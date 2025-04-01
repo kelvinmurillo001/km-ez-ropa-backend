@@ -11,7 +11,7 @@ const {
 const authMiddleware = require('../middleware/authMiddleware');
 
 // ✅ Usamos configuración modular de multer
-const upload = require('../middlewares/multer');
+const upload = require('../middleware/multer');
 
 // 🔓 Ruta pública para obtener productos
 router.get('/', getAllProducts);
