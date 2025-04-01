@@ -1,7 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
 
 const {
   getAllProducts,
@@ -12,33 +10,19 @@ const {
 
 const authMiddleware = require('../middleware/authMiddleware');
 
-// 📦 Configuración de multer para subir imágenes
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/');
-  },
-  filename: function (req, file, cb) {
-    cb(null, `${Date.now()}-${file.originalname}`);
-  }
-});
+// ✅ Usamos configuración modular de multer
+const upload = require('../middlewares/multer');
 
-const fileFilter = (req, file, cb) => {
-  const ext = path.extname(file.originalname).toLowerCase();
-  if (ext === '.jpg' || ext === '.jpeg' || ext === '.png' || ext === '.webp') {
-    cb(null, true);
-  } else {
-    cb(new Error('Only .jpg, .jpeg, .png, .webp images are allowed'));
-  }
-};
-
-const upload = multer({ storage, fileFilter });
-
-// 🔓 Public route
+// 🔓 Ruta pública para obtener productos
 router.get('/', getAllProducts);
 
-// 🔐 Protected routes
+// 🔐 Crear producto (con auth + imagen)
 router.post('/', authMiddleware, upload.single('imagen'), createProduct);
+
+// ✏️ Actualizar producto (con auth + imagen)
 router.put('/:id', authMiddleware, upload.single('imagen'), updateProduct);
+
+// 🗑️ Eliminar producto (con auth)
 router.delete('/:id', authMiddleware, deleteProduct);
 
 module.exports = router;

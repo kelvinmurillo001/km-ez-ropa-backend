@@ -5,7 +5,7 @@ const fs = require('fs');
 // 📥 Obtener todos los productos
 const getAllProducts = async (req, res) => {
   try {
-    const products = await Product.find().sort({ _id: -1 }); // Ordenar por más recientes
+    const products = await Product.find().sort({ _id: -1 });
     res.json(products);
   } catch (error) {
     console.error('❌ Error getting products:', error);
@@ -16,35 +16,46 @@ const getAllProducts = async (req, res) => {
 // ➕ Crear un nuevo producto
 const createProduct = async (req, res) => {
   try {
-    const { name, price, category, subcategory, stock, featured } = req.body;
+    const {
+      name,
+      price,
+      category,
+      subcategory,
+      stock,
+      featured,
+      talla,
+      colores
+    } = req.body;
+
     const image = req.file ? `/uploads/${req.file.filename}` : '';
     const createdBy = req.user?.username || 'admin';
 
-    // 🧪 Validación de campos obligatorios
     if (!name || !price || !category || !subcategory || image === '') {
-      return res.status(400).json({ message: 'All fields are required' });
+      return res.status(400).json({ message: 'Todos los campos obligatorios son requeridos' });
     }
 
     if (stock === undefined || isNaN(stock)) {
-      return res.status(400).json({ message: 'Stock must be a valid number' });
+      return res.status(400).json({ message: 'Stock debe ser un número válido' });
     }
 
     const newProduct = new Product({
-      nombre: name,
-      precio: price,
-      categoria: category,
-      subcategoria: subcategory,
-      stock: stock,
-      destacado: featured === 'true',
-      imagen: image,
-      creadoPor: createdBy,
-      editadoPor: ''
+      name,
+      price,
+      category,
+      subcategory,
+      stock,
+      talla,
+      colores,
+      featured: featured === 'true' || featured === true,
+      image,
+      createdBy,
+      updatedBy: ''
     });
 
     await newProduct.save();
     res.status(201).json(newProduct);
   } catch (error) {
-    console.error('❌ Error creating product:', error);
+    console.error('❌ Error creando producto:', error);
     res.status(500).json({ message: 'Server error creating product' });
   }
 };
@@ -53,35 +64,46 @@ const createProduct = async (req, res) => {
 const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, price, category, subcategory, stock, featured } = req.body;
+    const {
+      name,
+      price,
+      category,
+      subcategory,
+      stock,
+      featured,
+      talla,
+      colores
+    } = req.body;
 
     const product = await Product.findById(id);
     if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
+      return res.status(404).json({ message: 'Producto no encontrado' });
     }
 
-    // 🔁 Reemplazar imagen antigua si se sube una nueva
+    // 🔁 Reemplazar imagen si se sube nueva
     if (req.file) {
-      const oldImagePath = path.join(__dirname, '..', product.imagen);
+      const oldImagePath = path.join(__dirname, '..', product.image);
       if (fs.existsSync(oldImagePath)) {
         fs.unlinkSync(oldImagePath);
       }
-      product.imagen = `/uploads/${req.file.filename}`;
+      product.image = `/uploads/${req.file.filename}`;
     }
 
     // 🧠 Actualizar campos
-    product.nombre = name || product.nombre;
-    product.precio = price || product.precio;
-    product.categoria = category || product.categoria;
-    product.subcategoria = subcategory || product.subcategoria;
+    product.name = name || product.name;
+    product.price = price || product.price;
+    product.category = category || product.category;
+    product.subcategory = subcategory || product.subcategory;
     product.stock = stock || product.stock;
-    product.destacado = featured === 'true';
-    product.editadoPor = req.user?.username || 'admin';
+    product.talla = talla || product.talla;
+    product.colores = colores || product.colores;
+    product.featured = featured === 'true' || featured === true;
+    product.updatedBy = req.user?.username || 'admin';
 
     const updatedProduct = await product.save();
     res.json(updatedProduct);
   } catch (error) {
-    console.error('❌ Error updating product:', error);
+    console.error('❌ Error actualizando producto:', error);
     res.status(500).json({ message: 'Server error updating product' });
   }
 };
@@ -92,19 +114,18 @@ const deleteProduct = async (req, res) => {
     const { id } = req.params;
     const product = await Product.findById(id);
     if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
+      return res.status(404).json({ message: 'Producto no encontrado' });
     }
 
-    // 🖼️ Eliminar imagen del sistema de archivos
-    const imagePath = path.join(__dirname, '..', product.imagen);
+    const imagePath = path.join(__dirname, '..', product.image);
     if (fs.existsSync(imagePath)) {
       fs.unlinkSync(imagePath);
     }
 
     await product.deleteOne();
-    res.json({ message: '✅ Product deleted successfully' });
+    res.json({ message: '✅ Producto eliminado correctamente' });
   } catch (error) {
-    console.error('❌ Error deleting product:', error);
+    console.error('❌ Error eliminando producto:', error);
     res.status(500).json({ message: 'Server error deleting product' });
   }
 };

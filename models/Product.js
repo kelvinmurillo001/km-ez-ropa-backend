@@ -25,6 +25,12 @@ const productSchema = new mongoose.Schema({
     required: true,
     min: 0
   },
+  talla: {
+    type: String // Ej: "S", "M", "L"
+  },
+  colores: {
+    type: String // Ej: "rojo, azul, negro"
+  },
   featured: {
     type: Boolean,
     default: false
