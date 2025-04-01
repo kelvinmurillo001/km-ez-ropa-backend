@@ -15,10 +15,12 @@ const PORT = process.env.PORT || 5000;
 // 📦 Middlewares
 app.use(cors());
 app.use(express.json());
-// linea de local prueba 
+
+// línea para acceder a assets del frontend (local, opcional si ya está el frontend separado)
 app.use('/assets', express.static(path.join(__dirname, 'frontend', 'assets')));
-//linea de produccion 
-//app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve uploaded images
+
+// ✅ línea esencial para producción (Render):
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve uploaded images
 
 // 🔗 Import routes
 const productRoutes = require('./routes/productRoutes');
