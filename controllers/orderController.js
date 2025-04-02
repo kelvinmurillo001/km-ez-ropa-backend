@@ -46,8 +46,24 @@ const actualizarEstadoPedido = async (req, res) => {
   }
 };
 
+// 📊 Obtener estadísticas de pedidos
+const getOrderStats = async (req, res) => {
+  try {
+    const pedidos = await Order.find();
+
+    const totalEnviados = pedidos
+      .filter(p => p.estado === "enviado")
+      .reduce((sum, p) => sum + p.total, 0);
+
+    res.json({ ventasTotales: totalEnviados });
+  } catch (err) {
+    res.status(500).json({ message: "Error obteniendo estadísticas" });
+  }
+};
+
 module.exports = {
   createOrder,
   getOrders,
-  actualizarEstadoPedido
+  actualizarEstadoPedido,
+  getOrderStats
 };
