@@ -1,0 +1,18 @@
+# 👉 Ignorar node_modules
+node_modules/
+
+# 👉 Ignorar logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 👉 Ignorar entorno
+.env
+.env.local
+
+# 👉 Ignorar sistema operativo
+.DS_Store
+Thumbs.db
+
+# 👉 Ignorar VSCode
+.vscode/
