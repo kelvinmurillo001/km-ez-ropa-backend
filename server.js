@@ -28,7 +28,8 @@ const authRoutes = require('./routes/authRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const promoRoutes = require('./routes/promoRoutes');
 const orderRoutes = require('./routes/orderRoutes');
-const visitRoutes = require('./routes/visitRoutes'); // 🆕 Visitas
+const visitRoutes = require('./routes/visitRoutes');   // 🆕 Visitas: registra visitas
+const statsRoutes = require('./routes/statsRoutes');   // 🆕 Ruta para contador de visitas
 
 // 🧭 Use routes
 app.use('/api/products', productRoutes);
@@ -36,7 +37,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/promos', promoRoutes);
 app.use('/api/orders', orderRoutes);
-app.use('/api/visitas', visitRoutes); // 🆕 Ruta para registrar visitas
+app.use('/api/visitas', visitRoutes);    // POST /registrar (registro de visitas)
+app.use('/api/visitas', statsRoutes);    // GET /contador (leer visitas)
 
 // 🛡️ Root endpoint (health check)
 app.get('/', (req, res) => {
