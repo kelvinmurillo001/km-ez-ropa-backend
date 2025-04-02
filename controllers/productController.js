@@ -27,7 +27,8 @@ const createProduct = async (req, res) => {
       colores
     } = req.body;
 
-    const image = req.file ? `/uploads/${req.file.filename}` : '';
+    // ✅ URL completa para servir la imagen en frontend
+    const image = req.file ? `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}` : '';
     const createdBy = req.user?.username || 'admin';
 
     if (!name || !price || !category || !subcategory || image === '') {
@@ -80,13 +81,13 @@ const updateProduct = async (req, res) => {
       return res.status(404).json({ message: 'Producto no encontrado' });
     }
 
-    // 🔁 Reemplazar imagen si se sube nueva
+    // 🔁 Reemplazar imagen si se sube nueva (URL completa)
     if (req.file) {
       const oldImagePath = path.join(__dirname, '..', product.image);
       if (fs.existsSync(oldImagePath)) {
         fs.unlinkSync(oldImagePath);
       }
-      product.image = `/uploads/${req.file.filename}`;
+      product.image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
     }
 
     // 🧠 Actualizar campos
