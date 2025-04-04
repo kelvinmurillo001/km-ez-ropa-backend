@@ -8,13 +8,25 @@ const {
   addSubcategory,
   deleteCategory,
   deleteSubcategory
-} = require('../controllers/categoryController'); // Asegúrate que esta ruta y funciones existen
+} = require('../controllers/categoryController');
 
-// 🧭 Routes
-router.get('/', getAllCategories); // ✅ esto espera que getAllCategories esté definido
-router.post('/', createCategory);
-router.post('/:id/subcategories', addSubcategory);
-router.delete('/:id', deleteCategory);
-router.delete('/:id/subcategories', deleteSubcategory);
+const authMiddleware = require('../middleware/authMiddleware');
+
+// 📦 Rutas de categorías
+
+// 🔓 Obtener categorías (público o protegido si quieres)
+router.get('/', getAllCategories);
+
+// 🔐 Crear nueva categoría
+router.post('/', authMiddleware, createCategory);
+
+// 🔐 Agregar subcategoría a categoría existente
+router.post('/:categoryId/subcategories', authMiddleware, addSubcategory);
+
+// 🔐 Eliminar categoría
+router.delete('/:id', authMiddleware, deleteCategory);
+
+// 🔐 Eliminar subcategoría específica (se pasa por query param o body)
+router.delete('/:categoryId/subcategories/:subcategory', authMiddleware, deleteSubcategory);
 
 module.exports = router;

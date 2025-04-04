@@ -12,12 +12,25 @@ const promotionSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  theme: {
+    type: String,
+    enum: ['blue', 'orange', 'green', 'red'],
+    default: 'blue'
+  },
+  startDate: {
+    type: Date,
+    default: null
+  },
+  endDate: {
+    type: Date,
+    default: null
+  },
   createdBy: {
     type: String,
     default: "admin"
   }
 }, {
-  timestamps: true
+  timestamps: true // createdAt y updatedAt automáticamente
 });
 
 module.exports = mongoose.model("Promotion", promotionSchema);

@@ -6,10 +6,10 @@ const {
   obtenerVisitas
 } = require('../controllers/visitController');
 
-// POST /api/visitas/registrar
+// 📈 Registrar una visita (pública, sin auth)
 router.post('/registrar', registrarVisita);
 
-// GET /api/visitas
+// 📊 Obtener total acumulado de visitas
 router.get('/', obtenerVisitas);
 
 module.exports = router;

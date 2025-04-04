@@ -1,24 +1,31 @@
 const jwt = require('jsonwebtoken');
 
-// 🔐 Middleware de autenticación
+// 🔐 Middleware de autenticación para rutas protegidas
 const authMiddleware = (req, res, next) => {
-  const authHeader = req.headers.authorization;
+  const authHeader = req.headers.authorization?.trim();
 
-  // ⚠️ Si no hay header o formato incorrecto
+  // ⚠️ Validación básica del header
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Acceso denegado. Token no proporcionado o mal formado.' });
+    return res.status(401).json({
+      message: 'Acceso denegado. Token no proporcionado o mal formado.'
+    });
   }
 
   const token = authHeader.split(' ')[1];
 
   try {
-    // ✅ Verificar y decodificar el token
+    // ✅ Verificar el token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // Se puede acceder luego en req.user
+
+    // 📌 Añadir usuario decodificado a la request
+    req.user = decoded;
+
     next();
   } catch (error) {
     console.error('❌ Token inválido:', error.message);
-    res.status(401).json({ message: 'Token inválido o expirado.' });
+    return res.status(401).json({
+      message: 'Token inválido o expirado.'
+    });
   }
 };
 

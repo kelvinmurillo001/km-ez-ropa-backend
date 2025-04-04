@@ -1,30 +1,40 @@
 // controllers/promoController.js
-
 const Promotion = require("../models/promotion");
 
-// 📥 Get active promotion
+// 📥 Obtener promoción activa
 const getPromotion = async (req, res) => {
   try {
     const active = await Promotion.findOne({ active: true });
     res.json(active || null);
   } catch (error) {
-    console.error("❌ Error getting promotion:", error);
-    res.status(500).json({ message: "Error getting promotion" });
+    console.error("❌ Error al obtener promoción:", error);
+    res.status(500).json({ message: "Error al obtener promoción" });
   }
 };
 
-// 💾 Create or update promotion
+// 💾 Crear o actualizar promoción
 const updatePromotion = async (req, res) => {
   try {
-    const { message, active } = req.body;
+    const {
+      message,
+      active,
+      theme,
+      startDate,
+      endDate
+    } = req.body;
 
     if (!message) {
-      return res.status(400).json({ message: "Promotion message is required" });
+      return res.status(400).json({ message: "El mensaje de la promoción es obligatorio" });
     }
 
-    if (active) {
+    // Desactivar otras si se activa esta
+    if (active === true || active === 'true') {
       await Promotion.updateMany({}, { active: false });
     }
+
+    // Convertir fechas si vienen
+    const start = startDate ? new Date(startDate) : undefined;
+    const end = endDate ? new Date(endDate) : undefined;
 
     const existing = await Promotion.findOne();
 
@@ -32,16 +42,25 @@ const updatePromotion = async (req, res) => {
 
     if (existing) {
       existing.message = message;
-      existing.active = active;
+      existing.active = active === true || active === 'true';
+      if (theme) existing.theme = theme;
+      if (start) existing.startDate = start;
+      if (end) existing.endDate = end;
       promo = await existing.save();
     } else {
-      promo = await Promotion.create({ message, active });
+      promo = await Promotion.create({
+        message,
+        active: active === true || active === 'true',
+        theme: theme || 'blue',
+        startDate: start || null,
+        endDate: end || null
+      });
     }
 
     res.status(200).json(promo);
   } catch (error) {
-    console.error("❌ Error saving promotion:", error);
-    res.status(500).json({ message: "Error saving promotion" });
+    console.error("❌ Error al guardar promoción:", error);
+    res.status(500).json({ message: "Error al guardar promoción" });
   }
 };
 

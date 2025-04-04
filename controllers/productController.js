@@ -27,7 +27,6 @@ const createProduct = async (req, res) => {
       colores
     } = req.body;
 
-    // ✅ Forzar URL absoluta con HTTPS para evitar Mixed Content
     const image = req.file ? `https://${req.get('host')}/uploads/${req.file.filename}` : '';
     const createdBy = req.user?.username || 'admin';
 
@@ -81,23 +80,28 @@ const updateProduct = async (req, res) => {
       return res.status(404).json({ message: 'Producto no encontrado' });
     }
 
-    // 🔁 Reemplazar imagen si se sube nueva (URL HTTPS)
+    // 🧼 Validar y reemplazar imagen si corresponde
     if (req.file) {
-      const oldImagePath = path.join(__dirname, '..', product.image);
-      if (fs.existsSync(oldImagePath)) {
-        fs.unlinkSync(oldImagePath);
+      const imageUrl = product.image;
+      if (imageUrl && imageUrl.includes('/uploads/')) {
+        const imageName = imageUrl.split('/uploads/')[1];
+        const oldImagePath = path.join(__dirname, '..', 'uploads', imageName);
+        if (fs.existsSync(oldImagePath)) {
+          fs.unlinkSync(oldImagePath);
+        }
       }
+
       product.image = `https://${req.get('host')}/uploads/${req.file.filename}`;
     }
 
-    // 🧠 Actualizar campos
-    product.name = name || product.name;
-    product.price = price || product.price;
-    product.category = category || product.category;
-    product.subcategory = subcategory || product.subcategory;
-    product.stock = stock || product.stock;
-    product.talla = talla || product.talla;
-    product.colores = colores || product.colores;
+    // 🧠 Actualizar campos con cuidado
+    product.name = name ?? product.name;
+    product.price = price ?? product.price;
+    product.category = category ?? product.category;
+    product.subcategory = subcategory ?? product.subcategory;
+    product.stock = stock !== undefined ? stock : product.stock;
+    product.talla = talla ?? product.talla;
+    product.colores = colores ?? product.colores;
     product.featured = featured === 'true' || featured === true;
     product.updatedBy = req.user?.username || 'admin';
 
@@ -118,9 +122,13 @@ const deleteProduct = async (req, res) => {
       return res.status(404).json({ message: 'Producto no encontrado' });
     }
 
-    const imagePath = path.join(__dirname, '..', product.image);
-    if (fs.existsSync(imagePath)) {
-      fs.unlinkSync(imagePath);
+    const imageUrl = product.image;
+    if (imageUrl && imageUrl.includes('/uploads/')) {
+      const imageName = imageUrl.split('/uploads/')[1];
+      const imagePath = path.join(__dirname, '..', 'uploads', imageName);
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath);
+      }
     }
 
     await product.deleteOne();

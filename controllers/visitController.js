@@ -1,20 +1,24 @@
-const fs = require('fs');
+const fs = require('fs').promises;
 const path = require('path');
 
 const filePath = path.join(__dirname, '..', 'data', 'visitas.json');
 
 // 📈 Registrar una visita
-const registrarVisita = (req, res) => {
+const registrarVisita = async (req, res) => {
   try {
     let count = 0;
 
-    if (fs.existsSync(filePath)) {
-      const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-      count = data.count || 0;
+    try {
+      const data = await fs.readFile(filePath, 'utf8');
+      const json = JSON.parse(data);
+      count = json.count || 0;
+    } catch (error) {
+      console.warn("⚠️ Archivo visitas.json no existe o está vacío, inicializando...");
     }
 
     count += 1;
-    fs.writeFileSync(filePath, JSON.stringify({ count }));
+
+    await fs.writeFile(filePath, JSON.stringify({ count }));
 
     res.json({ message: "✅ Visita registrada", total: count });
   } catch (err) {
@@ -24,15 +28,15 @@ const registrarVisita = (req, res) => {
 };
 
 // 📊 Obtener total de visitas
-const obtenerVisitas = (req, res) => {
+const obtenerVisitas = async (req, res) => {
   try {
-    let count = 0;
-    if (fs.existsSync(filePath)) {
-      const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-      count = data.count || 0;
-    }
+    const data = await fs.readFile(filePath, 'utf8');
+    const json = JSON.parse(data);
+    const count = json.count || 0;
+
     res.json({ total: count });
   } catch (err) {
+    console.error("❌ Error leyendo visitas:", err);
     res.status(500).json({ message: "Error leyendo visitas" });
   }
 };

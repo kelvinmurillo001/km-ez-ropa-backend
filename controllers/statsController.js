@@ -1,15 +1,25 @@
-const fs = require("fs");
+const fs = require("fs").promises;
 const path = require("path");
 
 const visitasPath = path.join(__dirname, "../visitas.json");
 
-const getVisitas = (req, res) => {
+// 📊 Obtener contador de visitas
+const getVisitas = async (req, res) => {
   try {
-    const data = fs.readFileSync(visitasPath, "utf-8");
-    const json = JSON.parse(data);
+    const data = await fs.readFile(visitasPath, "utf-8");
+
+    let json = {};
+    try {
+      json = JSON.parse(data);
+    } catch (parseError) {
+      console.error("❌ Error al parsear visitas.json:", parseError.message);
+      return res.status(500).json({ message: "Error al procesar datos de visitas." });
+    }
+
     res.json({ total: json.visitas || 0 });
   } catch (error) {
-    res.status(500).json({ message: "Error leyendo visitas." });
+    console.error("❌ Error leyendo visitas.json:", error.message);
+    res.status(500).json({ message: "Error leyendo archivo de visitas." });
   }
 };
 

@@ -5,29 +5,41 @@ const bcrypt = require('bcryptjs');
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true,
+    required: [true, 'El nombre es obligatorio'],
     trim: true
   },
   email: {
     type: String,
-    required: true,
+    required: [true, 'El correo es obligatorio'],
     unique: true,
-    lowercase: true
+    lowercase: true,
+    trim: true,
+    match: [/\S+@\S+\.\S+/, 'Correo no válido']
   },
   password: {
     type: String,
-    required: true
+    required: [true, 'La contraseña es obligatoria'],
+    minlength: [6, 'La contraseña debe tener al menos 6 caracteres']
+  },
+  role: {
+    type: String,
+    enum: ['admin', 'editor', 'vendedor'],
+    default: 'admin'
+  },
+  isActive: {
+    type: Boolean,
+    default: true
   }
 }, {
-  timestamps: true // 🕒 Crea createdAt y updatedAt automáticamente
+  timestamps: true
 });
 
-// 🔐 Método para comparar contraseñas
+// 🔐 Método para comparar contraseñas ingresadas con la hash
 userSchema.methods.matchPassword = async function (inputPassword) {
   return await bcrypt.compare(inputPassword, this.password);
 };
 
-// 🔒 Encriptar contraseña antes de guardar (solo si fue modificada)
+// 🔒 Middleware para encriptar contraseña antes de guardar
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
 

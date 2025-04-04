@@ -4,11 +4,22 @@ const router = express.Router();
 const {
   createOrder,
   getOrders,
-  actualizarEstadoPedido
+  actualizarEstadoPedido,
+  getOrderStats
 } = require('../controllers/orderController');
 
+const authMiddleware = require('../middleware/authMiddleware');
+
+// 📥 Crear pedido (público)
 router.post('/', createOrder);
-router.get('/', getOrders);
-router.put('/:id/estado', actualizarEstadoPedido);
+
+// 🔐 Obtener todos los pedidos (admin)
+router.get('/', authMiddleware, getOrders);
+
+// 🔐 Cambiar estado de pedido (admin)
+router.put('/:id/estado', authMiddleware, actualizarEstadoPedido);
+
+// 📊 Estadísticas de pedidos (opcional)
+router.get('/stats/ventas', authMiddleware, getOrderStats);
 
 module.exports = router;

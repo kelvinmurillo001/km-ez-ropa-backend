@@ -3,7 +3,7 @@ const router = express.Router();
 
 const { loginAdmin } = require('../controllers/authController');
 
-// 🔐 Ruta para iniciar sesión del administrador
+// 🔐 Autenticación de administrador (login)
 router.post('/login', loginAdmin);
 
 module.exports = router;

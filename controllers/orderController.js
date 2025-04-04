@@ -4,60 +4,80 @@ const Order = require('../models/Order');
 const createOrder = async (req, res) => {
   try {
     const { items, total, nombreCliente, nota } = req.body;
-    if (!items || !nombreCliente || total === undefined) {
-      return res.status(400).json({ message: "Faltan datos del pedido." });
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ message: "El pedido debe contener al menos un producto." });
+    }
+
+    if (!nombreCliente || typeof nombreCliente !== 'string') {
+      return res.status(400).json({ message: "Nombre del cliente inválido." });
+    }
+
+    if (total === undefined || isNaN(total)) {
+      return res.status(400).json({ message: "Total inválido." });
     }
 
     const newOrder = await Order.create({
       items,
       total,
-      nombreCliente,
-      nota
+      nombreCliente: nombreCliente.trim(),
+      nota: nota?.trim() || '',
     });
 
     res.status(201).json(newOrder);
   } catch (error) {
     console.error("❌ Error creando pedido:", error);
-    res.status(500).json({ message: "Error interno" });
+    res.status(500).json({ message: "Error interno al crear el pedido." });
   }
 };
 
-// 📥 Obtener todos los pedidos
+// 📥 Obtener todos los pedidos (solo admin)
 const getOrders = async (req, res) => {
   try {
     const orders = await Order.find().sort({ createdAt: -1 });
     res.json(orders);
   } catch (error) {
+    console.error("❌ Error al obtener pedidos:", error);
     res.status(500).json({ message: "Error al obtener pedidos" });
   }
 };
 
-// 🔄 Actualizar estado
+// 🔄 Actualizar estado del pedido
 const actualizarEstadoPedido = async (req, res) => {
   try {
-    const pedido = await Order.findById(req.params.id);
-    if (!pedido) return res.status(404).json({ message: "Pedido no encontrado" });
+    const { id } = req.params;
+    const { estado } = req.body;
 
-    pedido.estado = req.body.estado || pedido.estado;
+    const pedido = await Order.findById(id);
+    if (!pedido) {
+      return res.status(404).json({ message: "Pedido no encontrado" });
+    }
+
+    if (!estado || typeof estado !== 'string') {
+      return res.status(400).json({ message: "Estado inválido" });
+    }
+
+    pedido.estado = estado;
     await pedido.save();
-    res.json({ message: "✅ Estado actualizado" });
+
+    res.json({ message: "✅ Estado actualizado", pedido });
   } catch (err) {
-    res.status(500).json({ message: "Error actualizando estado" });
+    console.error("❌ Error actualizando estado:", err);
+    res.status(500).json({ message: "Error actualizando estado del pedido" });
   }
 };
 
-// 📊 Obtener estadísticas de pedidos
+// 📊 Obtener estadísticas de ventas
 const getOrderStats = async (req, res) => {
   try {
-    const pedidos = await Order.find();
+    const pedidos = await Order.find({ estado: "enviado" });
 
-    const totalEnviados = pedidos
-      .filter(p => p.estado === "enviado")
-      .reduce((sum, p) => sum + p.total, 0);
+    const totalEnviados = pedidos.reduce((sum, p) => sum + p.total, 0);
 
     res.json({ ventasTotales: totalEnviados });
   } catch (err) {
-    res.status(500).json({ message: "Error obteniendo estadísticas" });
+    console.error("❌ Error obteniendo estadísticas:", err);
+    res.status(500).json({ message: "Error obteniendo estadísticas de pedidos" });
   }
 };
 

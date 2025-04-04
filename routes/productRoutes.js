@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
+// 🧠 Controladores
 const {
   getAllProducts,
   createProduct,
@@ -8,21 +9,36 @@ const {
   deleteProduct
 } = require('../controllers/productController');
 
+// 🔐 Middleware de autenticación y subida de archivos
 const authMiddleware = require('../middleware/authMiddleware');
-
-// ✅ Usamos configuración modular de multer
 const upload = require('../middleware/multer');
 
-// 🔓 Ruta pública para obtener productos
+// 📦 Rutas de productos
+
+// 🔓 Obtener todos los productos (pública)
 router.get('/', getAllProducts);
 
-// 🔐 Crear producto (con auth + imagen)
-router.post('/', authMiddleware, upload.single('imagen'), createProduct);
+// ➕ Crear producto (requiere auth + imagen)
+router.post(
+  '/',
+  authMiddleware,
+  upload.single('imagen'),
+  createProduct
+);
 
-// ✏️ Actualizar producto (con auth + imagen)
-router.put('/:id', authMiddleware, upload.single('imagen'), updateProduct);
+// ✏️ Actualizar producto (requiere auth + imagen)
+router.put(
+  '/:id',
+  authMiddleware,
+  upload.single('imagen'),
+  updateProduct
+);
 
-// 🗑️ Eliminar producto (con auth)
-router.delete('/:id', authMiddleware, deleteProduct);
+// 🗑️ Eliminar producto (requiere auth)
+router.delete(
+  '/:id',
+  authMiddleware,
+  deleteProduct
+);
 
 module.exports = router;
