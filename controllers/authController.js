@@ -1,28 +1,47 @@
 const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
-// 🔐 Generar token JWT
-const generateToken = (username) => {
-  return jwt.sign({ username }, process.env.JWT_SECRET, {
-    expiresIn: '7d',
-  });
+// 🎟️ Genera token JWT
+const generateToken = (user) => {
+  return jwt.sign(
+    { id: user._id, email: user.email, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: '7d' }
+  );
 };
 
-// 🧾 Login del administrador usando .env
+// 🔐 Login seguro con validación
 const loginAdmin = async (req, res) => {
-  const { username, password } = req.body;
+  const { email, password } = req.body;
 
   try {
-    const ADMIN_USER = process.env.ADMIN_USER;
-    const ADMIN_PASS = process.env.ADMIN_PASS;
+    const user = await User.findOne({ email });
 
-    if (username === ADMIN_USER && password === ADMIN_PASS) {
-      const token = generateToken(username);
-      return res.json({ token });
+    // ❌ Usuario no encontrado o no admin
+    if (!user || user.role !== 'admin') {
+      return res.status(401).json({ message: '❌ Credenciales inválidas' });
     }
 
-    res.status(401).json({ message: 'Credenciales incorrectas' });
-  } catch (error) {
-    console.error('❌ Error en login:', error);
+    // ❌ Contraseña incorrecta
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ message: '❌ Credenciales inválidas' });
+    }
+
+    // ✅ Generar token y responder
+    const token = generateToken(user);
+    res.status(200).json({
+      message: '✅ Login exitoso',
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (err) {
+    console.error('❌ Error en login:', err);
     res.status(500).json({ message: 'Error del servidor' });
   }
 };
