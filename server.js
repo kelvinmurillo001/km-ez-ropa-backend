@@ -2,37 +2,34 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const helmet = require('helmet'); // 🛡️ Extra seguridad
-const morgan = require('morgan'); // 📋 Logging
+const helmet = require('helmet');
+const morgan = require('morgan');
 const dotenv = require('dotenv');
 const path = require('path');
 
-// ⚙️ Load environment variables
+// ⚙️ Config env
 dotenv.config();
-
-// 🚀 Initialize app
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// 📦 Middlewares
-app.use(cors());
+// 📦 Middleware
+app.use(cors({
+  origin: 'https://km-ez-ropa-frontend.onrender.com',
+  credentials: true
+}));
 app.use(express.json());
-app.use(helmet());       // 🛡️ Seguridad en cabeceras HTTP
-app.use(morgan('dev'));  // 📋 Log de solicitudes
+app.use(helmet());
+app.use(morgan('dev'));
 
-// 🔥 NUEVO BLOQUE - permitir acceso cross-origin a imágenes subidas
+// 🖼️ CORS para imágenes subidas
 app.use('/uploads', (req, res, next) => {
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   next();
 });
-
-// ✅ Servir imágenes subidas
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// ⚠️ Esto solo es útil si el frontend también vive aquí:
 app.use('/assets', express.static(path.join(__dirname, 'frontend', 'assets')));
 
-// 🔗 Import routes
+// 🔗 Routes
 const productRoutes = require('./routes/productRoutes');
 const authRoutes = require('./routes/authRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
@@ -41,21 +38,20 @@ const orderRoutes = require('./routes/orderRoutes');
 const visitRoutes = require('./routes/visitRoutes');
 const statsRoutes = require('./routes/statsRoutes');
 
-// 🧭 Use routes
 app.use('/api/products', productRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/promos', promoRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/visitas', visitRoutes);
-app.use('/api/visitas', statsRoutes);
+app.use('/api/stats', statsRoutes); // ✅ corregido
 
-// 🛡️ Root endpoint (health check)
+// 🛡️ Health check
 app.get('/', (req, res) => {
   res.send('✅ API is working correctly');
 });
 
-// 🧠 Connect to MongoDB
+// 🚀 DB & Start
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
@@ -66,6 +62,10 @@ mongoose.connect(process.env.MONGO_URI, {
     console.log(`🚀 Server running on port ${PORT}`);
   });
 })
-.catch((error) => {
-  console.error('❌ Failed to connect to MongoDB:', error.message);
+.catch((err) => {
+  console.error('❌ MongoDB error:', err.message);
 });
+
+// 🧼 Global error handler
+const errorHandler = require('./middleware/errorHandler');
+app.use(errorHandler);

@@ -6,10 +6,13 @@ const {
   obtenerVisitas
 } = require('../controllers/visitController');
 
-// 📈 Registrar una visita (pública, sin auth)
+const authMiddleware = require('../middleware/authMiddleware');
+const adminOnly = require('../middleware/adminOnly');
+
+// 📈 Registrar visita (pública)
 router.post('/registrar', registrarVisita);
 
-// 📊 Obtener total acumulado de visitas
-router.get('/', obtenerVisitas);
+// 📊 Obtener visitas (solo admin)
+router.get('/', authMiddleware, adminOnly, obtenerVisitas);
 
 module.exports = router;

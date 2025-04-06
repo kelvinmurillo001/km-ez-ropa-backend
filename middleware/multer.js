@@ -1,4 +1,4 @@
-const multer = require("multer"); 
+const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
@@ -17,16 +17,19 @@ const storage = multer.diskStorage({
     const ext = path.extname(file.originalname).toLowerCase();
     const base = path.basename(file.originalname, ext)
       .replace(/\s+/g, '-')        // Reemplaza espacios por guiones
-      .replace(/[^\w\-]/g, '');    // Elimina caracteres no seguros
+      .replace(/[^\w\-]/g, '');    // Elimina caracteres peligrosos
 
     const uniqueName = `${Date.now()}-${base}${ext}`;
     cb(null, uniqueName);
   }
 });
 
-// 🛡️ Filtro: solo imágenes válidas
+// 🛡️ Multer con filtros y límite de tamaño
 const upload = multer({
   storage,
+  limits: {
+    fileSize: 2 * 1024 * 1024 // ✅ Límite: 2MB
+  },
   fileFilter: (req, file, cb) => {
     const allowedExt = [".jpg", ".jpeg", ".png", ".webp"];
     const ext = path.extname(file.originalname).toLowerCase();
