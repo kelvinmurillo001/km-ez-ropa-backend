@@ -1,7 +1,8 @@
 const fs = require("fs").promises;
 const path = require("path");
 
-const visitasPath = path.join(__dirname, "../visitas.json");
+// ✅ Ruta correcta hacia el archivo visitas.json
+const visitasPath = path.join(__dirname, "../data/visitas.json");
 
 // 📊 Obtener contador de visitas
 const getVisitas = async (req, res) => {
@@ -16,6 +17,7 @@ const getVisitas = async (req, res) => {
       return res.status(500).json({ message: "Error al procesar datos de visitas." });
     }
 
+    // ✅ Devolver la clave correcta según tu archivo
     res.json({ total: json.visitas || 0 });
   } catch (error) {
     console.error("❌ Error leyendo visitas.json:", error.message);
