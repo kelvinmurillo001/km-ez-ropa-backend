@@ -1,10 +1,10 @@
 // controllers/promoController.js
 const Promotion = require("../models/promotion");
 
-// 📥 Obtener promoción activa
+// 📥 Obtener promoción activa (más reciente)
 const getPromotion = async (req, res) => {
   try {
-    const active = await Promotion.findOne({ active: true });
+    const active = await Promotion.findOne({ active: true }).sort({ createdAt: -1 });
     res.json(active || null);
   } catch (error) {
     console.error("❌ Error al obtener promoción:", error);
@@ -27,12 +27,12 @@ const updatePromotion = async (req, res) => {
       return res.status(400).json({ message: "El mensaje de la promoción es obligatorio" });
     }
 
-    // Desactivar otras si se activa esta
+    // 🔄 Si esta se activa, desactiva todas las demás
     if (active === true || active === 'true') {
       await Promotion.updateMany({}, { active: false });
     }
 
-    // Convertir fechas si vienen
+    // 🗓️ Parsear fechas si existen
     const start = startDate ? new Date(startDate) : undefined;
     const end = endDate ? new Date(endDate) : undefined;
 
