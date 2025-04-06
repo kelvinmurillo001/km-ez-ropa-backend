@@ -4,20 +4,20 @@ const User = require('../models/User');
 // 🎟️ Genera token JWT
 const generateToken = (user) => {
   return jwt.sign(
-    { id: user._id, email: user.email, role: user.role },
+    { id: user._id, username: user.username, role: user.role },
     process.env.JWT_SECRET,
     { expiresIn: '7d' }
   );
 };
 
-// 🔐 Login seguro con validación
+// 🔐 Login seguro con validación por username
 const loginAdmin = async (req, res) => {
-  const { email, password } = req.body;
+  const { username, password } = req.body;
 
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ username });
 
-    // ❌ Usuario no encontrado o no admin
+    // ❌ Usuario no encontrado o no es admin
     if (!user || user.role !== 'admin') {
       return res.status(401).json({ message: '❌ Credenciales inválidas' });
     }
@@ -35,8 +35,8 @@ const loginAdmin = async (req, res) => {
       token,
       user: {
         id: user._id,
+        username: user.username,
         name: user.name,
-        email: user.email,
         role: user.role,
       },
     });
