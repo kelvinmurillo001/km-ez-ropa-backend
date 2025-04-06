@@ -20,6 +20,12 @@ app.use(express.json());
 app.use(helmet());       // 🛡️ Seguridad en cabeceras HTTP
 app.use(morgan('dev'));  // 📋 Log de solicitudes
 
+// 🔥 NUEVO BLOQUE - permitir acceso cross-origin a imágenes subidas
+app.use('/uploads', (req, res, next) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+});
+
 // ✅ Servir imágenes subidas
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 

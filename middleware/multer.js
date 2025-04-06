@@ -1,4 +1,4 @@
-const multer = require("multer");
+const multer = require("multer"); 
 const path = require("path");
 const fs = require("fs");
 
@@ -14,7 +14,12 @@ const storage = multer.diskStorage({
     cb(null, uploadDir); // ✅ guarda en /uploads
   },
   filename: function (req, file, cb) {
-    const uniqueName = `${Date.now()}-${file.originalname}`;
+    const ext = path.extname(file.originalname).toLowerCase();
+    const base = path.basename(file.originalname, ext)
+      .replace(/\s+/g, '-')        // Reemplaza espacios por guiones
+      .replace(/[^\w\-]/g, '');    // Elimina caracteres no seguros
+
+    const uniqueName = `${Date.now()}-${base}${ext}`;
     cb(null, uniqueName);
   }
 });
