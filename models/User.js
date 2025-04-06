@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs'); // ✅ CORREGIDO
 
-// 📦 Esquema del usuario
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -43,7 +42,7 @@ userSchema.pre('save', async function (next) {
   }
 });
 
-// 🔐 Método para comparar contraseñas
+// 🔐 Comparar contraseña
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
