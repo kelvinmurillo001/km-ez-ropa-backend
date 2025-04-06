@@ -37,8 +37,6 @@ const promoRoutes = require('./routes/promoRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const visitRoutes = require('./routes/visitRoutes');
 const statsRoutes = require('./routes/statsRoutes');
-const setupAdminRoute = require('./routes/setupAdmin');// eliminar
-
 
 app.use('/api/products', productRoutes);
 app.use('/api/auth', authRoutes);
@@ -47,7 +45,7 @@ app.use('/api/promos', promoRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/visitas', visitRoutes);
 app.use('/api/stats', statsRoutes); // ✅ corregido
-app.use('/api/setup-admin', setupAdminRoute);// eliminar 
+
 
 // 🛡️ Health check
 app.get('/', (req, res) => {
