@@ -17,7 +17,6 @@ const getVisitas = async (req, res) => {
       return res.status(500).json({ message: "Error al procesar datos de visitas." });
     }
 
-    // ✅ Devolver la clave correcta según tu archivo
     res.json({ total: json.visitas || 0 });
   } catch (error) {
     console.error("❌ Error leyendo visitas.json:", error.message);

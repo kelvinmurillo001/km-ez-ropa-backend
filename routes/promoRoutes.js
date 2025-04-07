@@ -1,21 +1,23 @@
 const express = require('express');
-const router = express.Router();
 const { body } = require('express-validator');
+const router = express.Router();
 
+// 📢 Controladores
 const {
   getPromotion,
   updatePromotion
 } = require('../controllers/promoController');
 
+// 🛡️ Middlewares
 const authMiddleware = require('../middleware/authMiddleware');
 const adminOnly = require('../middleware/adminOnly');
 
-// 📢 Rutas de promociones
+// 📄 RUTAS DE PROMOCIONES
 
-// 🔓 Obtener la promoción activa (pública)
+// 🔓 Obtener la promoción activa (PÚBLICO)
 router.get('/', getPromotion);
 
-// 🔐 Actualizar promoción (solo admin)
+// 🔐 Actualizar la promoción actual (ADMIN)
 router.put(
   '/',
   authMiddleware,

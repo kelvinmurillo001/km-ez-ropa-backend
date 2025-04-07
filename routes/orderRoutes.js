@@ -1,7 +1,8 @@
 const express = require('express');
-const router = express.Router();
 const { body } = require('express-validator');
+const router = express.Router();
 
+// 🧠 Controladores
 const {
   createOrder,
   getOrders,
@@ -9,10 +10,13 @@ const {
   getOrderStats
 } = require('../controllers/orderController');
 
+// 🛡️ Middlewares
 const authMiddleware = require('../middleware/authMiddleware');
 const adminOnly = require('../middleware/adminOnly');
 
-// 📥 Crear pedido (público o protegido si lo deseas)
+// 📦 RUTAS DE PEDIDOS
+
+// 📥 Crear pedido (📢 PÚBLICO)
 router.post(
   '/',
   [
@@ -24,13 +28,13 @@ router.post(
   createOrder
 );
 
-// 🔐 Obtener todos los pedidos (solo admin)
+// 📋 Obtener todos los pedidos (🔐 SOLO ADMIN)
 router.get('/', authMiddleware, adminOnly, getOrders);
 
-// 🔐 Cambiar estado de pedido (solo admin)
+// 🔄 Actualizar estado de pedido (🔐 SOLO ADMIN)
 router.put('/:id/estado', authMiddleware, adminOnly, actualizarEstadoPedido);
 
-// 📊 Estadísticas de pedidos (solo admin)
+// 📊 Obtener estadísticas de ventas (🔐 SOLO ADMIN)
 router.get('/stats/ventas', authMiddleware, adminOnly, getOrderStats);
 
 module.exports = router;

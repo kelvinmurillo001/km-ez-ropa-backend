@@ -1,7 +1,8 @@
 const express = require('express');
-const router = express.Router();
 const { body, param } = require('express-validator');
+const router = express.Router();
 
+// 📦 Controladores
 const {
   getAllCategories,
   createCategory,
@@ -10,26 +11,25 @@ const {
   deleteSubcategory
 } = require('../controllers/categoryController');
 
+// 🛡️ Middlewares
 const authMiddleware = require('../middleware/authMiddleware');
 const adminOnly = require('../middleware/adminOnly');
 
-// 📦 Categorías
+// 📄 RUTAS DE CATEGORÍAS
 
-// 🔓 Obtener categorías (público)
+// 🔓 Obtener todas las categorías (PÚBLICO)
 router.get('/', getAllCategories);
 
-// 🔐 Crear nueva categoría (solo admin)
+// 🔐 Crear nueva categoría (ADMIN)
 router.post(
   '/',
   authMiddleware,
   adminOnly,
-  [
-    body('name').notEmpty().withMessage('El nombre es obligatorio')
-  ],
+  body('name').notEmpty().withMessage('El nombre es obligatorio'),
   createCategory
 );
 
-// 🔐 Agregar subcategoría (solo admin)
+// 🔐 Agregar subcategoría a una categoría (ADMIN)
 router.post(
   '/:categoryId/subcategories',
   authMiddleware,
@@ -41,7 +41,7 @@ router.post(
   addSubcategory
 );
 
-// 🔐 Eliminar categoría (solo admin)
+// 🔐 Eliminar categoría (ADMIN)
 router.delete(
   '/:id',
   authMiddleware,
@@ -50,7 +50,7 @@ router.delete(
   deleteCategory
 );
 
-// 🔐 Eliminar subcategoría (solo admin)
+// 🔐 Eliminar subcategoría de una categoría (ADMIN)
 router.delete(
   '/:categoryId/subcategories/:subcategory',
   authMiddleware,
