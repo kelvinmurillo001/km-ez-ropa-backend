@@ -1,10 +1,3 @@
-const express = require('express');
-const router = express.Router();
-const { body } = require('express-validator');
-
-const { loginAdmin } = require('../controllers/authController');
-
-// 🔐 Login solo para administradores
 router.post(
   '/login',
   [
@@ -13,5 +6,3 @@ router.post(
   ],
   loginAdmin
 );
-
-module.exports = router;
