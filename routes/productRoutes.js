@@ -13,53 +13,41 @@ const {
 // 🔐 Middleware
 const authMiddleware = require('../middleware/authMiddleware');
 const adminOnly = require('../middleware/adminOnly');
-const multer = require('multer');
-
-// 🧠 Configuración Multer para múltiples imágenes en memoria
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
 
 // 📦 Rutas de productos
 
-// 🔓 Obtener todos los productos
+// 🔓 Obtener todos los productos (pública)
 router.get('/', getAllProducts);
 
-// ➕ Crear producto con múltiples imágenes por talla
+// ➕ Crear producto (admin, recibe variantes con imágenes subidas desde el cliente)
 router.post(
   '/',
   authMiddleware,
   adminOnly,
-  upload.fields([
-    { name: 'image_S' },
-    { name: 'image_M' },
-    { name: 'image_L' },
-    { name: 'image_XL' },
-    { name: 'image_XXL' } // puedes añadir más tallas aquí si usas otras
-  ]),
   [
     body('name').notEmpty().withMessage('El nombre es obligatorio'),
     body('price').isNumeric().withMessage('El precio debe ser numérico'),
-    body('category').notEmpty().withMessage('La categoría es obligatoria')
+    body('category').notEmpty().withMessage('La categoría es obligatoria'),
+    body('subcategory').notEmpty().withMessage('La subcategoría es obligatoria'),
+    body('variants').isArray({ min: 1 }).withMessage('Se requiere al menos una variante')
   ],
   createProduct
 );
 
-// ✏️ Actualizar producto (imágenes por talla opcionales)
+// ✏️ Actualizar producto (admin)
 router.put(
   '/:id',
   authMiddleware,
   adminOnly,
-  upload.fields([
-    { name: 'image_S' },
-    { name: 'image_M' },
-    { name: 'image_L' },
-    { name: 'image_XL' },
-    { name: 'image_XXL' }
-  ]),
+  [
+    body('name').optional().notEmpty(),
+    body('price').optional().isNumeric(),
+    body('variants').optional().isArray()
+  ],
   updateProduct
 );
 
-// 🗑️ Eliminar producto
+// 🗑️ Eliminar producto (admin)
 router.delete(
   '/:id',
   authMiddleware,

@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 
-// 📦 Esquema del producto con variantes por talla y color
 const productSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -30,14 +29,14 @@ const productSchema = new mongoose.Schema({
     default: false
   },
 
-  // ✅ Variantes por talla y color con imagen independiente
+  // ✅ Variantes por talla y color con imagen y stock por variante
   variants: [
     {
       talla: { type: String, required: true },
       color: { type: String, required: true },
       imageUrl: { type: String, required: true },
       cloudinaryId: { type: String, required: true },
-      stock: { type: Number, default: 0 } // Opcional: stock por variante
+      stock: { type: Number, default: 0 }
     }
   ],
 
@@ -50,7 +49,7 @@ const productSchema = new mongoose.Schema({
     default: ""
   }
 }, {
-  timestamps: true // 🕒 createdAt y updatedAt automáticos
+  timestamps: true
 });
 
 module.exports = mongoose.model('Product', productSchema);
