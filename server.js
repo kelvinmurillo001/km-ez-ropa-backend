@@ -21,12 +21,7 @@ app.use(express.json());
 app.use(helmet());
 app.use(morgan('dev'));
 
-// 🖼️ CORS para imágenes subidas
-app.use('/uploads', (req, res, next) => {
-  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-  next();
-});
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// 🖼️ Archivos estáticos (solo logos/assets del frontend)
 app.use('/assets', express.static(path.join(__dirname, 'frontend', 'assets')));
 
 // 🔗 Routes
@@ -37,7 +32,7 @@ const promoRoutes = require('./routes/promoRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const visitRoutes = require('./routes/visitRoutes');
 const statsRoutes = require('./routes/statsRoutes');
-const uploadRoutes = require('./routes/uploadRoutes');// RUTA IMAGEN
+const uploadRoutes = require('./routes/uploadRoutes'); // ✅ Sigue activo por si subes desde backend
 
 app.use('/api/products', productRoutes);
 app.use('/api/auth', authRoutes);
@@ -45,9 +40,8 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/promos', promoRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/visitas', visitRoutes);
-app.use('/api/stats', statsRoutes); // ✅ corregido
-app.use('/api/uploads', uploadRoutes); // RUTA IMAGENES
-
+app.use('/api/stats', statsRoutes);
+app.use('/api/uploads', uploadRoutes); // Subida a Cloudinary, no local
 
 // 🛡️ Health check
 app.get('/', (req, res) => {

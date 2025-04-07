@@ -36,7 +36,8 @@ const productSchema = new mongoose.Schema({
       talla: { type: String, required: true },
       color: { type: String, required: true },
       imageUrl: { type: String, required: true },
-      cloudinaryId: { type: String, required: true }
+      cloudinaryId: { type: String, required: true },
+      stock: { type: Number, default: 0 } // Opcional: stock por variante
     }
   ],
 
@@ -49,7 +50,7 @@ const productSchema = new mongoose.Schema({
     default: ""
   }
 }, {
-  timestamps: true // 🕒 createdAt y updatedAt
+  timestamps: true // 🕒 createdAt y updatedAt automáticos
 });
 
 module.exports = mongoose.model('Product', productSchema);

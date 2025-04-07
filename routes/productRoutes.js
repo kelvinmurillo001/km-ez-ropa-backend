@@ -13,19 +13,29 @@ const {
 // 🔐 Middleware
 const authMiddleware = require('../middleware/authMiddleware');
 const adminOnly = require('../middleware/adminOnly');
-const upload = require('../middleware/multer');
+const multer = require('multer');
+
+// 🧠 Configuración Multer para múltiples imágenes en memoria
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
 // 📦 Rutas de productos
 
-// 🔓 Obtener todos los productos (pública, considera paginación si hay muchos)
+// 🔓 Obtener todos los productos
 router.get('/', getAllProducts);
 
-// ➕ Crear producto (solo admin, con imagen + validación)
+// ➕ Crear producto con múltiples imágenes por talla
 router.post(
   '/',
   authMiddleware,
   adminOnly,
-  upload.single('imagen'),
+  upload.fields([
+    { name: 'image_S' },
+    { name: 'image_M' },
+    { name: 'image_L' },
+    { name: 'image_XL' },
+    { name: 'image_XXL' } // puedes añadir más tallas aquí si usas otras
+  ]),
   [
     body('name').notEmpty().withMessage('El nombre es obligatorio'),
     body('price').isNumeric().withMessage('El precio debe ser numérico'),
@@ -34,16 +44,22 @@ router.post(
   createProduct
 );
 
-// ✏️ Actualizar producto (solo admin, imagen opcional)
+// ✏️ Actualizar producto (imágenes por talla opcionales)
 router.put(
   '/:id',
   authMiddleware,
   adminOnly,
-  upload.single('imagen'),
+  upload.fields([
+    { name: 'image_S' },
+    { name: 'image_M' },
+    { name: 'image_L' },
+    { name: 'image_XL' },
+    { name: 'image_XXL' }
+  ]),
   updateProduct
 );
 
-// 🗑️ Eliminar producto (solo admin)
+// 🗑️ Eliminar producto
 router.delete(
   '/:id',
   authMiddleware,
