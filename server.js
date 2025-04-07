@@ -37,6 +37,7 @@ const promoRoutes = require('./routes/promoRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const visitRoutes = require('./routes/visitRoutes');
 const statsRoutes = require('./routes/statsRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');// RUTA IMAGEN
 
 app.use('/api/products', productRoutes);
 app.use('/api/auth', authRoutes);
@@ -45,6 +46,7 @@ app.use('/api/promos', promoRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/visitas', visitRoutes);
 app.use('/api/stats', statsRoutes); // ✅ corregido
+app.use('/api/uploads', uploadRoutes); // RUTA IMAGENES
 
 
 // 🛡️ Health check

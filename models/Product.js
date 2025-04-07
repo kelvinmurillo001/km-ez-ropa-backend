@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-// 📦 Esquema del producto
+// 📦 Esquema del producto con variantes por talla y color
 const productSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -25,20 +25,21 @@ const productSchema = new mongoose.Schema({
     required: true,
     min: 0
   },
-  talla: {
-    type: String // Ej: "S", "M", "L"
-  },
-  colores: {
-    type: String // Ej: "rojo, azul, negro"
-  },
   featured: {
     type: Boolean,
     default: false
   },
-  image: {
-    type: String,
-    required: true
-  },
+
+  // ✅ Variantes por talla y color con imagen independiente
+  variants: [
+    {
+      talla: { type: String, required: true },
+      color: { type: String, required: true },
+      imageUrl: { type: String, required: true },
+      cloudinaryId: { type: String, required: true }
+    }
+  ],
+
   createdBy: {
     type: String,
     required: true
@@ -48,8 +49,7 @@ const productSchema = new mongoose.Schema({
     default: ""
   }
 }, {
-  timestamps: true // 🕒 Agrega createdAt y updatedAt automáticamente
+  timestamps: true // 🕒 createdAt y updatedAt
 });
 
-// Exportar el modelo
 module.exports = mongoose.model('Product', productSchema);
