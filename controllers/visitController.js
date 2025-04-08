@@ -1,14 +1,21 @@
 const fs = require('fs').promises;
 const path = require('path');
 
+// 📁 Ruta al archivo de visitas
 const filePath = path.join(__dirname, '..', 'data', 'visitas.json');
 
-// 📈 Registrar una visita
+/**
+ * 📈 Registrar una visita
+ * - Lee el archivo visitas.json
+ * - Incrementa el contador
+ * - Lo vuelve a guardar
+ */
 const registrarVisita = async (req, res) => {
   try {
     let count = 0;
 
     try {
+      // 📖 Intentar leer archivo
       const data = await fs.readFile(filePath, 'utf8');
       const json = JSON.parse(data);
       count = json.count || 0;
@@ -18,6 +25,7 @@ const registrarVisita = async (req, res) => {
 
     count += 1;
 
+    // 💾 Guardar nuevo total en archivo
     await fs.writeFile(filePath, JSON.stringify({ count }));
 
     res.json({ message: "✅ Visita registrada", total: count });
@@ -27,7 +35,10 @@ const registrarVisita = async (req, res) => {
   }
 };
 
-// 📊 Obtener total de visitas
+/**
+ * 📊 Obtener total de visitas
+ * - Lee el archivo de visitas y devuelve el total acumulado
+ */
 const obtenerVisitas = async (req, res) => {
   try {
     const data = await fs.readFile(filePath, 'utf8');

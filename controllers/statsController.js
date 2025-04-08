@@ -1,10 +1,13 @@
 const fs = require("fs").promises;
 const path = require("path");
 
-// ✅ Ruta correcta hacia el archivo visitas.json
+// 📁 Ruta al archivo de visitas
 const visitasPath = path.join(__dirname, "../data/visitas.json");
 
-// 📊 Obtener contador de visitas
+/**
+ * 📊 Obtener contador de visitas desde visitas.json
+ * - Parsea archivo y devuelve total de visitas
+ */
 const getVisitas = async (req, res) => {
   try {
     const data = await fs.readFile(visitasPath, "utf-8");
@@ -17,7 +20,10 @@ const getVisitas = async (req, res) => {
       return res.status(500).json({ message: "Error al procesar datos de visitas." });
     }
 
-    res.json({ total: json.visitas || 0 });
+    // 📈 Valor esperado: { count: number } o { visitas: number }
+    const total = json.count ?? json.visitas ?? 0;
+
+    res.json({ total });
   } catch (error) {
     console.error("❌ Error leyendo visitas.json:", error.message);
     res.status(500).json({ message: "Error leyendo archivo de visitas." });

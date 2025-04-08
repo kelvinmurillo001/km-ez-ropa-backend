@@ -1,18 +1,24 @@
-// controllers/categoryController.js
 const Category = require('../models/category');
 
-// 📥 Obtener todas las categorías
+/**
+ * 📥 Obtener todas las categorías
+ * - Devuelve todas las categorías y sus subcategorías
+ */
 const getAllCategories = async (req, res) => {
   try {
     const categories = await Category.find();
     res.json(categories);
   } catch (error) {
     console.error('❌ Error al obtener categorías:', error);
-    res.status(500).json({ message: 'Error fetching categories' });
+    res.status(500).json({ message: 'Error al obtener las categorías' });
   }
 };
 
-// ➕ Crear nueva categoría
+/**
+ * ➕ Crear una nueva categoría
+ * - Valida existencia previa
+ * - Permite iniciar con una subcategoría si se proporciona
+ */
 const createCategory = async (req, res) => {
   try {
     const { name, subcategory } = req.body;
@@ -21,7 +27,6 @@ const createCategory = async (req, res) => {
       return res.status(400).json({ message: 'El nombre de la categoría es obligatorio' });
     }
 
-    // Buscar si ya existe
     const existing = await Category.findOne({ name });
     if (existing) {
       return res.status(400).json({ message: 'La categoría ya existe' });
@@ -40,7 +45,10 @@ const createCategory = async (req, res) => {
   }
 };
 
-// ➕ Agregar subcategoría
+/**
+ * ➕ Agregar subcategoría a una categoría existente
+ * - Previene duplicados
+ */
 const addSubcategory = async (req, res) => {
   try {
     const { categoryId } = req.params;
@@ -61,6 +69,7 @@ const addSubcategory = async (req, res) => {
 
     category.subcategories.push(subcategory);
     await category.save();
+
     res.json(category);
   } catch (error) {
     console.error('❌ Error agregando subcategoría:', error);
@@ -68,7 +77,9 @@ const addSubcategory = async (req, res) => {
   }
 };
 
-// ❌ Eliminar categoría
+/**
+ * 🗑️ Eliminar categoría completa
+ */
 const deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;
@@ -86,7 +97,9 @@ const deleteCategory = async (req, res) => {
   }
 };
 
-// ❌ Eliminar subcategoría específica
+/**
+ * 🗑️ Eliminar subcategoría específica dentro de una categoría
+ */
 const deleteSubcategory = async (req, res) => {
   try {
     const { categoryId, subcategory } = req.params;

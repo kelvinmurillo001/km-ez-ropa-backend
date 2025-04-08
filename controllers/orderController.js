@@ -1,11 +1,15 @@
 const Order = require('../models/Order');
 
-// 🛒 Crear nuevo pedido (público)
+/**
+ * 🛒 Crear nuevo pedido (público)
+ * - Valida estructura básica
+ * - Guarda pedido con estado "pendiente"
+ */
 const createOrder = async (req, res) => {
   try {
     const { items, total, nombreCliente, nota } = req.body;
 
-    // Validaciones básicas
+    // 🧪 Validaciones básicas
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ message: "El pedido debe contener al menos un producto." });
     }
@@ -18,7 +22,7 @@ const createOrder = async (req, res) => {
       return res.status(400).json({ message: "Total inválido." });
     }
 
-    // Crear pedido
+    // Crear y guardar el nuevo pedido
     const newOrder = new Order({
       items,
       total,
@@ -36,7 +40,10 @@ const createOrder = async (req, res) => {
   }
 };
 
-// 📋 Obtener todos los pedidos (admin)
+/**
+ * 📋 Obtener todos los pedidos (admin)
+ * - Ordenados por fecha descendente
+ */
 const getOrders = async (req, res) => {
   try {
     const orders = await Order.find().sort({ createdAt: -1 });
@@ -47,7 +54,11 @@ const getOrders = async (req, res) => {
   }
 };
 
-// 🔄 Actualizar estado del pedido (admin)
+/**
+ * 🔄 Actualizar estado de un pedido (admin)
+ * - Valida estado nuevo
+ * - Permite actualizar a: en_proceso, enviado, cancelado, etc.
+ */
 const actualizarEstadoPedido = async (req, res) => {
   try {
     const { id } = req.params;
@@ -72,7 +83,10 @@ const actualizarEstadoPedido = async (req, res) => {
   }
 };
 
-// 📊 Estadísticas de pedidos enviados (admin)
+/**
+ * 📊 Obtener estadísticas de pedidos (admin)
+ * - Calcula el total de ventas solo de pedidos con estado "enviado"
+ */
 const getOrderStats = async (req, res) => {
   try {
     const pedidos = await Order.find({ estado: "enviado" });

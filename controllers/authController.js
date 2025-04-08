@@ -1,7 +1,10 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-// 🎟️ Genera token JWT
+/**
+ * 🎟️ Genera un token JWT válido por 7 días
+ * Incluye ID, username y rol del usuario en el payload
+ */
 const generateToken = (user) => {
   return jwt.sign(
     { id: user._id, username: user.username, role: user.role },
@@ -10,11 +13,18 @@ const generateToken = (user) => {
   );
 };
 
-// 🔐 Login seguro con validación por username
+/**
+ * 🔐 Login de administrador con validación de credenciales
+ * - Verifica que exista el usuario
+ * - Verifica que sea rol "admin"
+ * - Compara contraseñas hasheadas
+ * - Genera token JWT en caso exitoso
+ */
 const loginAdmin = async (req, res) => {
   const { username, password } = req.body;
 
   try {
+    // 🔎 Buscar usuario por username
     const user = await User.findOne({ username });
 
     // ❌ Usuario no encontrado o no es admin
@@ -22,15 +32,16 @@ const loginAdmin = async (req, res) => {
       return res.status(401).json({ message: '❌ Credenciales inválidas' });
     }
 
-    // ❌ Contraseña incorrecta
+    // 🔐 Validar contraseña
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
       return res.status(401).json({ message: '❌ Credenciales inválidas' });
     }
 
-    // ✅ Generar token y responder
+    // ✅ Todo correcto → generar token
     const token = generateToken(user);
-    res.status(200).json({
+
+    return res.status(200).json({
       message: '✅ Login exitoso',
       token,
       user: {

@@ -1,18 +1,24 @@
-// controllers/promoController.js
 const Promotion = require("../models/promotion");
 
-// 📥 Obtener promoción activa (más reciente)
+/**
+ * 📥 Obtener la promoción activa más reciente
+ * - Devuelve la promo con `active: true`, ordenada por `createdAt`
+ */
 const getPromotion = async (req, res) => {
   try {
     const active = await Promotion.findOne({ active: true }).sort({ createdAt: -1 });
-    res.json(active || null);
+    res.json(active || null); // Si no hay promoción activa, devolver null
   } catch (error) {
     console.error("❌ Error al obtener promoción:", error);
     res.status(500).json({ message: "Error al obtener promoción" });
   }
 };
 
-// 💾 Crear o actualizar promoción
+/**
+ * 💾 Crear o actualizar promoción
+ * - Si `active` está en true, desactiva todas las demás
+ * - Permite definir mensaje, fechas y tema visual
+ */
 const updatePromotion = async (req, res) => {
   try {
     const {
@@ -23,24 +29,27 @@ const updatePromotion = async (req, res) => {
       endDate
     } = req.body;
 
+    // ✅ Validación obligatoria
     if (!message) {
       return res.status(400).json({ message: "El mensaje de la promoción es obligatorio" });
     }
 
-    // 🔄 Si esta se activa, desactiva todas las demás
+    // 🔁 Si se activa una nueva, desactivar todas las existentes
     if (active === true || active === 'true') {
       await Promotion.updateMany({}, { active: false });
     }
 
-    // 🗓️ Parsear fechas si existen
+    // 🗓️ Conversión segura de fechas
     const start = startDate ? new Date(startDate) : undefined;
     const end = endDate ? new Date(endDate) : undefined;
 
+    // Verificar si ya existe una promoción registrada
     const existing = await Promotion.findOne();
 
     let promo;
 
     if (existing) {
+      // ✏️ Actualizar campos existentes
       existing.message = message;
       existing.active = active === true || active === 'true';
       if (theme) existing.theme = theme;
@@ -48,6 +57,7 @@ const updatePromotion = async (req, res) => {
       if (end) existing.endDate = end;
       promo = await existing.save();
     } else {
+      // ➕ Crear una nueva promoción
       promo = await Promotion.create({
         message,
         active: active === true || active === 'true',
