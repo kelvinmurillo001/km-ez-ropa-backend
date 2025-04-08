@@ -1,3 +1,5 @@
+// routes/productRoutes.js
+
 const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
@@ -10,16 +12,23 @@ const {
   deleteProduct
 } = require('../controllers/productController');
 
-// 🔐 Middleware
+// 🔐 Middlewares
 const authMiddleware = require('../middleware/authMiddleware');
 const adminOnly = require('../middleware/adminOnly');
 
-// 📦 Rutas de productos
+// 📦 Rutas de Productos
 
-// 🔓 Obtener todos los productos (pública)
+/**
+ * 📥 Obtener todos los productos (Público)
+ * - Devuelve todos los productos ordenados por más recientes
+ */
 router.get('/', getAllProducts);
 
-// ➕ Crear producto (admin, recibe variantes con imágenes subidas desde el cliente)
+/**
+ * ➕ Crear un nuevo producto (Protegido / Solo Admin)
+ * - Requiere token válido + rol admin
+ * - Debe enviar al menos una variante con info de Cloudinary
+ */
 router.post(
   '/',
   authMiddleware,
@@ -34,7 +43,11 @@ router.post(
   createProduct
 );
 
-// ✏️ Actualizar producto (admin)
+/**
+ * ✏️ Actualizar un producto existente (Protegido / Solo Admin)
+ * - Elimina variantes anteriores y las imágenes de Cloudinary
+ * - Reemplaza por las nuevas variantes recibidas
+ */
 router.put(
   '/:id',
   authMiddleware,
@@ -47,12 +60,10 @@ router.put(
   updateProduct
 );
 
-// 🗑️ Eliminar producto (admin)
-router.delete(
-  '/:id',
-  authMiddleware,
-  adminOnly,
-  deleteProduct
-);
+/**
+ * 🗑️ Eliminar producto (Protegido / Solo Admin)
+ * - Elimina también las imágenes subidas en Cloudinary
+ */
+router.delete('/:id', authMiddleware, adminOnly, deleteProduct);
 
 module.exports = router;
