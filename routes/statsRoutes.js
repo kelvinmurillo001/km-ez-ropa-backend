@@ -1,11 +1,20 @@
+// routes/statsRoutes.js
+
 const express = require("express");
 const router = express.Router();
 
-const { getResumenEstadisticas } = require("../controllers/statsController");
+// 🔐 Middlewares
 const authMiddleware = require("../middleware/authMiddleware");
 const adminOnly = require("../middleware/adminOnly");
 
-// 📊 Ruta segura para ver estadísticas (solo admin)
+// 📊 Controlador
+const { getResumenEstadisticas } = require("../controllers/statsController");
+
+/**
+ * 📊 Ruta protegida para estadísticas generales
+ * - Acceso: Solo admins autenticados
+ * - Retorna: productos, visitas y ventas
+ */
 router.get("/resumen", authMiddleware, adminOnly, getResumenEstadisticas);
 
 module.exports = router;
