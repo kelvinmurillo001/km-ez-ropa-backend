@@ -12,13 +12,28 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// 📦 Middleware
+// 🔐 CORS Config
+const allowedOrigins = [
+  'https://km-ez-ropa-frontend.onrender.com',
+  'http://localhost:3000'
+];
+
 app.use(cors({
-  origin: 'https://km-ez-ropa-frontend.onrender.com',
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('❌ Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
-app.use(express.json());
-app.use(helmet());
+
+// 📦 Middleware
+app.use(express.json({ limit: '2mb' }));
+app.use(helmet({
+  crossOriginResourcePolicy: false // Permitir recursos externos (Cloudinary, etc.)
+}));
 app.use(morgan('dev'));
 
 // 🖼️ Archivos estáticos (solo logos/assets del frontend)
@@ -32,7 +47,7 @@ const promoRoutes = require('./routes/promoRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const visitRoutes = require('./routes/visitRoutes');
 const statsRoutes = require('./routes/statsRoutes');
-const uploadRoutes = require('./routes/uploadRoutes'); // ✅ Sigue activo por si subes desde backend
+const uploadRoutes = require('./routes/uploadRoutes'); // Subida a Cloudinary
 
 app.use('/api/products', productRoutes);
 app.use('/api/auth', authRoutes);
@@ -41,12 +56,21 @@ app.use('/api/promos', promoRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/visitas', visitRoutes);
 app.use('/api/stats', statsRoutes);
-app.use('/api/uploads', uploadRoutes); // Subida a Cloudinary, no local
+app.use('/api/uploads', uploadRoutes);
 
 // 🛡️ Health check
 app.get('/', (req, res) => {
   res.send('✅ API is working correctly');
 });
+
+// ⚠️ 404 Middleware - rutas no encontradas
+app.use('*', (req, res) => {
+  res.status(404).json({ message: '❌ Ruta no encontrada' });
+});
+
+// 🧼 Global error handler
+const errorHandler = require('./middleware/errorHandler');
+app.use(errorHandler);
 
 // 🚀 DB & Start
 mongoose.connect(process.env.MONGO_URI, {
@@ -62,7 +86,3 @@ mongoose.connect(process.env.MONGO_URI, {
 .catch((err) => {
   console.error('❌ MongoDB error:', err.message);
 });
-
-// 🧼 Global error handler
-const errorHandler = require('./middleware/errorHandler');
-app.use(errorHandler);

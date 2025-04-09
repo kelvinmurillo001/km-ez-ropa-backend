@@ -1,8 +1,6 @@
-// routes/productRoutes.js
-
 const express = require('express');
 const router = express.Router();
-const { body } = require('express-validator');
+const { body, param } = require('express-validator');
 
 // 🧠 Controladores
 const {
@@ -20,50 +18,76 @@ const adminOnly = require('../middleware/adminOnly');
 
 /**
  * 📥 Obtener todos los productos (Público)
- * - Devuelve todos los productos ordenados por más recientes
  */
 router.get('/', getAllProducts);
 
 /**
- * ➕ Crear un nuevo producto (Protegido / Solo Admin)
- * - Requiere token válido + rol admin
- * - Debe enviar al menos una variante con info de Cloudinary
+ * ➕ Crear nuevo producto (Solo Admin)
  */
 router.post(
   '/',
   authMiddleware,
   adminOnly,
   [
-    body('name').notEmpty().withMessage('El nombre es obligatorio'),
-    body('price').isNumeric().withMessage('El precio debe ser numérico'),
-    body('category').notEmpty().withMessage('La categoría es obligatoria'),
-    body('subcategory').notEmpty().withMessage('La subcategoría es obligatoria'),
-    body('variants').isArray({ min: 1 }).withMessage('Se requiere al menos una variante')
+    body('name')
+      .trim()
+      .notEmpty().withMessage('El nombre es obligatorio')
+      .isLength({ min: 2, max: 100 }).withMessage('El nombre debe tener entre 2 y 100 caracteres'),
+
+    body('price')
+      .isFloat({ min: 0.01 }).withMessage('El precio debe ser un número válido'),
+
+    body('category')
+      .trim()
+      .notEmpty().withMessage('La categoría es obligatoria'),
+
+    body('subcategory')
+      .trim()
+      .notEmpty().withMessage('La subcategoría es obligatoria'),
+
+    body('variants')
+      .isArray({ min: 1 }).withMessage('Se requiere al menos una variante')
   ],
   createProduct
 );
 
 /**
- * ✏️ Actualizar un producto existente (Protegido / Solo Admin)
- * - Elimina variantes anteriores y las imágenes de Cloudinary
- * - Reemplaza por las nuevas variantes recibidas
+ * ✏️ Actualizar producto existente (Solo Admin)
  */
 router.put(
   '/:id',
   authMiddleware,
   adminOnly,
   [
-    body('name').optional().notEmpty(),
-    body('price').optional().isNumeric(),
-    body('variants').optional().isArray()
+    param('id').isMongoId().withMessage('ID inválido'),
+
+    body('name')
+      .optional()
+      .trim()
+      .isLength({ min: 2, max: 100 }).withMessage('Nombre inválido'),
+
+    body('price')
+      .optional()
+      .isFloat({ min: 0 }).withMessage('Precio inválido'),
+
+    body('variants')
+      .optional()
+      .isArray().withMessage('Las variantes deben ser un array')
   ],
   updateProduct
 );
 
 /**
- * 🗑️ Eliminar producto (Protegido / Solo Admin)
- * - Elimina también las imágenes subidas en Cloudinary
+ * 🗑️ Eliminar producto (Solo Admin)
  */
-router.delete('/:id', authMiddleware, adminOnly, deleteProduct);
+router.delete(
+  '/:id',
+  authMiddleware,
+  adminOnly,
+  [
+    param('id').isMongoId().withMessage('ID inválido')
+  ],
+  deleteProduct
+);
 
 module.exports = router;
