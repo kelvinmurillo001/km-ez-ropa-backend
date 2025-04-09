@@ -33,6 +33,21 @@ const productSchema = new mongoose.Schema(
       default: false,
     },
 
+    // ✅ NUEVO: Galería principal de imágenes (no variantes)
+    images: [
+      {
+        url: {
+          type: String,
+          required: true,
+          match: /^https?:\/\/.+\.(jpg|jpeg|png|webp|gif)$/i,
+        },
+        cloudinaryId: {
+          type: String,
+          required: true,
+        }
+      }
+    ],
+
     // 🎨 Variantes por talla/color con imágenes y stock individual
     variants: [
       {
