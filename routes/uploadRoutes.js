@@ -21,7 +21,7 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
       return res.status(400).json({ message: '⚠️ No se ha enviado ninguna imagen.' });
     }
 
-    const stream = cloudinary.cloudinary.upload_stream(
+    const stream = cloudinary.uploader.upload_stream(
       {
         folder: 'productos_kmezropa',
         resource_type: 'image'
@@ -37,7 +37,7 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
           public_id: result.public_id
         });
       }
-    );
+    ).end(req.file.buffer);
 
     streamifier.createReadStream(req.file.buffer).pipe(stream);
   } catch (err) {
