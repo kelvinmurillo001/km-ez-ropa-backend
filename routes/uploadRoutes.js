@@ -4,10 +4,8 @@ const multer = require('multer');
 const { cloudinary } = require('../config/cloudinary');
 const streamifier = require('streamifier');
 const authMiddleware = require('../middleware/authMiddleware');
-// Opcional: solo permitir admins
-// const adminOnly = require('../middleware/adminOnly');
 
-// 📦 Configurar multer para trabajar con buffers
+// 📦 Configuración de multer para buffers
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
@@ -17,7 +15,7 @@ const upload = multer({ storage });
  */
 router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
   try {
-    if (!req.file) {
+    if (!req.file || !req.file.buffer) {
       return res.status(400).json({ message: '⚠️ No se ha enviado ninguna imagen.' });
     }
 
@@ -29,7 +27,7 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
       (error, result) => {
         if (error) {
           console.error('❌ Error al subir a Cloudinary:', error);
-          return res.status(500).json({ message: '❌ Error subiendo imagen a Cloudinary' });
+          return res.status(500).json({ message: '❌ Error subiendo imagen a Cloudinary.' });
         }
 
         return res.status(200).json({
@@ -37,12 +35,13 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
           public_id: result.public_id
         });
       }
-    ).end(req.file.buffer);
+    );
 
+    // ✅ Corrección: usar streamifier para enviar el buffer
     streamifier.createReadStream(req.file.buffer).pipe(stream);
   } catch (err) {
     console.error('❌ Error en el servidor al subir imagen:', err);
-    res.status(500).json({ message: '❌ Error en el servidor al subir imagen' });
+    res.status(500).json({ message: '❌ Error inesperado al subir imagen.' });
   }
 });
 
@@ -55,24 +54,24 @@ router.delete('/:publicId', authMiddleware, async (req, res) => {
     const { publicId } = req.params;
 
     if (!publicId) {
-      return res.status(400).json({ message: '⚠️ ID de imagen faltante para eliminar' });
+      return res.status(400).json({ message: '⚠️ publicId es requerido para eliminar imagen.' });
     }
 
     const result = await cloudinary.uploader.destroy(publicId);
 
     if (result.result !== 'ok' && result.result !== 'not found') {
-      return res.status(500).json({ message: '❌ No se pudo eliminar la imagen' });
+      return res.status(500).json({ message: '❌ No se pudo eliminar la imagen.' });
     }
 
-    res.json({ message: '✅ Imagen eliminada correctamente', result });
+    res.status(200).json({ message: '✅ Imagen eliminada correctamente.', result });
   } catch (err) {
     console.error('❌ Error al eliminar imagen:', err);
-    res.status(500).json({ message: '❌ Error del servidor al eliminar imagen' });
+    res.status(500).json({ message: '❌ Error inesperado al eliminar imagen.' });
   }
 });
 
 /**
- * 📃 Listar imágenes (opcional)
+ * 📃 Listar imágenes
  * Ruta: GET /api/uploads/list
  */
 router.get('/list', authMiddleware, async (req, res) => {
@@ -83,14 +82,16 @@ router.get('/list', authMiddleware, async (req, res) => {
       .max_results(50)
       .execute();
 
-    res.json(result.resources.map(img => ({
+    const images = result.resources.map(img => ({
       url: img.secure_url,
       public_id: img.public_id,
       created_at: img.created_at
-    })));
+    }));
+
+    res.json(images);
   } catch (err) {
     console.error('❌ Error al listar imágenes:', err);
-    res.status(500).json({ message: '❌ Error al obtener imágenes' });
+    res.status(500).json({ message: '❌ Error al obtener imágenes.' });
   }
 });
 

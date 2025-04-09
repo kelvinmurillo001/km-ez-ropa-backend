@@ -29,14 +29,14 @@ app.use(cors({
   credentials: true
 }));
 
-// 📦 Middleware
+// 📦 Middlewares
 app.use(express.json({ limit: '2mb' }));
 app.use(helmet({
-  crossOriginResourcePolicy: false // Permitir recursos externos (Cloudinary, etc.)
+  crossOriginResourcePolicy: false
 }));
 app.use(morgan('dev'));
 
-// 🖼️ Archivos estáticos (solo logos/assets del frontend)
+// 🖼️ Archivos estáticos
 app.use('/assets', express.static(path.join(__dirname, 'frontend', 'assets')));
 
 // 🔗 Routes
@@ -47,7 +47,13 @@ const promoRoutes = require('./routes/promoRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const visitRoutes = require('./routes/visitRoutes');
 const statsRoutes = require('./routes/statsRoutes');
-const uploadRoutes = require('./routes/uploadRoutes'); // Subida a Cloudinary
+const uploadRoutes = require('./routes/uploadRoutes');
+
+// (opcional) Log de subida
+app.use('/api/uploads', (req, res, next) => {
+  console.log('📂 Subida recibida');
+  next();
+}, uploadRoutes);
 
 app.use('/api/products', productRoutes);
 app.use('/api/auth', authRoutes);
@@ -56,23 +62,22 @@ app.use('/api/promos', promoRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/visitas', visitRoutes);
 app.use('/api/stats', statsRoutes);
-app.use('/api/uploads', uploadRoutes);
 
 // 🛡️ Health check
 app.get('/', (req, res) => {
   res.send('✅ API is working correctly');
 });
 
-// ⚠️ 404 Middleware - rutas no encontradas
+// ⚠️ 404 Middleware
 app.use('*', (req, res) => {
   res.status(404).json({ message: '❌ Ruta no encontrada' });
 });
 
-// 🧼 Global error handler
+// 🧼 Error handler global
 const errorHandler = require('./middleware/errorHandler');
 app.use(errorHandler);
 
-// 🚀 DB & Start
+// 🚀 Conexión Mongo y servidor
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
