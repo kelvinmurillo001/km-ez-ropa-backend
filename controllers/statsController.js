@@ -47,4 +47,7 @@ const getResumenEstadisticas = async (req, res) => {
   }
 };
 
-module.exports = { getResumenEstadisticas };
+// ✅ Exportar correctamente
+module.exports = {
+  getResumenEstadisticas
+};
