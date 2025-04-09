@@ -21,7 +21,7 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
       return res.status(400).json({ message: '⚠️ No se ha enviado ninguna imagen.' });
     }
 
-    const stream = cloudinary.storage.upload_stream(
+    const stream = cloudinary.cloudinary.upload_stream(
       {
         folder: 'productos_kmezropa',
         resource_type: 'image'
