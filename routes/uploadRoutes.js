@@ -5,12 +5,15 @@ const { cloudinary } = require('../config/cloudinary');
 const streamifier = require('streamifier');
 const authMiddleware = require('../middleware/authMiddleware');
 
-// 📦 Configuración de multer para buffers
+// 📂 Carpeta centralizada de Cloudinary
+const CLOUDINARY_FOLDER = 'productos_kmezropa';
+
+// 📦 Configuración de multer para recibir buffer (no archivo en disco)
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 /**
- * 📤 Subir imagen a Cloudinary
+ * 📤 SUBIR imagen a Cloudinary
  * Ruta: POST /api/uploads
  */
 router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
@@ -19,9 +22,9 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
       return res.status(400).json({ message: '⚠️ No se ha enviado ninguna imagen.' });
     }
 
-    const stream = cloudinary.uploader.upload_stream(
+    const uploadStream = cloudinary.uploader.upload_stream(
       {
-        folder: 'productos_kmezropa',
+        folder: CLOUDINARY_FOLDER,
         resource_type: 'image'
       },
       (error, result) => {
@@ -30,6 +33,7 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
           return res.status(500).json({ message: '❌ Error subiendo imagen a Cloudinary.' });
         }
 
+        // ✅ Éxito
         return res.status(200).json({
           url: result.secure_url,
           public_id: result.public_id
@@ -37,16 +41,16 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
       }
     );
 
-    // ✅ Corrección: usar streamifier para enviar el buffer
-    streamifier.createReadStream(req.file.buffer).pipe(stream);
+    // ✅ Convertir buffer a stream y enviarlo
+    streamifier.createReadStream(req.file.buffer).pipe(uploadStream);
   } catch (err) {
-    console.error('❌ Error en el servidor al subir imagen:', err);
+    console.error('❌ Error inesperado al subir imagen:', err);
     res.status(500).json({ message: '❌ Error inesperado al subir imagen.' });
   }
 });
 
 /**
- * 🗑️ Eliminar imagen en Cloudinary
+ * 🗑️ ELIMINAR imagen por publicId
  * Ruta: DELETE /api/uploads/:publicId
  */
 router.delete('/:publicId', authMiddleware, async (req, res) => {
@@ -71,13 +75,38 @@ router.delete('/:publicId', authMiddleware, async (req, res) => {
 });
 
 /**
- * 📃 Listar imágenes
+ * 🔘 ELIMINAR imagen (POST con cloudinaryId) — para frontend dinámico
+ * Ruta: POST /api/uploads/delete
+ */
+router.post('/delete', authMiddleware, async (req, res) => {
+  try {
+    const { cloudinaryId } = req.body;
+
+    if (!cloudinaryId) {
+      return res.status(400).json({ message: '⚠️ cloudinaryId es requerido para eliminar imagen.' });
+    }
+
+    const result = await cloudinary.uploader.destroy(cloudinaryId);
+
+    if (result.result === 'ok' || result.result === 'not found') {
+      return res.json({ message: '✅ Imagen eliminada correctamente.', result });
+    }
+
+    res.status(500).json({ message: '❌ No se pudo eliminar la imagen.' });
+  } catch (err) {
+    console.error('❌ Error en eliminación por cloudinaryId:', err);
+    res.status(500).json({ message: '❌ Error del servidor al eliminar imagen.' });
+  }
+});
+
+/**
+ * 📃 LISTAR imágenes del folder
  * Ruta: GET /api/uploads/list
  */
 router.get('/list', authMiddleware, async (req, res) => {
   try {
     const result = await cloudinary.search
-      .expression('folder:productos_kmezropa')
+      .expression(`folder:${CLOUDINARY_FOLDER}`)
       .sort_by('created_at', 'desc')
       .max_results(50)
       .execute();

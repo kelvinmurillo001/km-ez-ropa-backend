@@ -1,5 +1,6 @@
 const Product = require('../models/Product');
-const cloudinary = require('../config/cloudinary');
+const { cloudinary } = require('../config/cloudinary'); // ✅ destructuración para compatibilidad
+const { validationResult } = require('express-validator');
 
 /**
  * 📥 Obtener todos los productos (ordenados por más recientes)
@@ -15,9 +16,14 @@ const getAllProducts = async (req, res) => {
 };
 
 /**
- * ➕ Crear nuevo producto con variantes
+ * ➕ Crear nuevo producto
  */
 const createProduct = async (req, res) => {
+  const errores = validationResult(req);
+  if (!errores.isEmpty()) {
+    return res.status(400).json({ errors: errores.array() });
+  }
+
   try {
     const {
       name,
@@ -26,18 +32,19 @@ const createProduct = async (req, res) => {
       subcategory,
       stock,
       featured,
-      variants
+      variants,
+      mainImages
     } = req.body;
 
-    // 🔍 Validación
-    if (!name || !price || !category || !subcategory || !Array.isArray(variants) || variants.length === 0) {
-      return res.status(400).json({ message: '⚠️ Datos incompletos. Revisa el formulario' });
+    if (!name || !price || !category || !subcategory || !Array.isArray(variants) || variants.length === 0 || !Array.isArray(mainImages) || mainImages.length === 0) {
+      return res.status(400).json({ message: '⚠️ Todos los campos son obligatorios (incluye variantes e imágenes principales)' });
     }
 
+    // 🧩 Validar variantes
     const processedVariants = variants.map(v => {
       const { talla, color, imageUrl, cloudinaryId, stock: variantStock } = v;
       if (!talla || !color || !imageUrl || !cloudinaryId) {
-        throw new Error('⚠️ Cada variante debe incluir talla, color, imageUrl y cloudinaryId');
+        throw new Error('⚠️ Cada variante debe tener talla, color, imageUrl y cloudinaryId');
       }
       return {
         talla,
@@ -45,6 +52,17 @@ const createProduct = async (req, res) => {
         imageUrl,
         cloudinaryId,
         stock: variantStock || 0,
+      };
+    });
+
+    // 🖼️ Validar imágenes principales
+    const processedImages = mainImages.map(img => {
+      if (!img.url || !img.public_id) {
+        throw new Error('⚠️ Cada imagen principal debe tener url y public_id');
+      }
+      return {
+        url: img.url,
+        cloudinaryId: img.public_id
       };
     });
 
@@ -58,7 +76,8 @@ const createProduct = async (req, res) => {
       stock,
       featured: featured === true || featured === 'true',
       variants: processedVariants,
-      createdBy,
+      images: processedImages,
+      createdBy
     });
 
     await newProduct.save();
@@ -70,9 +89,14 @@ const createProduct = async (req, res) => {
 };
 
 /**
- * ✏️ Actualizar producto (con reemplazo de imágenes antiguas)
+ * ✏️ Actualizar producto (elimina imágenes antiguas)
  */
 const updateProduct = async (req, res) => {
+  const errores = validationResult(req);
+  if (!errores.isEmpty()) {
+    return res.status(400).json({ errors: errores.array() });
+  }
+
   try {
     const { id } = req.params;
     const {
@@ -82,34 +106,57 @@ const updateProduct = async (req, res) => {
       subcategory,
       stock,
       featured,
-      variants
+      variants,
+      mainImages
     } = req.body;
 
     const product = await Product.findById(id);
     if (!product) return res.status(404).json({ message: '❌ Producto no encontrado' });
 
-    // 🧼 Eliminar imágenes anteriores de Cloudinary
-    for (const variant of product.variants) {
-      if (variant.cloudinaryId) {
-        await cloudinary.uploader.destroy(variant.cloudinaryId);
+    // 🗑️ Eliminar imágenes anteriores de Cloudinary (solo si fueron reemplazadas)
+    if (product.images?.length) {
+      for (const img of product.images) {
+        if (img.cloudinaryId) await cloudinary.uploader.destroy(img.cloudinaryId);
       }
     }
 
-    const processedVariants = Array.isArray(variants) ? variants.map(v => {
-      const { talla, color, imageUrl, cloudinaryId, stock: variantStock } = v;
-      if (!talla || !color || !imageUrl || !cloudinaryId) {
-        throw new Error('⚠️ Cada variante debe incluir talla, color, imageUrl y cloudinaryId');
+    if (product.variants?.length) {
+      for (const v of product.variants) {
+        if (v.cloudinaryId) await cloudinary.uploader.destroy(v.cloudinaryId);
       }
-      return {
-        talla,
-        color,
-        imageUrl,
-        cloudinaryId,
-        stock: variantStock || 0,
-      };
-    }) : [];
+    }
 
-    // 🛠 Actualizar producto
+    // 🧩 Procesar nuevas variantes
+    const processedVariants = Array.isArray(variants)
+      ? variants.map(v => {
+          const { talla, color, imageUrl, cloudinaryId, stock: variantStock } = v;
+          if (!talla || !color || !imageUrl || !cloudinaryId) {
+            throw new Error('⚠️ Cada variante debe tener talla, color, imageUrl y cloudinaryId');
+          }
+          return {
+            talla,
+            color,
+            imageUrl,
+            cloudinaryId,
+            stock: variantStock || 0
+          };
+        })
+      : [];
+
+    // 🖼️ Procesar nuevas imágenes principales
+    const processedImages = Array.isArray(mainImages)
+      ? mainImages.map(img => {
+          if (!img.url || !img.public_id) {
+            throw new Error('⚠️ Cada imagen principal debe tener url y public_id');
+          }
+          return {
+            url: img.url,
+            cloudinaryId: img.public_id
+          };
+        })
+      : [];
+
+    // 🛠 Actualizar campos
     product.name = name ?? product.name;
     product.price = price ?? product.price;
     product.category = category ?? product.category;
@@ -117,6 +164,7 @@ const updateProduct = async (req, res) => {
     product.stock = stock ?? product.stock;
     product.featured = featured === true || featured === 'true';
     product.variants = processedVariants;
+    product.images = processedImages;
     product.updatedBy = req.user?.username || 'admin';
 
     const updated = await product.save();
@@ -137,14 +185,22 @@ const deleteProduct = async (req, res) => {
     const product = await Product.findById(id);
     if (!product) return res.status(404).json({ message: '❌ Producto no encontrado' });
 
-    for (const variant of product.variants) {
-      if (variant.cloudinaryId) {
-        await cloudinary.uploader.destroy(variant.cloudinaryId);
+    // 🧼 Eliminar imágenes principales
+    if (product.images && product.images.length > 0) {
+      for (const img of product.images) {
+        if (img.cloudinaryId) await cloudinary.uploader.destroy(img.cloudinaryId);
+      }
+    }
+
+    // 🧼 Eliminar imágenes de variantes
+    if (product.variants && product.variants.length > 0) {
+      for (const v of product.variants) {
+        if (v.cloudinaryId) await cloudinary.uploader.destroy(v.cloudinaryId);
       }
     }
 
     await product.deleteOne();
-    res.json({ message: '✅ Producto eliminado correctamente' });
+    res.json({ message: '✅ Producto y sus imágenes fueron eliminados correctamente' });
   } catch (error) {
     console.error('❌ Error eliminando producto:', error.message);
     res.status(500).json({ message: 'Error del servidor al eliminar producto' });
