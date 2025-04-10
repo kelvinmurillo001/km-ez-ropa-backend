@@ -1,4 +1,4 @@
-// 🌐 Dependencies
+// 🌐 Dependencias
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -7,12 +7,17 @@ const morgan = require('morgan');
 const dotenv = require('dotenv');
 const path = require('path');
 
-// ⚙️ Config env
+// ⚙️ Variables de entorno
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// 🔐 CORS Config
+if (!process.env.MONGO_URI) {
+  console.error("❌ No se ha definido MONGO_URI en el archivo .env");
+  process.exit(1);
+}
+
+// 🔐 Configuración CORS
 const allowedOrigins = [
   'https://km-ez-ropa-frontend.onrender.com',
   'http://localhost:3000'
@@ -29,17 +34,16 @@ app.use(cors({
   credentials: true
 }));
 
-// 📦 Middlewares
+// 🧱 Middlewares globales
 app.use(express.json({ limit: '2mb' }));
-app.use(helmet({
-  crossOriginResourcePolicy: false
-}));
+app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(morgan('dev'));
 
 // 🖼️ Archivos estáticos
-app.use('/assets', express.static(path.join(__dirname, 'frontend', 'assets')));
+const assetsPath = path.join(__dirname, 'frontend', 'assets');
+app.use('/assets', express.static(assetsPath));
 
-// 🔗 Routes
+// 🔗 Rutas
 const productRoutes = require('./routes/productRoutes');
 const authRoutes = require('./routes/authRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
@@ -49,12 +53,7 @@ const visitRoutes = require('./routes/visitRoutes');
 const statsRoutes = require('./routes/statsRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 
-// (opcional) Log de subida
-app.use('/api/uploads', (req, res, next) => {
-  console.log('📂 Subida recibida');
-  next();
-}, uploadRoutes);
-
+// ✅ Rutas API
 app.use('/api/products', productRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
@@ -62,32 +61,38 @@ app.use('/api/promos', promoRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/visitas', visitRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/uploads', (req, res, next) => {
+  console.log('📂 Subida recibida');
+  next();
+});
+app.use('/api/uploads', uploadRoutes); // SEPARADO PARA EVITAR ERROR DE OBJETO
 
-// 🛡️ Health check
+// 🛡️ Verificación de salud
 app.get('/', (req, res) => {
   res.send('✅ API is working correctly');
 });
 
-// ⚠️ 404 Middleware
+// ⚠️ Ruta no encontrada
 app.use('*', (req, res) => {
   res.status(404).json({ message: '❌ Ruta no encontrada' });
 });
 
-// 🧼 Error handler global
+// 🧼 Manejo de errores global
 const errorHandler = require('./middleware/errorHandler');
 app.use(errorHandler);
 
-// 🚀 Conexión Mongo y servidor
+// 🚀 Conexión a MongoDB y arranque del servidor
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
 .then(() => {
-  console.log('✅ Connected to MongoDB');
+  console.log('✅ Conectado a MongoDB');
   app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`🚀 Servidor escuchando en puerto ${PORT}`);
   });
 })
 .catch((err) => {
-  console.error('❌ MongoDB error:', err.message);
+  console.error('❌ Error conectando a MongoDB:', err.message);
+  process.exit(1);
 });

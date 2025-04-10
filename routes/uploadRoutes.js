@@ -25,7 +25,7 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
         folder: CLOUDINARY_FOLDER,
-        resource_type: 'image'
+        resource_type: 'image',
       },
       (error, result) => {
         if (error) {
@@ -33,10 +33,9 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
           return res.status(500).json({ message: '❌ Error subiendo imagen a Cloudinary.' });
         }
 
-        // ✅ Éxito
         return res.status(200).json({
           url: result.secure_url,
-          public_id: result.public_id
+          public_id: result.public_id,
         });
       }
     );
@@ -75,7 +74,7 @@ router.delete('/:publicId', authMiddleware, async (req, res) => {
 });
 
 /**
- * 🔘 ELIMINAR imagen (POST con cloudinaryId) — para frontend dinámico
+ * 🔘 ELIMINAR imagen (POST con cloudinaryId) — para frontend dinámico
  * Ruta: POST /api/uploads/delete
  */
 router.post('/delete', authMiddleware, async (req, res) => {
@@ -114,7 +113,7 @@ router.get('/list', authMiddleware, async (req, res) => {
     const images = result.resources.map(img => ({
       url: img.secure_url,
       public_id: img.public_id,
-      created_at: img.created_at
+      created_at: img.created_at,
     }));
 
     res.json(images);
