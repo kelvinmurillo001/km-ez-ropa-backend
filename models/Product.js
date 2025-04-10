@@ -1,30 +1,32 @@
-// models/Product.js
-
 const mongoose = require('mongoose');
 
-// 📦 Esquema del producto con variantes por talla y color
+// 📦 Esquema de producto con variantes por talla y color
 const productSchema = new mongoose.Schema(
   {
     name: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
     },
 
     price: {
       type: Number,
-      required: true
+      required: true,
+      min: 0
     },
 
     category: {
       type: String,
       required: true,
-      enum: ['Hombre', 'Mujer', 'Niño', 'Niña', 'Bebé', 'Interior', 'Casual', 'Informal']
+      enum: ['Hombre', 'Mujer', 'Niño', 'Niña', 'Bebé', 'Interior', 'Casual', 'Informal'],
+      trim: true
     },
 
     subcategory: {
       type: String,
-      required: true
+      required: true,
+      trim: true,
+      lowercase: true
     },
 
     stock: {
@@ -38,58 +40,75 @@ const productSchema = new mongoose.Schema(
       default: false
     },
 
-    // 🖼️ Imágenes principales (no variantes)
+    // 🖼️ Imágenes principales (galería del producto)
     images: [
       {
         url: {
           type: String,
           required: true,
+          trim: true,
           match: /^https?:\/\/.+\.(jpg|jpeg|png|webp|gif)$/i
         },
         cloudinaryId: {
           type: String,
-          required: true
+          required: true,
+          trim: true
         }
       }
     ],
 
-    // 🎨 Variantes por talla y color con imagen individual
+    // 🎨 Variantes con talla/color, imagen individual y stock
     variants: [
       {
-        talla: { type: String, required: true },
-        color: { type: String, required: true },
+        talla: {
+          type: String,
+          required: true,
+          trim: true,
+          lowercase: true
+        },
+        color: {
+          type: String,
+          required: true,
+          trim: true,
+          lowercase: true
+        },
         imageUrl: {
           type: String,
           required: true,
+          trim: true,
           match: /^https?:\/\/.+\.(jpg|jpeg|png|webp|gif)$/i
         },
         cloudinaryId: {
           type: String,
-          required: true
+          required: true,
+          trim: true
         },
         stock: {
           type: Number,
-          default: 0
+          default: 0,
+          min: 0
         }
       }
     ],
 
     createdBy: {
       type: String,
-      required: true
+      required: true,
+      trim: true
     },
 
     updatedBy: {
       type: String,
-      default: ''
+      default: '',
+      trim: true
     }
   },
   {
-    timestamps: true // ⏱️ Crea automáticamente createdAt y updatedAt
+    timestamps: true // ⏱️ createdAt y updatedAt automáticos
   }
 );
 
-// 🔍 Índice para búsquedas por texto y categorías
+// 🔍 Índice de búsqueda para nombre y categorías
 productSchema.index({ name: 'text', category: 1, subcategory: 1 });
 
 module.exports = mongoose.model('Product', productSchema);

@@ -8,11 +8,12 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
       trim: true,
+      minlength: 3
     },
     name: {
       type: String,
       required: true,
-      trim: true,
+      trim: true
     },
     email: {
       type: String,
@@ -20,22 +21,24 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
+      match: [/^\S+@\S+\.\S+$/, 'Email inválido']
     },
     password: {
       type: String,
       required: true,
       minlength: 6,
+      select: false // 🔒 evita exponer la contraseña por defecto
     },
     role: {
       type: String,
       enum: ['admin', 'user'],
-      default: 'user',
+      default: 'user'
     }
   },
   { timestamps: true }
 );
 
-// 🔐 Encripta la contraseña antes de guardar
+// 🔐 Encripta la contraseña antes de guardar o modificar
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
 
@@ -48,7 +51,7 @@ userSchema.pre('save', async function (next) {
   }
 });
 
-// 🔐 Comparar contraseña
+// 🔑 Comparar contraseñas (para login)
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
