@@ -5,7 +5,6 @@ const User = require('../models/User');
 
 /**
  * 🎟️ Genera un token JWT válido por 7 días
- * El token incluye ID, username y rol
  */
 const generateToken = (user) => {
   return jwt.sign(
@@ -25,7 +24,7 @@ const generateToken = (user) => {
 const loginAdmin = async (req, res) => {
   const { username, password } = req.body;
 
-  // 🛡️ Validaciones estrictas del body
+  // 🛡️ Validación de entrada
   if (!username || typeof username !== 'string' || username.trim().length < 3) {
     return res.status(400).json({ message: '⚠️ Nombre de usuario inválido o incompleto' });
   }
@@ -35,25 +34,26 @@ const loginAdmin = async (req, res) => {
   }
 
   try {
-    // 🔍 Buscar al usuario por nombre
-    const user = await User.findOne({ username: username.trim() });
+    // 🔍 Buscar al usuario incluyendo la contraseña explícitamente
+    const user = await User.findOne({ username: username.trim() }).select('+password');
 
     if (!user) {
       return res.status(401).json({ message: '❌ Usuario no encontrado' });
     }
 
-    // 🔒 Solo admins pueden ingresar
+    // 🚫 Solo administradores
     if (user.role !== 'admin') {
       return res.status(403).json({ message: '⛔ Solo los administradores pueden ingresar' });
     }
 
-    // 🔐 Comparar contraseña
+    // 🔐 Comparar contraseñas de forma segura
     const isMatch = await user.matchPassword(password);
+
     if (!isMatch) {
       return res.status(401).json({ message: '❌ Contraseña incorrecta' });
     }
 
-    // ✅ Generar JWT
+    // ✅ Login exitoso
     const token = generateToken(user);
 
     return res.status(200).json({
@@ -67,7 +67,7 @@ const loginAdmin = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('❌ Error en login:', error);
+    console.error('❌ Error en login:', error.message || error);
     return res.status(500).json({ message: '❌ Error interno del servidor' });
   }
 };

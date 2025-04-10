@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require('mongoose'); 
 const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema(
@@ -27,7 +27,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       minlength: 6,
-      select: false // 🔒 evita exponer la contraseña por defecto
+      select: false // 🔒 no se expone por defecto
     },
     role: {
       type: String,
@@ -38,7 +38,7 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// 🔐 Encripta la contraseña antes de guardar o modificar
+// 🔐 Hashea la contraseña antes de guardar/modificar
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
 
@@ -51,8 +51,9 @@ userSchema.pre('save', async function (next) {
   }
 });
 
-// 🔑 Comparar contraseñas (para login)
+// 🔐 Comparar contraseñas de forma segura
 userSchema.methods.matchPassword = async function (enteredPassword) {
+  if (!this.password) return false; // protección extra
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
