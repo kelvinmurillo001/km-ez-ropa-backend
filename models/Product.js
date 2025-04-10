@@ -41,21 +41,29 @@ const productSchema = new mongoose.Schema(
     },
 
     // 🖼️ Imágenes principales (galería del producto)
-    images: [
-      {
-        url: {
-          type: String,
-          required: true,
-          trim: true,
-          match: /^https?:\/\/.+\.(jpg|jpeg|png|webp|gif)$/i
-        },
-        cloudinaryId: {
-          type: String,
-          required: true,
-          trim: true
+    images: {
+      type: [
+        {
+          url: {
+            type: String,
+            required: true,
+            trim: true,
+            match: /^https?:\/\/.+\.(jpg|jpeg|png|webp|gif)$/i
+          },
+          cloudinaryId: {
+            type: String,
+            required: true,
+            trim: true
+          }
         }
+      ],
+      validate: {
+        validator: function (val) {
+          return Array.isArray(val) && val.length >= 1 && val.length <= 4;
+        },
+        message: '⚠️ Debes subir entre 1 y 4 imágenes principales.'
       }
-    ],
+    },
 
     // 🎨 Variantes con talla/color, imagen individual y stock
     variants: [

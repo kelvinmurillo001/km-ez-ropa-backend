@@ -32,42 +32,47 @@ const createProduct = async (req, res) => {
       subcategory,
       stock,
       featured,
-      variants,
-      mainImages
+      variants = [],
+      mainImages = []
     } = req.body;
 
-    // Validación adicional manual
-    if (
-      !name || !price || !category || !subcategory ||
-      !Array.isArray(variants) || variants.length === 0 ||
-      !Array.isArray(mainImages) || mainImages.length === 0
-    ) {
+    // Validación adicional
+    if (!name || !price || !category || !subcategory) {
+      return res.status(400).json({ message: '⚠️ Nombre, precio, categoría y subcategoría son obligatorios' });
+    }
+
+    // Validar mínimo 1 imagen principal, máximo 4
+    if (!Array.isArray(mainImages) || mainImages.length === 0 || mainImages.length > 4) {
       return res.status(400).json({
-        message: '⚠️ Todos los campos son obligatorios (incluye variantes e imágenes principales)'
+        message: '⚠️ Debes subir entre 1 y 4 imágenes principales'
       });
     }
 
-    const processedVariants = variants.map(v => {
-      const { talla, color, imageUrl, cloudinaryId, stock: variantStock } = v;
-      if (!talla || !color || !imageUrl || !cloudinaryId) {
-        throw new Error('⚠️ Cada variante debe tener talla, color, imageUrl y cloudinaryId');
-      }
-      return {
-        talla,
-        color,
-        imageUrl,
-        cloudinaryId,
-        stock: variantStock || 0,
-      };
-    });
+    // Procesar variantes si hay
+    const processedVariants = Array.isArray(variants)
+      ? variants.map(v => {
+          const { talla, color, imageUrl, cloudinaryId, stock: variantStock } = v;
+          if (!talla || !color || !imageUrl || !cloudinaryId) {
+            throw new Error('⚠️ Cada variante debe tener talla, color, imageUrl y cloudinaryId');
+          }
+          return {
+            talla,
+            color,
+            imageUrl,
+            cloudinaryId,
+            stock: variantStock || 0
+          };
+        })
+      : [];
 
+    // Procesar imágenes principales
     const processedImages = mainImages.map(img => {
       if (!img.url || !img.cloudinaryId) {
         throw new Error('⚠️ Cada imagen principal debe tener url y cloudinaryId');
       }
       return {
         url: img.url,
-        cloudinaryId: img.cloudinaryId,
+        cloudinaryId: img.cloudinaryId
       };
     });
 
@@ -94,7 +99,7 @@ const createProduct = async (req, res) => {
 };
 
 /**
- * ✏️ Actualizar producto (elimina imágenes anteriores si se reemplazan)
+ * ✏️ Actualizar producto
  */
 const updateProduct = async (req, res) => {
   const errores = validationResult(req);
@@ -111,22 +116,22 @@ const updateProduct = async (req, res) => {
       subcategory,
       stock,
       featured,
-      variants,
-      mainImages
+      variants = [],
+      mainImages = []
     } = req.body;
 
     const product = await Product.findById(id);
     if (!product) return res.status(404).json({ message: '❌ Producto no encontrado' });
 
-    // 🧹 Eliminar imágenes anteriores si se reemplazan
-    if (product.images?.length) {
-      for (const img of product.images) {
+    // Eliminar imágenes anteriores solo si se envían nuevas
+    if (Array.isArray(mainImages) && mainImages.length > 0) {
+      for (const img of product.images || []) {
         if (img.cloudinaryId) await cloudinary.uploader.destroy(img.cloudinaryId);
       }
     }
 
-    if (product.variants?.length) {
-      for (const v of product.variants) {
+    if (Array.isArray(variants) && variants.length > 0) {
+      for (const v of product.variants || []) {
         if (v.cloudinaryId) await cloudinary.uploader.destroy(v.cloudinaryId);
       }
     }
@@ -159,7 +164,6 @@ const updateProduct = async (req, res) => {
         })
       : [];
 
-    // 🛠 Actualización de campos
     product.name = name ?? product.name;
     product.price = price ?? product.price;
     product.category = category ?? product.category;
@@ -179,7 +183,7 @@ const updateProduct = async (req, res) => {
 };
 
 /**
- * 🗑️ Eliminar producto y sus imágenes asociadas
+ * 🗑️ Eliminar producto y sus imágenes
  */
 const deleteProduct = async (req, res) => {
   try {
@@ -188,17 +192,12 @@ const deleteProduct = async (req, res) => {
     const product = await Product.findById(id);
     if (!product) return res.status(404).json({ message: '❌ Producto no encontrado' });
 
-    // 🧼 Eliminar imágenes en Cloudinary
-    if (product.images?.length) {
-      for (const img of product.images) {
-        if (img.cloudinaryId) await cloudinary.uploader.destroy(img.cloudinaryId);
-      }
+    for (const img of product.images || []) {
+      if (img.cloudinaryId) await cloudinary.uploader.destroy(img.cloudinaryId);
     }
 
-    if (product.variants?.length) {
-      for (const v of product.variants) {
-        if (v.cloudinaryId) await cloudinary.uploader.destroy(v.cloudinaryId);
-      }
+    for (const v of product.variants || []) {
+      if (v.cloudinaryId) await cloudinary.uploader.destroy(v.cloudinaryId);
     }
 
     await product.deleteOne();
