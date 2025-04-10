@@ -1,18 +1,27 @@
 // middleware/adminOnly.js
 
 /**
- * 🔒 Middleware para restringir acceso solo a usuarios con rol "admin"
+ * 🔒 Middleware que restringe el acceso a rutas solo a usuarios con rol "admin"
  */
 const adminOnly = (req, res, next) => {
-  // ✅ Verifica que exista un usuario y que tenga el rol correcto
-  if (req.user && req.user.role === 'admin') {
-    return next(); // Acceso permitido
-  }
+  try {
+    // 🧍‍♂️ Validar existencia de usuario y su rol
+    if (!req.user || typeof req.user !== 'object') {
+      return res.status(401).json({ message: 'No autenticado. Acceso restringido.' });
+    }
 
-  // 🚫 Acceso denegado
-  return res.status(403).json({
-    message: 'Acceso denegado. Solo administradores.',
-  });
+    // ✅ Usuario autenticado con rol adecuado
+    if (req.user.role === 'admin') {
+      return next();
+    }
+
+    // 🚫 Usuario autenticado pero sin rol de admin
+    return res.status(403).json({ message: '⛔ Acceso denegado. Solo administradores.' });
+
+  } catch (err) {
+    console.error('❌ Error en middleware adminOnly:', err);
+    return res.status(500).json({ message: '❌ Error interno del servidor' });
+  }
 };
 
 module.exports = adminOnly;

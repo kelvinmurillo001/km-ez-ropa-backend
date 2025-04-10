@@ -1,44 +1,59 @@
+// controllers/authController.js
+
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
 /**
  * 🎟️ Genera un token JWT válido por 7 días
- * Incluye ID, username y rol del usuario en el payload
+ * El token incluye ID, username y rol
  */
 const generateToken = (user) => {
   return jwt.sign(
-    { id: user._id, username: user.username, role: user.role },
+    {
+      id: user._id,
+      username: user.username,
+      role: user.role,
+    },
     process.env.JWT_SECRET,
     { expiresIn: '7d' }
   );
 };
 
 /**
- * 🔐 Login de administrador con validación de credenciales
- * - Verifica que exista el usuario
- * - Verifica que sea rol "admin"
- * - Compara contraseñas hasheadas
- * - Genera token JWT en caso exitoso
+ * 🔐 Login de administrador con validación robusta
  */
 const loginAdmin = async (req, res) => {
   const { username, password } = req.body;
 
-  try {
-    // 🔎 Buscar usuario por username
-    const user = await User.findOne({ username });
+  // 🛡️ Validaciones estrictas del body
+  if (!username || typeof username !== 'string' || username.trim().length < 3) {
+    return res.status(400).json({ message: '⚠️ Nombre de usuario inválido o incompleto' });
+  }
 
-    // ❌ Usuario no encontrado o no es admin
-    if (!user || user.role !== 'admin') {
-      return res.status(401).json({ message: '❌ Credenciales inválidas' });
+  if (!password || typeof password !== 'string' || password.length < 6) {
+    return res.status(400).json({ message: '⚠️ Contraseña inválida o muy corta' });
+  }
+
+  try {
+    // 🔍 Buscar al usuario por nombre
+    const user = await User.findOne({ username: username.trim() });
+
+    if (!user) {
+      return res.status(401).json({ message: '❌ Usuario no encontrado' });
     }
 
-    // 🔐 Validar contraseña
+    // 🔒 Solo admins pueden ingresar
+    if (user.role !== 'admin') {
+      return res.status(403).json({ message: '⛔ Solo los administradores pueden ingresar' });
+    }
+
+    // 🔐 Comparar contraseña
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
-      return res.status(401).json({ message: '❌ Credenciales inválidas' });
+      return res.status(401).json({ message: '❌ Contraseña incorrecta' });
     }
 
-    // ✅ Todo correcto → generar token
+    // ✅ Generar JWT
     const token = generateToken(user);
 
     return res.status(200).json({
@@ -51,9 +66,9 @@ const loginAdmin = async (req, res) => {
         role: user.role,
       },
     });
-  } catch (err) {
-    console.error('❌ Error en login:', err);
-    res.status(500).json({ message: 'Error del servidor' });
+  } catch (error) {
+    console.error('❌ Error en login:', error);
+    return res.status(500).json({ message: '❌ Error interno del servidor' });
   }
 };
 
