@@ -29,6 +29,15 @@ const productSchema = new mongoose.Schema(
       lowercase: true
     },
 
+    // 🔠 Tipo de talla (adulto, niño, bebé, etc.)
+    tallaTipo: {
+      type: String,
+      required: [true, '⚠️ El tipo de talla es obligatorio'],
+      enum: ['adulto', 'niño', 'niña', 'bebé'],
+      lowercase: true,
+      trim: true
+    },
+
     stock: {
       type: Number,
       required: [true, '⚠️ El stock es obligatorio'],
@@ -61,7 +70,7 @@ const productSchema = new mongoose.Schema(
         validator: function (val) {
           return Array.isArray(val) && val.length === 1;
         },
-        message: '⚠️ Solo se permite **una** imagen principal.'
+        message: '⚠️ Solo se permite exactamente una imagen principal.'
       }
     },
 
