@@ -5,34 +5,34 @@ const productSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: true,
+      required: [true, '⚠️ El nombre del producto es obligatorio'],
       trim: true,
     },
 
     price: {
       type: Number,
-      required: true,
-      min: 0
+      required: [true, '⚠️ El precio es obligatorio'],
+      min: [0, '⚠️ El precio no puede ser negativo']
     },
 
     category: {
       type: String,
-      required: true,
+      required: [true, '⚠️ La categoría es obligatoria'],
       enum: ['Hombre', 'Mujer', 'Niño', 'Niña', 'Bebé', 'Interior', 'Casual', 'Informal'],
       trim: true
     },
 
     subcategory: {
       type: String,
-      required: true,
+      required: [true, '⚠️ La subcategoría es obligatoria'],
       trim: true,
       lowercase: true
     },
 
     stock: {
       type: Number,
-      required: true,
-      min: 0
+      required: [true, '⚠️ El stock es obligatorio'],
+      min: [0, '⚠️ El stock no puede ser negativo']
     },
 
     featured: {
@@ -40,68 +40,77 @@ const productSchema = new mongoose.Schema(
       default: false
     },
 
-    // 🖼️ Imágenes principales (galería del producto)
+    // 🖼️ Imágenes principales (solo 1 obligatoria)
     images: {
       type: [
         {
           url: {
             type: String,
-            required: true,
+            required: [true, '⚠️ La imagen debe tener una URL válida'],
             trim: true,
-            match: /^https?:\/\/.+\.(jpg|jpeg|png|webp|gif)$/i
+            match: [/^https?:\/\/.+\.(jpg|jpeg|png|webp|gif)$/i, '⚠️ URL de imagen inválida']
           },
           cloudinaryId: {
             type: String,
-            required: true,
+            required: [true, '⚠️ cloudinaryId obligatorio'],
             trim: true
           }
         }
       ],
       validate: {
         validator: function (val) {
-          return Array.isArray(val) && val.length >= 1 && val.length <= 4;
+          return Array.isArray(val) && val.length === 1;
         },
-        message: '⚠️ Debes subir entre 1 y 4 imágenes principales.'
+        message: '⚠️ Solo se permite **una** imagen principal.'
       }
     },
 
-    // 🎨 Variantes con talla/color, imagen individual y stock
-    variants: [
-      {
-        talla: {
-          type: String,
-          required: true,
-          trim: true,
-          lowercase: true
-        },
-        color: {
-          type: String,
-          required: true,
-          trim: true,
-          lowercase: true
-        },
-        imageUrl: {
-          type: String,
-          required: true,
-          trim: true,
-          match: /^https?:\/\/.+\.(jpg|jpeg|png|webp|gif)$/i
-        },
-        cloudinaryId: {
-          type: String,
-          required: true,
-          trim: true
-        },
-        stock: {
-          type: Number,
-          default: 0,
-          min: 0
+    // 🎨 Variantes (opcionales, pero si existen, deben tener todo)
+    variants: {
+      type: [
+        {
+          talla: {
+            type: String,
+            required: [true, '⚠️ La talla es obligatoria'],
+            trim: true,
+            lowercase: true
+          },
+          color: {
+            type: String,
+            required: [true, '⚠️ El color es obligatorio'],
+            trim: true,
+            lowercase: true
+          },
+          imageUrl: {
+            type: String,
+            required: [true, '⚠️ La imagen es obligatoria'],
+            trim: true,
+            match: [/^https?:\/\/.+\.(jpg|jpeg|png|webp|gif)$/i, '⚠️ URL de imagen de variante inválida']
+          },
+          cloudinaryId: {
+            type: String,
+            required: [true, '⚠️ cloudinaryId de variante obligatorio'],
+            trim: true
+          },
+          stock: {
+            type: Number,
+            default: 0,
+            min: [0, '⚠️ El stock no puede ser negativo']
+          }
         }
-      }
-    ],
+      ],
+      validate: {
+        validator: function (val) {
+          return val.length <= 4;
+        },
+        message: '⚠️ Máximo 4 variantes por producto.'
+      },
+      default: []
+    },
 
     createdBy: {
       type: String,
-      required: true,
+      required: [true, '⚠️ Campo createdBy requerido'],
       trim: true
     },
 

@@ -41,11 +41,14 @@ router.post(
     body('subcategory')
       .notEmpty().withMessage('⚠️ La subcategoría es obligatoria'),
 
-    body('variants')
-      .isArray({ min: 1 }).withMessage('⚠️ Se requiere al menos una variante'),
-
+    // ✅ Ahora mainImages debe ser exactamente 1 imagen
     body('mainImages')
-      .isArray({ min: 1 }).withMessage('⚠️ Se requiere al menos una imagen principal')
+      .isArray({ min: 1, max: 1 }).withMessage('⚠️ Debes subir exactamente 1 imagen principal'),
+
+    // ✅ variants es opcional, pero si existe debe ser un array de hasta 4
+    body('variants')
+      .optional()
+      .isArray({ max: 4 }).withMessage('⚠️ Se permiten hasta 4 variantes como máximo')
   ],
   createProduct
 );
@@ -68,13 +71,13 @@ router.put(
       .optional()
       .isFloat({ min: 0 }).withMessage('⚠️ Precio inválido'),
 
-    body('variants')
-      .optional()
-      .isArray().withMessage('⚠️ Las variantes deben ser un array'),
-
     body('mainImages')
       .optional()
-      .isArray().withMessage('⚠️ Las imágenes principales deben ser un array')
+      .isArray({ max: 1 }).withMessage('⚠️ Solo se permite una imagen principal'),
+
+    body('variants')
+      .optional()
+      .isArray({ max: 4 }).withMessage('⚠️ Máximo 4 variantes permitidas')
   ],
   updateProduct
 );
