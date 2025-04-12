@@ -1,19 +1,18 @@
-// routes/statsRoutes.js
-
 const express = require("express");
 const router = express.Router();
 
-// 🔐 Middlewares
+// 🛡️ Middlewares de seguridad
 const authMiddleware = require("../middleware/authMiddleware");
 const adminOnly = require("../middleware/adminOnly");
 
-// 📊 Controlador
+// 📊 Controlador de estadísticas
 const { getResumenEstadisticas } = require("../controllers/statsController");
 
 /**
- * 📊 Ruta protegida para estadísticas generales
- * - Acceso: Solo admins autenticados
- * - Retorna: productos, visitas y ventas
+ * 📊 Obtener resumen de estadísticas para el panel administrativo
+ * - Incluye: total de productos, productos destacados, pedidos del día,
+ *   total de pedidos, ventas totales, visitas, y productos por categoría
+ * - Acceso: SOLO ADMIN
  */
 router.get("/resumen", authMiddleware, adminOnly, getResumenEstadisticas);
 

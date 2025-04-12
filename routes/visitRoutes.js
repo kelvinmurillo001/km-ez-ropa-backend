@@ -9,10 +9,16 @@ const {
 const authMiddleware = require('../middleware/authMiddleware');
 const adminOnly = require('../middleware/adminOnly');
 
-// 📈 Registrar visita (pública)
+/**
+ * 📈 Registrar una visita (PÚBLICO)
+ * POST /api/visitas/registrar
+ */
 router.post('/registrar', registrarVisita);
 
-// 📊 Obtener visitas (solo admin)
+/**
+ * 📊 Obtener total de visitas (SOLO ADMIN)
+ * GET /api/visitas
+ */
 router.get('/', authMiddleware, adminOnly, obtenerVisitas);
 
 module.exports = router;
