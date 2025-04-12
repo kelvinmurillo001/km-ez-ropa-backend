@@ -2,11 +2,11 @@ const express = require('express');
 const router = express.Router();
 const { body, param } = require('express-validator');
 
-// ✅ Controladores (CORREGIDOS)
-const getAllProducts = require('../controllers/getAllProducts');
-const createProduct = require('../controllers/createProduct');
-const updateProduct = require('../controllers/updateProduct');
-const deleteProduct = require('../controllers/deleteProduct');
+// ✅ Controladores (RUTA CORRECTA)
+const getAllProducts = require('../controllers/product/getAllProducts');
+const createProduct = require('../controllers/product/createProduct');
+const updateProduct = require('../controllers/product/updateProduct');
+const deleteProduct = require('../controllers/product/deleteProduct');
 
 // 🔐 Middlewares
 const authMiddleware = require('../middleware/authMiddleware');
