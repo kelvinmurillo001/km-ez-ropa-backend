@@ -10,14 +10,14 @@ const createProduct = async (req, res) => {
   try {
     const {
       name, price, category, subcategory, stock,
-      featured, tallaTipo, variants = [], mainImages = []
+      featured, tallaTipo, variants = [], images = []
     } = req.body;
 
     if (!name || !price || !category || !subcategory || !tallaTipo) {
       return res.status(400).json({ message: '⚠️ Faltan campos obligatorios' });
     }
 
-    if (!Array.isArray(mainImages) || mainImages.length !== 1) {
+    if (!Array.isArray(images) || images.length !== 1) {
       return res.status(400).json({ message: '⚠️ Debes subir exactamente 1 imagen principal' });
     }
 
@@ -25,7 +25,7 @@ const createProduct = async (req, res) => {
       return res.status(400).json({ message: '⚠️ Solo se permiten hasta 4 variantes' });
     }
 
-    const processedImages = mainImages.map(img => ({
+    const processedImages = images.map(img => ({
       url: img.url,
       cloudinaryId: img.cloudinaryId
     }));

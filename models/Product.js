@@ -29,7 +29,6 @@ const productSchema = new mongoose.Schema(
       lowercase: true
     },
 
-    // 🔠 Tipo de talla (adulto, niño, bebé, etc.)
     tallaTipo: {
       type: String,
       required: [true, '⚠️ El tipo de talla es obligatorio'],
@@ -49,7 +48,7 @@ const productSchema = new mongoose.Schema(
       default: false
     },
 
-    // 🖼️ Imágenes principales (solo 1 obligatoria)
+    // 🖼️ Imágenes principales (obligatoria una sola imagen)
     images: {
       type: [
         {
@@ -67,14 +66,12 @@ const productSchema = new mongoose.Schema(
         }
       ],
       validate: {
-        validator: function (val) {
-          return Array.isArray(val) && val.length === 1;
-        },
+        validator: val => Array.isArray(val) && val.length === 1,
         message: '⚠️ Solo se permite exactamente una imagen principal.'
       }
     },
 
-    // 🎨 Variantes (opcionales, pero si existen, deben tener todo)
+    // 🎨 Variantes
     variants: {
       type: [
         {
@@ -109,9 +106,7 @@ const productSchema = new mongoose.Schema(
         }
       ],
       validate: {
-        validator: function (val) {
-          return val.length <= 4;
-        },
+        validator: val => val.length <= 4,
         message: '⚠️ Máximo 4 variantes por producto.'
       },
       default: []
@@ -134,7 +129,7 @@ const productSchema = new mongoose.Schema(
   }
 );
 
-// 🔍 Índice de búsqueda para nombre y categorías
+// 🔍 Índices
 productSchema.index({ name: 'text', category: 1, subcategory: 1 });
 
 module.exports = mongoose.model('Product', productSchema);

@@ -2,13 +2,11 @@ const express = require('express');
 const router = express.Router();
 const { body, param } = require('express-validator');
 
-// ✅ NUEVA RUTA MODULAR
-const {
-  getAllProducts,
-  createProduct,
-  updateProduct,
-  deleteProduct
-} = require('../controllers/product');
+// ✅ Controladores
+const getAllProducts = require('../controllers/products/getAllProducts');
+const createProduct = require('../controllers/products/createProduct');
+const updateProduct = require('../controllers/products/updateProduct');
+const deleteProduct = require('../controllers/products/deleteProduct');
 
 // 🔐 Middlewares
 const authMiddleware = require('../middleware/authMiddleware');
@@ -41,7 +39,14 @@ router.post(
     body('subcategory')
       .notEmpty().withMessage('⚠️ La subcategoría es obligatoria'),
 
-    body('images') // CAMBIADO DE 'mainImages'
+    body('tallaTipo')
+      .notEmpty().withMessage('⚠️ El tipo de talla es obligatorio'),
+
+    body('stock')
+      .notEmpty().withMessage('⚠️ El stock es obligatorio')
+      .isInt({ min: 0 }).withMessage('⚠️ El stock debe ser un número igual o mayor a 0'),
+
+    body('images') // antes mainImages
       .isArray({ min: 1, max: 1 }).withMessage('⚠️ Debes subir exactamente 1 imagen principal'),
 
     body('variants')
@@ -69,7 +74,11 @@ router.put(
       .optional()
       .isFloat({ min: 0 }).withMessage('⚠️ Precio inválido'),
 
-    body('images') // CAMBIADO DE 'mainImages'
+    body('stock')
+      .optional()
+      .isInt({ min: 0 }).withMessage('⚠️ Stock inválido'),
+
+    body('images')
       .optional()
       .isArray({ max: 1 }).withMessage('⚠️ Solo se permite una imagen principal'),
 

@@ -11,30 +11,47 @@ const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
     const {
-      name, price, category, subcategory, tallaTipo,
-      stock, featured, variants = [], mainImages = []
+      name,
+      price,
+      category,
+      subcategory,
+      tallaTipo,
+      stock,
+      featured,
+      variants = [],
+      images = []
     } = req.body;
 
     const product = await Product.findById(id);
-    if (!product) return res.status(404).json({ message: '❌ Producto no encontrado' });
+    if (!product) {
+      return res.status(404).json({ message: '❌ Producto no encontrado' });
+    }
 
-    if (mainImages.length > 0) {
+    // Eliminar imágenes anteriores si se subieron nuevas
+    if (images.length > 0) {
       for (const img of product.images) {
-        if (img.cloudinaryId) await cloudinary.uploader.destroy(img.cloudinaryId);
+        if (img.cloudinaryId) {
+          await cloudinary.uploader.destroy(img.cloudinaryId);
+        }
       }
     }
 
+    // Eliminar imágenes de variantes si se reemplazan
     if (variants.length > 0) {
-      for (const v of product.variants) {
-        if (v.cloudinaryId) await cloudinary.uploader.destroy(v.cloudinaryId);
+      for (const variant of product.variants) {
+        if (variant.cloudinaryId) {
+          await cloudinary.uploader.destroy(variant.cloudinaryId);
+        }
       }
     }
 
-    const processedImages = mainImages.map(img => ({
+    // Procesar nuevas imágenes
+    const processedImages = images.map(img => ({
       url: img.url,
       cloudinaryId: img.cloudinaryId
     }));
 
+    // Procesar variantes
     const processedVariants = variants.map(v => ({
       talla: v.talla,
       color: v.color,
@@ -43,24 +60,23 @@ const updateProduct = async (req, res) => {
       stock: v.stock || 0
     }));
 
-    Object.assign(product, {
-      name: name ?? product.name,
-      price: price ?? product.price,
-      category: category ?? product.category,
-      subcategory: subcategory ?? product.subcategory,
-      tallaTipo: tallaTipo ?? product.tallaTipo,
-      stock: stock ?? product.stock,
-      featured: featured === true || featured === 'true',
-      variants: processedVariants.length ? processedVariants : product.variants,
-      images: processedImages.length ? processedImages : product.images,
-      updatedBy: req.user?.username || 'admin'
-    });
+    // Actualizar datos del producto
+    product.name = name ?? product.name;
+    product.price = price ?? product.price;
+    product.category = category ?? product.category;
+    product.subcategory = subcategory ?? product.subcategory;
+    product.tallaTipo = tallaTipo ?? product.tallaTipo;
+    product.stock = stock ?? product.stock;
+    product.featured = featured === true || featured === 'true';
+    product.images = processedImages.length ? processedImages : product.images;
+    product.variants = processedVariants.length ? processedVariants : product.variants;
+    product.updatedBy = req.user?.username || 'admin';
 
     const updated = await product.save();
-    res.json(updated);
+    res.status(200).json(updated);
   } catch (error) {
     console.error('❌ Error actualizando producto:', error.message);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: error.message || '❌ Error del servidor' });
   }
 };
 
