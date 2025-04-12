@@ -20,8 +20,9 @@ const productSchema = new mongoose.Schema(
     category: {
       type: String,
       required: [true, '⚠️ La categoría es obligatoria'],
-      enum: ['Hombre', 'Mujer', 'Niño', 'Niña', 'Bebé', 'Interior', 'Casual', 'Informal'],
-      trim: true
+      trim: true,
+      lowercase: true
+      // 🔥 enum eliminado para permitir categorías dinámicas
     },
 
     subcategory: {
