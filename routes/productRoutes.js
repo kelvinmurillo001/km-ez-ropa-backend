@@ -46,7 +46,7 @@ router.post(
       .notEmpty().withMessage('⚠️ El stock es obligatorio')
       .isInt({ min: 0 }).withMessage('⚠️ El stock debe ser un número igual o mayor a 0'),
 
-    body('images') // antes mainImages
+    body('images') // importante usar "images" como en el createProduct.js
       .isArray({ min: 1, max: 1 }).withMessage('⚠️ Debes subir exactamente 1 imagen principal'),
 
     body('variants')

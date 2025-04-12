@@ -1,5 +1,5 @@
 const express = require('express');
-const { body } = require('express-validator');
+const { body, param } = require('express-validator');
 const router = express.Router();
 
 // 🧠 Controladores
@@ -14,27 +14,70 @@ const {
 const authMiddleware = require('../middleware/authMiddleware');
 const adminOnly = require('../middleware/adminOnly');
 
-// 📦 RUTAS DE PEDIDOS
+/* -------------------------------------------------------------------------- */
+/* 🛒 RUTAS DE PEDIDOS                                                        */
+/* -------------------------------------------------------------------------- */
 
-// 📥 Crear pedido (📢 PÚBLICO)
+/**
+ * 📥 Crear pedido (PÚBLICO)
+ * POST /api/orders
+ */
 router.post(
   '/',
   [
-    body('cliente').notEmpty().withMessage('El nombre del cliente es obligatorio'),
-    body('telefono').notEmpty().withMessage('El teléfono es obligatorio'),
-    body('productos').isArray({ min: 1 }).withMessage('Debe incluir al menos un producto'),
-    body('total').isNumeric().withMessage('Total inválido')
+    body('items')
+      .isArray({ min: 1 })
+      .withMessage('⚠️ El pedido debe contener al menos un producto'),
+
+    body('total')
+      .isFloat({ min: 0.01 })
+      .withMessage('⚠️ El total debe ser un número mayor a 0'),
+
+    body('nombreCliente')
+      .notEmpty()
+      .isString()
+      .isLength({ min: 2 })
+      .withMessage('⚠️ El nombre del cliente es obligatorio y debe tener al menos 2 caracteres'),
+
+    body('nota')
+      .optional()
+      .isString()
+      .withMessage('⚠️ La nota debe ser texto válido')
   ],
   createOrder
 );
 
-// 📋 Obtener todos los pedidos (🔐 SOLO ADMIN)
+/**
+ * 📋 Obtener todos los pedidos (SOLO ADMIN)
+ * GET /api/orders
+ */
 router.get('/', authMiddleware, adminOnly, getOrders);
 
-// 🔄 Actualizar estado de pedido (🔐 SOLO ADMIN)
-router.put('/:id/estado', authMiddleware, adminOnly, actualizarEstadoPedido);
+/**
+ * 🔄 Actualizar estado de un pedido (SOLO ADMIN)
+ * PUT /api/orders/:id/estado
+ */
+router.put(
+  '/:id/estado',
+  authMiddleware,
+  adminOnly,
+  [
+    param('id')
+      .isMongoId()
+      .withMessage('⚠️ ID de pedido inválido'),
 
-// 📊 Obtener estadísticas de ventas (🔐 SOLO ADMIN)
+    body('estado')
+      .notEmpty()
+      .isString()
+      .withMessage('⚠️ El estado es requerido y debe ser un string')
+  ],
+  actualizarEstadoPedido
+);
+
+/**
+ * 📊 Obtener estadísticas de ventas (SOLO ADMIN)
+ * GET /api/orders/stats/ventas
+ */
 router.get('/stats/ventas', authMiddleware, adminOnly, getOrderStats);
 
 module.exports = router;

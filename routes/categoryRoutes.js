@@ -15,16 +15,18 @@ const {
 const authMiddleware = require('../middleware/authMiddleware');
 const adminOnly = require('../middleware/adminOnly');
 
-// 📄 RUTAS DE CATEGORÍAS
+/* -------------------------------------------------------------------------- */
+/* 🗂️ RUTAS DE CATEGORÍAS                                                    */
+/* -------------------------------------------------------------------------- */
 
 /**
- * 🔓 Obtener todas las categorías (PÚBLICO)
+ * 📥 Obtener todas las categorías (PÚBLICO)
  * GET /api/categories
  */
 router.get('/', getAllCategories);
 
 /**
- * 🔐 Crear nueva categoría (ADMIN)
+ * ➕ Crear nueva categoría (SOLO ADMIN)
  * POST /api/categories
  */
 router.post(
@@ -41,7 +43,7 @@ router.post(
 );
 
 /**
- * 🔐 Agregar subcategoría a una categoría (ADMIN)
+ * ➕ Agregar subcategoría (SOLO ADMIN)
  * POST /api/categories/:categoryId/subcategories
  */
 router.post(
@@ -59,19 +61,21 @@ router.post(
 );
 
 /**
- * 🔐 Eliminar categoría (ADMIN)
+ * 🗑️ Eliminar categoría completa (SOLO ADMIN)
  * DELETE /api/categories/:id
  */
 router.delete(
   '/:id',
   authMiddleware,
   adminOnly,
-  param('id').isMongoId().withMessage('⚠️ ID inválido'),
+  [
+    param('id').isMongoId().withMessage('⚠️ ID inválido')
+  ],
   deleteCategory
 );
 
 /**
- * 🔐 Eliminar subcategoría específica (ADMIN)
+ * 🗑️ Eliminar subcategoría específica (SOLO ADMIN)
  * DELETE /api/categories/:categoryId/subcategories/:subcategory
  */
 router.delete(
