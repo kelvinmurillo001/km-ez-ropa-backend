@@ -2,13 +2,13 @@ const express = require('express');
 const router = express.Router();
 const { body, param } = require('express-validator');
 
-// 🧠 Controladores
+// ✅ NUEVA RUTA MODULAR
 const {
   getAllProducts,
   createProduct,
   updateProduct,
   deleteProduct
-} = require('../controllers/productController');
+} = require('../controllers/product'); // << CAMBIO AQUI
 
 // 🔐 Middlewares
 const authMiddleware = require('../middleware/authMiddleware');
@@ -41,11 +41,9 @@ router.post(
     body('subcategory')
       .notEmpty().withMessage('⚠️ La subcategoría es obligatoria'),
 
-    // ✅ Ahora mainImages debe ser exactamente 1 imagen
     body('mainImages')
       .isArray({ min: 1, max: 1 }).withMessage('⚠️ Debes subir exactamente 1 imagen principal'),
 
-    // ✅ variants es opcional, pero si existe debe ser un array de hasta 4
     body('variants')
       .optional()
       .isArray({ max: 4 }).withMessage('⚠️ Se permiten hasta 4 variantes como máximo')
