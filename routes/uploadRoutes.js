@@ -1,24 +1,26 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const { cloudinary } = require('../config/cloudinary');
 const streamifier = require('streamifier');
+const { cloudinary } = require('../config/cloudinary');
 const authMiddleware = require('../middleware/authMiddleware');
+const adminOnly = require('../middleware/adminOnly');
+const { cleanOrphanedImages } = require('../controllers/uploads/cleanOrphanedImages');
 
-// 📂 Carpeta centralizada de Cloudinary
+// 📂 Carpeta central de imágenes
 const CLOUDINARY_FOLDER = 'productos_kmezropa';
 
-// 📦 Configuración de multer para recibir buffer (no archivo en disco)
+// 📦 Multer en memoria
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 /**
  * 📤 SUBIR imagen a Cloudinary
- * Ruta: POST /api/uploads
+ * POST /api/uploads
  */
 router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
   try {
-    if (!req.file || !req.file.buffer) {
+    if (!req.file?.buffer) {
       return res.status(400).json({ message: '⚠️ No se ha enviado ninguna imagen.' });
     }
 
@@ -40,7 +42,6 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
       }
     );
 
-    // ✅ Convertir buffer a stream y enviarlo
     streamifier.createReadStream(req.file.buffer).pipe(uploadStream);
   } catch (err) {
     console.error('❌ Error inesperado al subir imagen:', err);
@@ -50,7 +51,7 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
 
 /**
  * 🗑️ ELIMINAR imagen por publicId
- * Ruta: DELETE /api/uploads/:publicId
+ * DELETE /api/uploads/:publicId
  */
 router.delete('/:publicId', authMiddleware, async (req, res) => {
   try {
@@ -74,8 +75,8 @@ router.delete('/:publicId', authMiddleware, async (req, res) => {
 });
 
 /**
- * 🔘 ELIMINAR imagen (POST con cloudinaryId) — para frontend dinámico
- * Ruta: POST /api/uploads/delete
+ * 🔘 ELIMINAR imagen por body.cloudinaryId
+ * POST /api/uploads/delete
  */
 router.post('/delete', authMiddleware, async (req, res) => {
   try {
@@ -99,8 +100,8 @@ router.post('/delete', authMiddleware, async (req, res) => {
 });
 
 /**
- * 📃 LISTAR imágenes del folder
- * Ruta: GET /api/uploads/list
+ * 📃 LISTAR imágenes
+ * GET /api/uploads/list
  */
 router.get('/list', authMiddleware, async (req, res) => {
   try {
@@ -122,5 +123,11 @@ router.get('/list', authMiddleware, async (req, res) => {
     res.status(500).json({ message: '❌ Error al obtener imágenes.' });
   }
 });
+
+/**
+ * 🧹 LIMPIAR imágenes huérfanas
+ * GET /api/uploads/limpiar-huerfanas
+ */
+router.get('/limpiar-huerfanas', authMiddleware, adminOnly, cleanOrphanedImages);
 
 module.exports = router;
