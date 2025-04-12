@@ -2,11 +2,11 @@ const express = require('express');
 const router = express.Router();
 const { body, param } = require('express-validator');
 
-// ✅ Controladores
-const getAllProducts = require('../controllers/products/getAllProducts');
-const createProduct = require('../controllers/products/createProduct');
-const updateProduct = require('../controllers/products/updateProduct');
-const deleteProduct = require('../controllers/products/deleteProduct');
+// ✅ Controladores (CORREGIDOS)
+const getAllProducts = require('../controllers/getAllProducts');
+const createProduct = require('../controllers/createProduct');
+const updateProduct = require('../controllers/updateProduct');
+const deleteProduct = require('../controllers/deleteProduct');
 
 // 🔐 Middlewares
 const authMiddleware = require('../middleware/authMiddleware');
@@ -46,7 +46,7 @@ router.post(
       .notEmpty().withMessage('⚠️ El stock es obligatorio')
       .isInt({ min: 0 }).withMessage('⚠️ El stock debe ser un número igual o mayor a 0'),
 
-    body('images') // importante usar "images" como en el createProduct.js
+    body('images')
       .isArray({ min: 1, max: 1 }).withMessage('⚠️ Debes subir exactamente 1 imagen principal'),
 
     body('variants')
