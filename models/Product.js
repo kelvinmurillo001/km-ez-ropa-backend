@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-// 📦 Esquema de producto con variantes por talla y color
+// 📦 Esquema de producto con variantes y talla/color para imagen principal
 const productSchema = new mongoose.Schema(
   {
     name: {
@@ -22,6 +22,7 @@ const productSchema = new mongoose.Schema(
       required: [true, '⚠️ La categoría es obligatoria'],
       trim: true,
       lowercase: true
+      // 🔥 enum eliminado para permitir categorías dinámicas
     },
 
     subcategory: {
@@ -51,7 +52,6 @@ const productSchema = new mongoose.Schema(
       default: false
     },
 
-    // 🖼️ Imagen principal con talla y color
     images: {
       type: [
         {
