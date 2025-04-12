@@ -7,6 +7,8 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: [true, '⚠️ El nombre del producto es obligatorio'],
       trim: true,
+      minlength: [2, '⚠️ El nombre debe tener al menos 2 caracteres'],
+      maxlength: [100, '⚠️ El nombre no debe superar los 100 caracteres']
     },
 
     price: {
@@ -26,7 +28,8 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: [true, '⚠️ La subcategoría es obligatoria'],
       trim: true,
-      lowercase: true
+      lowercase: true,
+      minlength: [2, '⚠️ La subcategoría debe tener al menos 2 caracteres']
     },
 
     tallaTipo: {
@@ -48,7 +51,6 @@ const productSchema = new mongoose.Schema(
       default: false
     },
 
-    // 🖼️ Imágenes principales (obligatoria una sola imagen)
     images: {
       type: [
         {
@@ -71,7 +73,6 @@ const productSchema = new mongoose.Schema(
       }
     },
 
-    // 🎨 Variantes
     variants: {
       type: [
         {
@@ -89,7 +90,7 @@ const productSchema = new mongoose.Schema(
           },
           imageUrl: {
             type: String,
-            required: [true, '⚠️ La imagen es obligatoria'],
+            required: [true, '⚠️ La imagen de la variante es obligatoria'],
             trim: true,
             match: [/^https?:\/\/.+\.(jpg|jpeg|png|webp|gif)$/i, '⚠️ URL de imagen de variante inválida']
           },
@@ -125,11 +126,11 @@ const productSchema = new mongoose.Schema(
     }
   },
   {
-    timestamps: true // ⏱️ createdAt y updatedAt automáticos
+    timestamps: true
   }
 );
 
-// 🔍 Índices
+// 🔍 Índices de búsqueda
 productSchema.index({ name: 'text', category: 1, subcategory: 1 });
 
 module.exports = mongoose.model('Product', productSchema);

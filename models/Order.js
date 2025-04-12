@@ -6,35 +6,39 @@ const orderSchema = new mongoose.Schema(
       {
         nombre: {
           type: String,
-          required: true,
-          trim: true
+          required: [true, '⚠️ El nombre del producto es obligatorio'],
+          trim: true,
+          minlength: [2, '⚠️ El nombre debe tener al menos 2 caracteres']
         },
         cantidad: {
           type: Number,
-          required: true,
-          min: 1
+          required: [true, '⚠️ La cantidad es obligatoria'],
+          min: [1, '⚠️ La cantidad debe ser al menos 1']
         },
         precio: {
           type: Number,
-          required: true,
-          min: 0
+          required: [true, '⚠️ El precio es obligatorio'],
+          min: [0, '⚠️ El precio no puede ser negativo']
         }
       }
     ],
     total: {
       type: Number,
-      required: true,
-      min: 0
+      required: [true, '⚠️ El total es obligatorio'],
+      min: [0, '⚠️ El total no puede ser negativo']
     },
     nombreCliente: {
       type: String,
-      required: true,
-      trim: true
+      required: [true, '⚠️ El nombre del cliente es obligatorio'],
+      trim: true,
+      minlength: [2, '⚠️ El nombre debe tener al menos 2 caracteres'],
+      maxlength: [100, '⚠️ El nombre no debe exceder 100 caracteres']
     },
     nota: {
       type: String,
       default: '',
-      trim: true
+      trim: true,
+      maxlength: [300, '⚠️ La nota no debe superar 300 caracteres']
     },
     estado: {
       type: String,
