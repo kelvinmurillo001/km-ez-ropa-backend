@@ -22,7 +22,6 @@ const productSchema = new mongoose.Schema(
       required: [true, '⚠️ La categoría es obligatoria'],
       trim: true,
       lowercase: true
-      // 🔥 enum eliminado para permitir categorías dinámicas
     },
 
     subcategory: {
@@ -52,6 +51,7 @@ const productSchema = new mongoose.Schema(
       default: false
     },
 
+    // 🖼️ Imagen principal con talla y color
     images: {
       type: [
         {
@@ -65,6 +65,18 @@ const productSchema = new mongoose.Schema(
             type: String,
             required: [true, '⚠️ cloudinaryId obligatorio'],
             trim: true
+          },
+          talla: {
+            type: String,
+            required: [true, '⚠️ La talla de la imagen principal es obligatoria'],
+            trim: true,
+            lowercase: true
+          },
+          color: {
+            type: String,
+            required: [true, '⚠️ El color de la imagen principal es obligatorio'],
+            trim: true,
+            lowercase: true
           }
         }
       ],

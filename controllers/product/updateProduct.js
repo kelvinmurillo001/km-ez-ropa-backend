@@ -45,22 +45,32 @@ const updateProduct = async (req, res) => {
       }
     }
 
-    // Procesar nuevas imágenes
-    const processedImages = images.map(img => ({
-      url: img.url,
-      cloudinaryId: img.cloudinaryId
-    }));
+    // Validar imagen principal
+    if (images.length > 0) {
+      const mainImage = images[0];
+      if (!mainImage.talla || !mainImage.color) {
+        return res.status(400).json({ message: '⚠️ La imagen principal debe incluir talla y color' });
+      }
+    }
+
+    // Procesar imagen principal
+    const processedImages = images.length > 0 ? [{
+      url: images[0].url,
+      cloudinaryId: images[0].cloudinaryId,
+      talla: images[0].talla.toLowerCase(),
+      color: images[0].color.toLowerCase()
+    }] : product.images;
 
     // Procesar variantes
     const processedVariants = variants.map(v => ({
-      talla: v.talla,
-      color: v.color,
+      talla: v.talla?.toLowerCase(),
+      color: v.color?.toLowerCase(),
       imageUrl: v.imageUrl,
       cloudinaryId: v.cloudinaryId,
       stock: v.stock || 0
     }));
 
-    // Actualizar datos del producto
+    // Actualizar datos
     product.name = name ?? product.name;
     product.price = price ?? product.price;
     product.category = category ?? product.category;
@@ -68,7 +78,7 @@ const updateProduct = async (req, res) => {
     product.tallaTipo = tallaTipo ?? product.tallaTipo;
     product.stock = stock ?? product.stock;
     product.featured = featured === true || featured === 'true';
-    product.images = processedImages.length ? processedImages : product.images;
+    product.images = processedImages;
     product.variants = processedVariants.length ? processedVariants : product.variants;
     product.updatedBy = req.user?.username || 'admin';
 

@@ -21,18 +21,26 @@ const createProduct = async (req, res) => {
       return res.status(400).json({ message: '⚠️ Debes subir exactamente 1 imagen principal' });
     }
 
+    const [mainImage] = images;
+
+    if (!mainImage.talla || !mainImage.color) {
+      return res.status(400).json({ message: '⚠️ La imagen principal debe incluir talla y color' });
+    }
+
     if (variants.length > 4) {
       return res.status(400).json({ message: '⚠️ Solo se permiten hasta 4 variantes' });
     }
 
-    const processedImages = images.map(img => ({
-      url: img.url,
-      cloudinaryId: img.cloudinaryId
-    }));
+    const processedImages = [{
+      url: mainImage.url,
+      cloudinaryId: mainImage.cloudinaryId,
+      talla: mainImage.talla.toLowerCase(),
+      color: mainImage.color.toLowerCase()
+    }];
 
     const processedVariants = variants.map(v => ({
-      talla: v.talla,
-      color: v.color,
+      talla: v.talla?.toLowerCase(),
+      color: v.color?.toLowerCase(),
       imageUrl: v.imageUrl,
       cloudinaryId: v.cloudinaryId,
       stock: v.stock || 0
