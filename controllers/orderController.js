@@ -9,7 +9,6 @@ const createOrder = async (req, res) => {
   try {
     const { items, total, nombreCliente, nota } = req.body;
 
-    // ✅ Validaciones básicas
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ message: "⚠️ El pedido debe contener al menos un producto." });
     }
@@ -20,7 +19,7 @@ const createOrder = async (req, res) => {
 
     const totalParsed = parseFloat(total);
     if (isNaN(totalParsed) || totalParsed <= 0) {
-      return res.status(400).json({ message: "⚠️ Total inválido." });
+      return res.status(400).json({ message: "⚠️ Total del pedido inválido." });
     }
 
     const newOrder = new Order({
@@ -32,17 +31,16 @@ const createOrder = async (req, res) => {
     });
 
     await newOrder.save();
-    return res.status(201).json(newOrder);
+    res.status(201).json(newOrder);
 
   } catch (error) {
     console.error("❌ Error creando pedido:", error);
-    return res.status(500).json({ message: "❌ Error interno al crear el pedido." });
+    res.status(500).json({ message: "❌ Error interno al crear el pedido." });
   }
 };
 
 /**
  * 📋 Obtener todos los pedidos (admin)
- * - Ordenados por fecha descendente
  */
 const getOrders = async (req, res) => {
   try {
@@ -56,37 +54,34 @@ const getOrders = async (req, res) => {
 
 /**
  * 🔄 Actualizar estado de un pedido (admin)
- * - Valida estado nuevo
- * - Permite actualizar a: en_proceso, enviado, cancelado, etc.
  */
 const actualizarEstadoPedido = async (req, res) => {
   try {
     const { id } = req.params;
     const { estado } = req.body;
 
+    if (!estado || typeof estado !== 'string') {
+      return res.status(400).json({ message: "⚠️ Estado del pedido inválido." });
+    }
+
     const pedido = await Order.findById(id);
     if (!pedido) {
       return res.status(404).json({ message: "❌ Pedido no encontrado." });
     }
 
-    if (!estado || typeof estado !== 'string') {
-      return res.status(400).json({ message: "⚠️ Estado inválido." });
-    }
-
-    pedido.estado = estado;
+    pedido.estado = estado.trim().toLowerCase();
     await pedido.save();
 
     res.json({ message: "✅ Estado del pedido actualizado", pedido });
 
   } catch (error) {
-    console.error("❌ Error actualizando estado:", error);
+    console.error("❌ Error actualizando estado del pedido:", error);
     res.status(500).json({ message: "❌ Error al actualizar el estado del pedido." });
   }
 };
 
 /**
  * 📊 Obtener estadísticas de pedidos (admin)
- * - Calcula el total de ventas solo de pedidos con estado "enviado"
  */
 const getOrderStats = async (req, res) => {
   try {
@@ -95,8 +90,8 @@ const getOrderStats = async (req, res) => {
 
     res.json({ ventasTotales: ventasTotales.toFixed(2) });
   } catch (error) {
-    console.error("❌ Error obteniendo estadísticas:", error);
-    res.status(500).json({ message: "❌ Error al obtener estadísticas de pedidos." });
+    console.error("❌ Error obteniendo estadísticas de pedidos:", error);
+    res.status(500).json({ message: "❌ Error al obtener estadísticas." });
   }
 };
 

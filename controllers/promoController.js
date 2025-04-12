@@ -2,12 +2,11 @@ const Promotion = require("../models/promotion");
 
 /**
  * 📥 Obtener la promoción activa más reciente
- * - Devuelve la promo con `active: true`, ordenada por `createdAt`
  */
 const getPromotion = async (req, res) => {
   try {
     const active = await Promotion.findOne({ active: true }).sort({ createdAt: -1 });
-    return res.json(active || null); // null si no hay promoción activa
+    return res.json(active || null); // Devuelve null si no hay una activa
   } catch (error) {
     console.error("❌ Error al obtener promoción:", error);
     return res.status(500).json({ message: "❌ Error al obtener promoción activa" });
@@ -16,8 +15,6 @@ const getPromotion = async (req, res) => {
 
 /**
  * 💾 Crear o actualizar promoción
- * - Si `active` está en true, desactiva todas las demás
- * - Permite definir mensaje, fechas y tema visual
  */
 const updatePromotion = async (req, res) => {
   try {
@@ -29,18 +26,20 @@ const updatePromotion = async (req, res) => {
       endDate
     } = req.body;
 
-    // 🔎 Validación de mensaje obligatorio
+    // 🛡️ Validación básica
     if (!message || typeof message !== 'string' || message.trim().length < 3) {
-      return res.status(400).json({ message: "⚠️ El mensaje de la promoción es obligatorio y debe tener al menos 3 caracteres" });
+      return res.status(400).json({
+        message: "⚠️ El mensaje de la promoción es obligatorio y debe tener al menos 3 caracteres"
+      });
     }
 
-    // 🔁 Si se activa una nueva promoción, desactivar todas las existentes
     const isActive = active === true || active === 'true';
+
+    // 🚫 Desactivar otras promociones si se activa una nueva
     if (isActive) {
       await Promotion.updateMany({}, { active: false });
     }
 
-    // 🗓️ Validar y convertir fechas
     const parsedStart = startDate ? new Date(startDate) : null;
     const parsedEnd = endDate ? new Date(endDate) : null;
 
@@ -53,10 +52,10 @@ const updatePromotion = async (req, res) => {
     }
 
     let promo;
-
-    // ⚙️ Si ya existe una promoción, actualizamos
     const existing = await Promotion.findOne();
+
     if (existing) {
+      // 🔄 Actualizar existente
       existing.message = message.trim();
       existing.active = isActive;
       existing.theme = theme;
@@ -64,7 +63,7 @@ const updatePromotion = async (req, res) => {
       existing.endDate = parsedEnd;
       promo = await existing.save();
     } else {
-      // ➕ Crear una nueva promoción
+      // ➕ Crear nueva
       promo = await Promotion.create({
         message: message.trim(),
         active: isActive,
@@ -78,6 +77,7 @@ const updatePromotion = async (req, res) => {
       message: '✅ Promoción guardada exitosamente',
       data: promo
     });
+
   } catch (error) {
     console.error("❌ Error al guardar promoción:", error);
     return res.status(500).json({ message: "❌ Error al guardar promoción" });

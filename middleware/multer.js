@@ -10,25 +10,26 @@ if (!fs.existsSync(uploadDir)) {
 
 // 💾 Configuración de almacenamiento
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
+  destination: (req, file, cb) => {
     cb(null, uploadDir);
   },
-  filename: function (req, file, cb) {
+  filename: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
     const base = path.basename(file.originalname, ext)
-      .replace(/\s+/g, "-")         // Espacios → guiones
-      .replace(/[^\w\-]/g, "")      // Elimina caracteres peligrosos
-      .substring(0, 50);            // 🔐 Máximo 50 caracteres
+      .replace(/\s+/g, "-")            // Espacios → guiones
+      .replace(/[^\w\-]/g, "")         // Caracteres no seguros
+      .substring(0, 50);               // Limitar longitud
 
     const uniqueName = `${Date.now()}-${base}${ext}`;
     cb(null, uniqueName);
   }
 });
 
-// 🔐 Validación MIME + extensión
+// ✅ Tipos permitidos
 const ALLOWED_EXT = [".jpg", ".jpeg", ".png", ".webp"];
 const ALLOWED_MIME = ["image/jpeg", "image/png", "image/webp"];
 
+// 🔐 Filtro de archivos
 const fileFilter = (req, file, cb) => {
   const ext = path.extname(file.originalname).toLowerCase();
   const mime = file.mimetype;
@@ -40,14 +41,11 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// 🛡️ Configurar Multer con filtros y tamaño límite
+// 🛡️ Inicializar Multer con configuración segura
 const upload = multer({
   storage,
-  limits: {
-    fileSize: 2 * 1024 * 1024 // 2MB
-  },
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2 MB
   fileFilter
 });
 
 module.exports = upload;
-

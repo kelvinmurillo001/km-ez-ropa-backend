@@ -1,14 +1,13 @@
 const fs = require('fs').promises;
 const path = require('path');
 
-// 📁 Ruta del archivo de visitas
+// 📁 Ruta del archivo donde se almacenan las visitas
 const filePath = path.join(__dirname, '..', 'data', 'visitas.json');
 
 /**
  * 📈 Registrar una nueva visita
  * - Lee el archivo JSON
- * - Incrementa el contador
- * - Guarda el nuevo valor
+ * - Incrementa el contador si existe, o lo crea desde 0
  */
 const registrarVisita = async (req, res) => {
   try {
@@ -21,13 +20,14 @@ const registrarVisita = async (req, res) => {
         count = json.count;
       }
     } catch (error) {
-      console.warn("⚠️ visitas.json no existe o está corrupto, inicializando en 0.");
+      console.warn("⚠️ visitas.json no existe o está corrupto, se inicia desde cero.");
     }
 
     count += 1;
 
     await fs.writeFile(filePath, JSON.stringify({ count }, null, 2));
     return res.json({ message: '✅ Visita registrada', total: count });
+
   } catch (err) {
     console.error('❌ Error registrando visita:', err);
     return res.status(500).json({ message: '❌ Error al registrar visita' });
@@ -44,6 +44,7 @@ const obtenerVisitas = async (req, res) => {
     const count = (typeof json.count === 'number' && json.count >= 0) ? json.count : 0;
 
     return res.json({ total: count });
+
   } catch (err) {
     console.error('❌ Error leyendo visitas:', err);
     return res.status(500).json({ message: '❌ Error al obtener visitas' });

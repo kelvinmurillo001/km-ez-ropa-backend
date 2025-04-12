@@ -33,7 +33,7 @@ const loginAdmin = async (req, res) => {
       return res.status(400).json({ message: '⚠️ Contraseña inválida o muy corta' });
     }
 
-    // 🔍 Buscar al usuario (incluyendo password explícitamente)
+    // 🔍 Buscar usuario en base de datos, incluyendo contraseña
     const user = await User.findOne({ username }).select('+password');
 
     if (!user) {
@@ -44,16 +44,16 @@ const loginAdmin = async (req, res) => {
       return res.status(403).json({ message: '⛔ Solo los administradores pueden ingresar' });
     }
 
-    // 🔐 Comparar contraseñas con bcrypt
+    // 🔐 Validar contraseña
     const isValidPassword = await user.matchPassword(password);
     if (!isValidPassword) {
       return res.status(401).json({ message: '❌ Contraseña incorrecta' });
     }
 
-    // 🎫 Generar token
+    // 🎫 Generar token JWT
     const token = generateToken(user);
 
-    // ✅ Enviar respuesta
+    // ✅ Respuesta exitosa
     return res.status(200).json({
       message: '✅ Login exitoso',
       token,
@@ -65,7 +65,7 @@ const loginAdmin = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Error en login:', error);
+    console.error('❌ Error en loginAdmin:', error.message || error);
     return res.status(500).json({ message: '❌ Error interno del servidor' });
   }
 };

@@ -14,11 +14,15 @@ const cleanOrphanedImages = async (req, res) => {
 
     // 🔗 Recoger todos los cloudinaryId usados
     for (const p of productos) {
-      (p.images || []).forEach(img => usedIds.add(img.cloudinaryId));
-      (p.variants || []).forEach(v => usedIds.add(v.cloudinaryId));
+      (p.images || []).forEach(img => {
+        if (img.cloudinaryId) usedIds.add(img.cloudinaryId);
+      });
+      (p.variants || []).forEach(v => {
+        if (v.cloudinaryId) usedIds.add(v.cloudinaryId);
+      });
     }
 
-    // 🔍 Buscar imágenes en Cloudinary
+    // 🔍 Buscar imágenes en Cloudinary (cambia el folder si es necesario)
     const result = await cloudinary.search
       .expression('folder:productos_kmezropa')
       .max_results(100)
