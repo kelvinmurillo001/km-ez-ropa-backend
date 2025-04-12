@@ -38,6 +38,8 @@ const createProduct = async (req, res) => {
       stock: v.stock || 0
     }));
 
+    const createdBy = req.user?.username || 'admin';
+
     const newProduct = new Product({
       name,
       price,
@@ -48,14 +50,14 @@ const createProduct = async (req, res) => {
       featured: featured === true || featured === 'true',
       variants: processedVariants,
       images: processedImages,
-      createdBy: req.user?.username || 'admin'
+      createdBy
     });
 
     await newProduct.save();
     res.status(201).json(newProduct);
   } catch (error) {
     console.error('❌ Error creando producto:', error.message);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: error.message || 'Error del servidor al crear producto' });
   }
 };
 
