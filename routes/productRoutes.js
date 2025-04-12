@@ -8,7 +8,7 @@ const {
   createProduct,
   updateProduct,
   deleteProduct
-} = require('../controllers/product'); // << CAMBIO AQUI
+} = require('../controllers/product');
 
 // 🔐 Middlewares
 const authMiddleware = require('../middleware/authMiddleware');
@@ -41,7 +41,7 @@ router.post(
     body('subcategory')
       .notEmpty().withMessage('⚠️ La subcategoría es obligatoria'),
 
-    body('mainImages')
+    body('images') // CAMBIADO DE 'mainImages'
       .isArray({ min: 1, max: 1 }).withMessage('⚠️ Debes subir exactamente 1 imagen principal'),
 
     body('variants')
@@ -69,7 +69,7 @@ router.put(
       .optional()
       .isFloat({ min: 0 }).withMessage('⚠️ Precio inválido'),
 
-    body('mainImages')
+    body('images') // CAMBIADO DE 'mainImages'
       .optional()
       .isArray({ max: 1 }).withMessage('⚠️ Solo se permite una imagen principal'),
 
