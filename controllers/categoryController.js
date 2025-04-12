@@ -5,7 +5,7 @@ const Category = require('../models/category');
  */
 const getAllCategories = async (req, res) => {
   try {
-    const categories = await Category.find();
+    const categories = await Category.find().sort({ name: 1 }); // 🔠 Orden alfabético opcional
     res.json(categories);
   } catch (error) {
     console.error('❌ Error al obtener categorías:', error);
@@ -22,7 +22,9 @@ const createCategory = async (req, res) => {
     const subcategory = req.body.subcategory?.trim();
 
     if (!name || name.length < 2) {
-      return res.status(400).json({ message: '⚠️ El nombre de la categoría es obligatorio y debe tener al menos 2 caracteres' });
+      return res.status(400).json({
+        message: '⚠️ El nombre de la categoría es obligatorio y debe tener al menos 2 caracteres'
+      });
     }
 
     const existing = await Category.findOne({ name: new RegExp(`^${name}$`, 'i') });
@@ -52,7 +54,9 @@ const addSubcategory = async (req, res) => {
     const subcategory = req.body.subcategory?.trim();
 
     if (!subcategory || subcategory.length < 2) {
-      return res.status(400).json({ message: '⚠️ La subcategoría es obligatoria y debe tener al menos 2 caracteres' });
+      return res.status(400).json({
+        message: '⚠️ La subcategoría es obligatoria y debe tener al menos 2 caracteres'
+      });
     }
 
     const category = await Category.findById(categoryId);
@@ -60,9 +64,14 @@ const addSubcategory = async (req, res) => {
       return res.status(404).json({ message: '❌ Categoría no encontrada' });
     }
 
-    const exists = category.subcategories.some(sc => sc.toLowerCase() === subcategory.toLowerCase());
+    const exists = category.subcategories.some(
+      sc => sc.toLowerCase() === subcategory.toLowerCase()
+    );
+
     if (exists) {
-      return res.status(400).json({ message: '⚠️ La subcategoría ya existe en esta categoría' });
+      return res.status(400).json({
+        message: '⚠️ La subcategoría ya existe en esta categoría'
+      });
     }
 
     category.subcategories.push(subcategory);
@@ -106,7 +115,10 @@ const deleteSubcategory = async (req, res) => {
       return res.status(404).json({ message: '❌ Categoría no encontrada' });
     }
 
-    const index = category.subcategories.findIndex(sc => sc.toLowerCase() === subcategory.toLowerCase());
+    const index = category.subcategories.findIndex(
+      sc => sc.toLowerCase() === subcategory.toLowerCase()
+    );
+
     if (index === -1) {
       return res.status(404).json({ message: '❌ Subcategoría no encontrada' });
     }
