@@ -7,10 +7,10 @@ const Promotion = require("../models/promotion");
 const getPromotion = async (req, res) => {
   try {
     const active = await Promotion.findOne({ active: true }).sort({ createdAt: -1 });
-    res.json(active || null); // Si no hay promoción activa, devolver null
+    return res.json(active || null); // null si no hay promoción activa
   } catch (error) {
     console.error("❌ Error al obtener promoción:", error);
-    res.status(500).json({ message: "Error al obtener promoción" });
+    return res.status(500).json({ message: "❌ Error al obtener promoción activa" });
   }
 };
 
@@ -23,54 +23,64 @@ const updatePromotion = async (req, res) => {
   try {
     const {
       message,
-      active,
-      theme,
+      active = false,
+      theme = 'blue',
       startDate,
       endDate
     } = req.body;
 
-    // ✅ Validación obligatoria
-    if (!message) {
-      return res.status(400).json({ message: "El mensaje de la promoción es obligatorio" });
+    // 🔎 Validación de mensaje obligatorio
+    if (!message || typeof message !== 'string' || message.trim().length < 3) {
+      return res.status(400).json({ message: "⚠️ El mensaje de la promoción es obligatorio y debe tener al menos 3 caracteres" });
     }
 
-    // 🔁 Si se activa una nueva, desactivar todas las existentes
-    if (active === true || active === 'true') {
+    // 🔁 Si se activa una nueva promoción, desactivar todas las existentes
+    const isActive = active === true || active === 'true';
+    if (isActive) {
       await Promotion.updateMany({}, { active: false });
     }
 
-    // 🗓️ Conversión segura de fechas
-    const start = startDate ? new Date(startDate) : undefined;
-    const end = endDate ? new Date(endDate) : undefined;
+    // 🗓️ Validar y convertir fechas
+    const parsedStart = startDate ? new Date(startDate) : null;
+    const parsedEnd = endDate ? new Date(endDate) : null;
 
-    // Verificar si ya existe una promoción registrada
-    const existing = await Promotion.findOne();
+    if (parsedStart && isNaN(parsedStart)) {
+      return res.status(400).json({ message: "⚠️ Fecha de inicio inválida" });
+    }
+
+    if (parsedEnd && isNaN(parsedEnd)) {
+      return res.status(400).json({ message: "⚠️ Fecha de fin inválida" });
+    }
 
     let promo;
 
+    // ⚙️ Si ya existe una promoción, actualizamos
+    const existing = await Promotion.findOne();
     if (existing) {
-      // ✏️ Actualizar campos existentes
-      existing.message = message;
-      existing.active = active === true || active === 'true';
-      if (theme) existing.theme = theme;
-      if (start) existing.startDate = start;
-      if (end) existing.endDate = end;
+      existing.message = message.trim();
+      existing.active = isActive;
+      existing.theme = theme;
+      existing.startDate = parsedStart;
+      existing.endDate = parsedEnd;
       promo = await existing.save();
     } else {
       // ➕ Crear una nueva promoción
       promo = await Promotion.create({
-        message,
-        active: active === true || active === 'true',
-        theme: theme || 'blue',
-        startDate: start || null,
-        endDate: end || null
+        message: message.trim(),
+        active: isActive,
+        theme,
+        startDate: parsedStart,
+        endDate: parsedEnd
       });
     }
 
-    res.status(200).json(promo);
+    return res.status(200).json({
+      message: '✅ Promoción guardada exitosamente',
+      data: promo
+    });
   } catch (error) {
     console.error("❌ Error al guardar promoción:", error);
-    res.status(500).json({ message: "Error al guardar promoción" });
+    return res.status(500).json({ message: "❌ Error al guardar promoción" });
   }
 };
 
