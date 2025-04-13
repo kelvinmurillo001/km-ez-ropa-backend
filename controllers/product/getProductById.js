@@ -1,18 +1,24 @@
 const Product = require('../../models/Product');
 
+/**
+ * 🔍 Obtener un producto por su ID
+ * @route GET /api/products/:id
+ */
 const getProductById = async (req, res) => {
   try {
     const { id } = req.params;
-    const product = await Product.findById(id);
 
-    if (!product) {
+    // Buscar el producto por su ID en la base de datos
+    const producto = await Product.findById(id);
+
+    if (!producto) {
       return res.status(404).json({ message: '❌ Producto no encontrado' });
     }
 
-    res.status(200).json(product);
+    res.status(200).json(producto);
   } catch (error) {
-    console.error("❌ Error buscando producto por ID:", error.message);
-    res.status(500).json({ message: "❌ Error del servidor" });
+    console.error("❌ Error en getProductById:", error.message);
+    res.status(500).json({ message: '❌ Error del servidor al obtener el producto' });
   }
 };
 
