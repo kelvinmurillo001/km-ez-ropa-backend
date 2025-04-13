@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { body, param } = require('express-validator');
 
-// ✅ Controladores centralizados desde index.js
+// ✅ Importar controladores desde index.js centralizado
 const {
   getAllProducts,
   getProductById,
@@ -21,7 +21,7 @@ const adminOnly = require('../middleware/adminOnly');
 router.get('/', getAllProducts);
 
 /**
- * 🔍 Obtener producto por ID (público)
+ * 🔍 Obtener un producto por ID (público)
  */
 router.get('/:id', [
   param('id').isMongoId().withMessage('⚠️ ID inválido')

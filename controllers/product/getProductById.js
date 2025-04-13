@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Product = require('../../models/Product');
 
 /**
@@ -8,13 +9,19 @@ const getProductById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Buscar el producto por su ID en la base de datos
+    // ✅ Validación de ID válida de MongoDB
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: '⚠️ ID no válido' });
+    }
+
+    // 🔍 Buscar el producto por ID
     const producto = await Product.findById(id);
 
     if (!producto) {
       return res.status(404).json({ message: '❌ Producto no encontrado' });
     }
 
+    // ✅ Retornar producto
     res.status(200).json(producto);
   } catch (error) {
     console.error("❌ Error en getProductById:", error.message);

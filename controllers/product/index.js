@@ -1,8 +1,15 @@
 // controllers/product/index.js
 
+const getAllProducts = require('./getAllProducts');
+const getProductById = require('./getProductById');
+const createProduct = require('./createProduct');
+const updateProduct = require('./updateProduct');
+const deleteProduct = require('./deleteProduct');
+
 module.exports = {
-  getAllProducts: require('./getAllProducts'),
-  createProduct: require('./createProduct'),
-  updateProduct: require('./updateProduct'),
-  deleteProduct: require('./deleteProduct')
+  getAllProducts,
+  getProductById,
+  createProduct,
+  updateProduct,
+  deleteProduct
 };
