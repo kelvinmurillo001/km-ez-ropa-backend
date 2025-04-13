@@ -1,12 +1,14 @@
-const express = require('express');
+const express = require('express'); 
 const router = express.Router();
 const { body, param } = require('express-validator');
 
-// ✅ Controladores (RUTA CORRECTA)
+// ✅ Controladores
+const getProductById = require('../controllers/product/getProductById');
 const getAllProducts = require('../controllers/product/getAllProducts');
 const createProduct = require('../controllers/product/createProduct');
 const updateProduct = require('../controllers/product/updateProduct');
 const deleteProduct = require('../controllers/product/deleteProduct');
+const { getProductById } = require('../controllers/product/index'); // 🔥 Agregado
 
 // 🔐 Middlewares
 const authMiddleware = require('../middleware/authMiddleware');
@@ -16,6 +18,18 @@ const adminOnly = require('../middleware/adminOnly');
  * 📥 Obtener todos los productos (público)
  */
 router.get('/', getAllProducts);
+
+/**
+ * 📥 Obtener producto por ID (público)
+ */
+router.get('/:id', getProductById);
+
+/**
+ * 🔍 Obtener un producto por ID (público)
+ */
+router.get('/:id', [
+  param('id').isMongoId().withMessage('⚠️ ID inválido')
+], getProductById); // ✅ Nueva ruta
 
 /**
  * ➕ Crear producto (solo admin)
