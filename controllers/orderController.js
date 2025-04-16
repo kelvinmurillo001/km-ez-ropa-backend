@@ -11,6 +11,7 @@ const createOrder = async (req, res) => {
 
     const { items, total, nombreCliente, nota } = req.body;
 
+    // Validaciones
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ message: "⚠️ El pedido debe contener al menos un producto." });
     }
@@ -24,6 +25,7 @@ const createOrder = async (req, res) => {
       return res.status(400).json({ message: "⚠️ Total del pedido inválido." });
     }
 
+    // Crear pedido
     const newOrder = new Order({
       items,
       total: totalParsed,
@@ -37,7 +39,10 @@ const createOrder = async (req, res) => {
 
   } catch (error) {
     console.error("❌ Error creando pedido:", error);
-    res.status(500).json({ message: "❌ Error interno al crear el pedido." });
+    res.status(500).json({
+      message: "❌ Error interno al crear el pedido.",
+      error: error.message, // 👈 ayuda a depurar
+    });
   }
 };
 
