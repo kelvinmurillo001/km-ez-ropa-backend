@@ -7,6 +7,8 @@ const Order = require('../models/Order');
  */
 const createOrder = async (req, res) => {
   try {
+    console.log("📩 Pedido recibido en backend:", req.body);
+
     const { items, total, nombreCliente, nota } = req.body;
 
     if (!Array.isArray(items) || items.length === 0) {
