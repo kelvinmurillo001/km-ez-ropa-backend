@@ -4,41 +4,49 @@ const orderSchema = new mongoose.Schema(
   {
     items: [
       {
-        nombre: {
+        productId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Product"
+        },
+        name: {
           type: String,
-          required: [true, '⚠️ El nombre del producto es obligatorio'],
+          required: true,
           trim: true,
-          minlength: [2, '⚠️ El nombre debe tener al menos 2 caracteres']
+          minlength: 2
+        },
+        talla: {
+          type: String,
+          default: "Única"
         },
         cantidad: {
           type: Number,
-          required: [true, '⚠️ La cantidad es obligatoria'],
-          min: [1, '⚠️ La cantidad debe ser al menos 1']
+          required: true,
+          min: 1
         },
         precio: {
           type: Number,
-          required: [true, '⚠️ El precio es obligatorio'],
-          min: [0, '⚠️ El precio no puede ser negativo']
+          required: true,
+          min: 0
         }
       }
     ],
     total: {
       type: Number,
-      required: [true, '⚠️ El total es obligatorio'],
-      min: [0, '⚠️ El total no puede ser negativo']
+      required: true,
+      min: 0
     },
     nombreCliente: {
       type: String,
-      required: [true, '⚠️ El nombre del cliente es obligatorio'],
+      required: true,
       trim: true,
-      minlength: [2, '⚠️ El nombre debe tener al menos 2 caracteres'],
-      maxlength: [100, '⚠️ El nombre no debe exceder 100 caracteres']
+      minlength: 2,
+      maxlength: 100
     },
     nota: {
       type: String,
       default: '',
       trim: true,
-      maxlength: [300, '⚠️ La nota no debe superar 300 caracteres']
+      maxlength: 300
     },
     estado: {
       type: String,
@@ -47,7 +55,7 @@ const orderSchema = new mongoose.Schema(
     }
   },
   {
-    timestamps: true // Añade createdAt y updatedAt automáticamente
+    timestamps: true
   }
 );
 
