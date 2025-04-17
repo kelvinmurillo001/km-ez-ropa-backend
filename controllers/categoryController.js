@@ -8,13 +8,13 @@ const getAllCategories = async (req, res) => {
     const categories = await Category.find().sort({ name: 1 });
     res.json(categories);
   } catch (error) {
-    console.error('❌ Error al obtener categorías:', error.message || error);
+    console.error('❌ Error al obtener categorías:', error);
     res.status(500).json({ message: '❌ Error al obtener las categorías' });
   }
 };
 
 /**
- * ➕ Crear nueva categoría
+ * ➕ Crear nueva categoría con o sin subcategoría inicial
  */
 const createCategory = async (req, res) => {
   try {
@@ -40,7 +40,7 @@ const createCategory = async (req, res) => {
     await nuevaCategoria.save();
     res.status(201).json(nuevaCategoria);
   } catch (error) {
-    console.error('❌ Error creando categoría:', error.message || error);
+    console.error('❌ Error creando categoría:', error);
     res.status(500).json({ message: '❌ Error al crear la categoría' });
   }
 };
@@ -76,7 +76,7 @@ const addSubcategory = async (req, res) => {
 
     res.json({ message: '✅ Subcategoría agregada correctamente', category });
   } catch (error) {
-    console.error('❌ Error agregando subcategoría:', error.message || error);
+    console.error('❌ Error agregando subcategoría:', error);
     res.status(500).json({ message: '❌ Error al agregar la subcategoría' });
   }
 };
@@ -96,7 +96,7 @@ const deleteCategory = async (req, res) => {
     await category.deleteOne();
     res.json({ message: '✅ Categoría eliminada correctamente' });
   } catch (error) {
-    console.error('❌ Error eliminando categoría:', error.message || error);
+    console.error('❌ Error eliminando categoría:', error);
     res.status(500).json({ message: '❌ Error al eliminar la categoría' });
   }
 };
@@ -126,7 +126,7 @@ const deleteSubcategory = async (req, res) => {
 
     res.json({ message: '✅ Subcategoría eliminada correctamente', category });
   } catch (error) {
-    console.error('❌ Error eliminando subcategoría:', error.message || error);
+    console.error('❌ Error eliminando subcategoría:', error);
     res.status(500).json({ message: '❌ Error al eliminar la subcategoría' });
   }
 };
