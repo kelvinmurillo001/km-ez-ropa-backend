@@ -80,4 +80,10 @@ router.put(
  */
 router.get('/stats/ventas', authMiddleware, adminOnly, getOrderStats);
 
+/**
+ * 📊 Obtener resumen para el DASHBOARD (SOLO ADMIN)
+ * GET /api/orders/resumen
+ */
+router.get('/resumen', authMiddleware, adminOnly, getOrderStats); // <- ESTA LÍNEA AGREGA SOPORTE PARA EL DASHBOARD
+
 module.exports = router;

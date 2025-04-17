@@ -25,7 +25,7 @@ const createOrder = async (req, res) => {
       return res.status(400).json({ message: "⚠️ Total del pedido inválido." });
     }
 
-    // Validaciones opcionales pero útiles
+    // Validaciones opcionales
     if (email && !/^\S+@\S+\.\S+$/.test(email)) {
       return res.status(400).json({ message: "⚠️ Correo electrónico inválido." });
     }
@@ -34,7 +34,7 @@ const createOrder = async (req, res) => {
       return res.status(400).json({ message: "⚠️ Teléfono inválido." });
     }
 
-    // Crear pedido con toda la info
+    // Crear pedido
     const newOrder = new Order({
       items,
       total: totalParsed,
@@ -99,14 +99,40 @@ const actualizarEstadoPedido = async (req, res) => {
 };
 
 /**
- * 📊 Obtener estadísticas de pedidos (admin)
+ * 📊 Obtener resumen de estadísticas del dashboard (admin)
  */
 const getOrderStats = async (req, res) => {
   try {
-    const pedidos = await Order.find({ estado: "enviado" });
-    const ventasTotales = pedidos.reduce((sum, p) => sum + parseFloat(p.total || 0), 0);
+    const pedidos = await Order.find();
 
-    res.json({ ventasTotales: ventasTotales.toFixed(2) });
+    const hoy = new Date().setHours(0, 0, 0, 0);
+    let ventasTotales = 0;
+
+    const resumen = {
+      total: pedidos.length,
+      pendiente: 0,
+      en_proceso: 0,
+      enviado: 0,
+      cancelado: 0,
+      hoy: 0,
+      ventasTotales: 0,
+      totalVisitas: 0, // si lo implementas
+      totalProductos: 0, // lo puedes calcular desde otra colección
+      productosDestacados: 0 // por ahora estático
+    };
+
+    pedidos.forEach(p => {
+      const estado = (p.estado || "pendiente").toLowerCase();
+      if (resumen.hasOwnProperty(estado)) resumen[estado]++;
+      if (estado === "enviado") ventasTotales += parseFloat(p.total || 0);
+
+      const fechaPedido = new Date(p.createdAt).setHours(0, 0, 0, 0);
+      if (fechaPedido === hoy) resumen.hoy++;
+    });
+
+    resumen.ventasTotales = ventasTotales.toFixed(2);
+
+    res.json(resumen);
   } catch (error) {
     console.error("❌ Error obteniendo estadísticas de pedidos:", error);
     res.status(500).json({ message: "❌ Error al obtener estadísticas." });
