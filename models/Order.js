@@ -42,6 +42,19 @@ const orderSchema = new mongoose.Schema(
       minlength: 2,
       maxlength: 100
     },
+    email: {
+      type: String,
+      required: true,
+      trim: true,
+      match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, '⚠️ Email inválido']
+    },
+    telefono: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 7,
+      maxlength: 20
+    },
     nota: {
       type: String,
       default: '',

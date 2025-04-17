@@ -9,9 +9,9 @@ const createOrder = async (req, res) => {
   try {
     console.log("📩 Pedido recibido en backend:", req.body);
 
-    const { items, total, nombreCliente, nota } = req.body;
+    const { items, total, nombreCliente, nota, email, telefono } = req.body;
 
-    // Validaciones
+    // Validaciones básicas
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ message: "⚠️ El pedido debe contener al menos un producto." });
     }
@@ -25,11 +25,22 @@ const createOrder = async (req, res) => {
       return res.status(400).json({ message: "⚠️ Total del pedido inválido." });
     }
 
-    // Crear pedido
+    // Validaciones opcionales pero útiles
+    if (email && !/^\S+@\S+\.\S+$/.test(email)) {
+      return res.status(400).json({ message: "⚠️ Correo electrónico inválido." });
+    }
+
+    if (telefono && typeof telefono !== 'string') {
+      return res.status(400).json({ message: "⚠️ Teléfono inválido." });
+    }
+
+    // Crear pedido con toda la info
     const newOrder = new Order({
       items,
       total: totalParsed,
       nombreCliente: nombreCliente.trim(),
+      email: email?.trim() || '',
+      telefono: telefono?.trim() || '',
       nota: nota?.trim() || '',
       estado: 'pendiente'
     });
@@ -41,7 +52,7 @@ const createOrder = async (req, res) => {
     console.error("❌ Error creando pedido:", error);
     res.status(500).json({
       message: "❌ Error interno al crear el pedido.",
-      error: error.message, // 👈 ayuda a depurar
+      error: error.message,
     });
   }
 };
