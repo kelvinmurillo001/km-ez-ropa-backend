@@ -1,15 +1,26 @@
 const Promotion = require("../models/promotion");
 
 /**
- * 📥 Obtener la promoción activa más reciente
+ * 📥 Obtener promociones activas y vigentes (actuales)
  */
 const getPromotion = async (req, res) => {
   try {
-    const active = await Promotion.findOne({ active: true }).sort({ createdAt: -1 });
-    return res.json(active || null); // Devuelve null si no hay una activa
+    const now = new Date();
+
+    const activePromos = await Promotion.find({
+      active: true,
+      $or: [
+        { startDate: { $lte: now }, endDate: { $gte: now } },
+        { startDate: null, endDate: null },
+        { startDate: { $lte: now }, endDate: null },
+        { startDate: null, endDate: { $gte: now } }
+      ]
+    }).sort({ createdAt: -1 });
+
+    return res.json(activePromos);
   } catch (error) {
-    console.error("❌ Error al obtener promoción:", error);
-    return res.status(500).json({ message: "❌ Error al obtener promoción activa" });
+    console.error("❌ Error al obtener promociones:", error);
+    return res.status(500).json({ message: "❌ Error al obtener promociones activas" });
   }
 };
 
@@ -35,11 +46,6 @@ const updatePromotion = async (req, res) => {
 
     const isActive = active === true || active === 'true';
 
-    // 🚫 Desactivar otras promociones si se activa una nueva
-    if (isActive) {
-      await Promotion.updateMany({}, { active: false });
-    }
-
     const parsedStart = startDate ? new Date(startDate) : null;
     const parsedEnd = endDate ? new Date(endDate) : null;
 
@@ -51,30 +57,19 @@ const updatePromotion = async (req, res) => {
       return res.status(400).json({ message: "⚠️ Fecha de fin inválida" });
     }
 
-    let promo;
-    const existing = await Promotion.findOne();
+    const promo = new Promotion({
+      message: message.trim(),
+      active: isActive,
+      theme,
+      startDate: parsedStart,
+      endDate: parsedEnd,
+      createdBy: req.user?.username || "admin"
+    });
 
-    if (existing) {
-      // 🔄 Actualizar existente
-      existing.message = message.trim();
-      existing.active = isActive;
-      existing.theme = theme;
-      existing.startDate = parsedStart;
-      existing.endDate = parsedEnd;
-      promo = await existing.save();
-    } else {
-      // ➕ Crear nueva
-      promo = await Promotion.create({
-        message: message.trim(),
-        active: isActive,
-        theme,
-        startDate: parsedStart,
-        endDate: parsedEnd
-      });
-    }
+    await promo.save();
 
-    return res.status(200).json({
-      message: '✅ Promoción guardada exitosamente',
+    return res.status(201).json({
+      message: '✅ Promoción creada correctamente',
       data: promo
     });
 

@@ -15,13 +15,13 @@ const adminOnly = require('../middleware/adminOnly');
 // 📄 RUTAS DE PROMOCIONES
 
 /**
- * 🔓 Obtener la promoción activa (PÚBLICO)
+ * 🔓 Obtener promociones activas y vigentes (PÚBLICO)
  * GET /api/promotions
  */
 router.get('/', getPromotion);
 
 /**
- * 🔐 Actualizar o crear promoción actual (SOLO ADMIN)
+ * 🔐 Crear una nueva promoción (SOLO ADMIN)
  * PUT /api/promotions
  */
 router.put(
@@ -30,7 +30,7 @@ router.put(
   adminOnly,
   [
     body('message')
-      .optional()
+      .exists().withMessage('⚠️ El mensaje es obligatorio')
       .isString().withMessage('⚠️ El mensaje debe ser texto')
       .isLength({ min: 3 }).withMessage('⚠️ El mensaje debe tener al menos 3 caracteres'),
 
