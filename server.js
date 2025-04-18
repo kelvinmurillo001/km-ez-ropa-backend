@@ -47,13 +47,11 @@ app.use('/assets', express.static(assetsPath));
 app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
-app.use('/api/promos', require('./routes/promoRoutes'));
+app.use('/api/promos', require('./routes/promoRoutes')); // ✅ promociones correctamente conectadas
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/visitas', require('./routes/visitRoutes'));
 app.use('/api/stats', require('./routes/statsRoutes'));
 app.use('/api/uploads', require('./routes/uploadRoutes'));
-app.use('/api/promotions', require('./routes/promotionRoutes'));
-
 
 // 🧠 Ruta principal
 app.get('/', (req, res) => {
