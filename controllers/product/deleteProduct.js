@@ -1,18 +1,21 @@
 const Product = require('../../models/Product');
 const { cloudinary } = require('../../config/cloudinary');
 
+/**
+ * 🗑️ Eliminar un producto completo (incluye imágenes en Cloudinary)
+ */
 const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // 🔎 Buscar el producto
+    // 🔍 Buscar producto
     const product = await Product.findById(id);
     if (!product) {
       return res.status(404).json({ message: '❌ Producto no encontrado' });
     }
 
-    // 🧹 Eliminar imágenes principales de Cloudinary
-    if (product.images && product.images.length) {
+    // 🧹 Eliminar imágenes principales en Cloudinary
+    if (product.images?.length) {
       for (const img of product.images) {
         if (img.cloudinaryId) {
           await cloudinary.uploader.destroy(img.cloudinaryId);
@@ -20,19 +23,20 @@ const deleteProduct = async (req, res) => {
       }
     }
 
-    // 🧹 Eliminar imágenes de variantes
-    if (product.variants && product.variants.length) {
-      for (const v of product.variants) {
-        if (v.cloudinaryId) {
-          await cloudinary.uploader.destroy(v.cloudinaryId);
+    // 🧹 Eliminar imágenes de variantes en Cloudinary
+    if (product.variants?.length) {
+      for (const variant of product.variants) {
+        if (variant.cloudinaryId) {
+          await cloudinary.uploader.destroy(variant.cloudinaryId);
         }
       }
     }
 
-    // 🗑️ Eliminar el documento en MongoDB
+    // 🧽 Eliminar el producto de la base de datos
     await product.deleteOne();
 
     return res.status(200).json({ message: '✅ Producto eliminado correctamente' });
+
   } catch (error) {
     console.error('❌ Error eliminando producto:', error.message);
     return res.status(500).json({

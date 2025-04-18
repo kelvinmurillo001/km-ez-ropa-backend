@@ -1,7 +1,7 @@
 const Product = require('../../models/Product');
 
 /**
- * 📥 Obtener todos los productos visibles (público)
+ * 📥 Obtener todos los productos visibles (público o para panel admin)
  * @route GET /api/products
  */
 const getAllProducts = async (req, res) => {
@@ -9,14 +9,20 @@ const getAllProducts = async (req, res) => {
     const products = await Product.find({
       name: { $exists: true, $ne: "" },
       price: { $exists: true, $gt: 0 }
-      // 🔥 Eliminamos temporalmente el filtro de imágenes
-    }).sort({ createdAt: -1 }).lean();
+      // 📸 Filtro de imágenes puede agregarse si se requiere en el futuro
+    })
+      .sort({ createdAt: -1 }) // 🕒 Más recientes primero
+      .lean(); // ✅ Objeto plano, más eficiente
 
-    console.log("✅ Productos encontrados:", products.length);
+    console.log(`✅ ${products.length} productos encontrados`);
     res.status(200).json(products);
+
   } catch (error) {
     console.error("❌ Error al obtener productos:", error.message);
-    res.status(500).json({ message: '❌ Error del servidor al obtener productos' });
+    res.status(500).json({
+      message: '❌ Error del servidor al obtener productos',
+      error: error.message
+    });
   }
 };
 
