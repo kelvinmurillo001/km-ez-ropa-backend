@@ -52,6 +52,8 @@ app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/visitas', require('./routes/visitRoutes'));
 app.use('/api/stats', require('./routes/statsRoutes'));
 app.use('/api/uploads', require('./routes/uploadRoutes'));
+app.use('/api/promotions', require('./routes/promotionRoutes'));
+
 
 // 🧠 Ruta principal
 app.get('/', (req, res) => {
