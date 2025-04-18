@@ -1,6 +1,6 @@
 "use strict";
 
-import { verificarSesion, goBack, mostrarMensaje } from "./admin-utils.js";
+//import { verificarSesion, goBack, mostrarMensaje } from "./admin-utils.js";
 import { API_BASE } from "./config.js";
 
 // 🔐 Verificar sesión
