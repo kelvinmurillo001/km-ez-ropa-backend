@@ -1,31 +1,20 @@
-// 🌐 Dependencias principales
+// 🌐 Dependencias principales 
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const dotenv = require('dotenv');
 const path = require('path');
 
-// ⚙️ Configuración inicial del entorno
-dotenv.config();
-const app = express();
-const PORT = process.env.PORT || 5000;
+// ⚙️ Configuración central
+const config = require('./config/configuracionesito');
 
-// 🛑 Validación crítica: conexión a MongoDB
-if (!process.env.MONGO_URI) {
-  console.error("❌ ERROR: Falta MONGO_URI en el archivo .env");
-  process.exit(1);
-}
+const app = express();
 
 // 🔐 CORS configurado para permitir origenes válidos
-const allowedOrigins = [
-  'https://km-ez-ropa-frontend.onrender.com',
-  'http://localhost:3000'
-];
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || config.allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('❌ CORS no permitido'));
@@ -68,11 +57,11 @@ const errorHandler = require('./middleware/errorHandler');
 app.use(errorHandler);
 
 // 🚀 Conexión y arranque del servidor
-mongoose.connect(process.env.MONGO_URI)
+mongoose.connect(config.mongoUri)
   .then(() => {
     console.log('✅ Conectado exitosamente a MongoDB');
-    app.listen(PORT, () => {
-      console.log(`🚀 Servidor activo en: http://localhost:${PORT}`);
+    app.listen(config.port, () => {
+      console.log(`🚀 Servidor activo en: http://localhost:${config.port}`);
     });
   })
   .catch(err => {

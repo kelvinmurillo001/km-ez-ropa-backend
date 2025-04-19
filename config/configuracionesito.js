@@ -1,5 +1,20 @@
 // backend/config/configuracionesito.js
-rrequire("dotenv").config();
+require("dotenv").config();
+
+// ✅ Validación mínima
+const requiredVars = [
+  "PORT",
+  "MONGO_URI",
+  "JWT_SECRET",
+  "ADMIN_USER",
+  "ADMIN_PASS"
+];
+
+const missing = requiredVars.filter(key => !process.env[key]);
+if (missing.length > 0) {
+  console.error(`❌ Faltan las siguientes variables de entorno: ${missing.join(', ')}`);
+  process.exit(1);
+}
 
 module.exports = {
   port: process.env.PORT || 5000,
@@ -10,10 +25,5 @@ module.exports = {
   allowedOrigins: [
     'https://km-ez-ropa-frontend.onrender.com',
     'http://localhost:3000'
-  ],
-  cloudinary: {
-    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
-    apiKey: process.env.CLOUDINARY_API_KEY,
-    apiSecret: process.env.CLOUDINARY_API_SECRET
-  }
+  ]
 };
