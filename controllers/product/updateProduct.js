@@ -6,6 +6,7 @@ const { validationResult } = require('express-validator');
  * ✏️ Actualizar producto existente
  */
 const updateProduct = async (req, res) => {
+  // ✅ Validación de errores con express-validator
   const errores = validationResult(req);
   if (!errores.isEmpty()) {
     return res.status(400).json({ errors: errores.array() });
@@ -25,13 +26,16 @@ const updateProduct = async (req, res) => {
       images = []
     } = req.body;
 
+    // ✅ Buscar producto existente
     const product = await Product.findById(id);
-    if (!product) return res.status(404).json({ message: "❌ Producto no encontrado" });
+    if (!product) {
+      return res.status(404).json({ message: "❌ Producto no encontrado" });
+    }
 
-    // 📸 Procesar imagen principal si hay nueva
+    // 📸 Procesar imagen principal si se incluye nueva
     let processedImages = product.images;
 
-    if (Array.isArray(images) && images.length > 0) {
+    if (Array.isArray(images) && images.length === 1) {
       const mainImage = images[0];
 
       if (!mainImage.url || !mainImage.talla || !mainImage.color || !mainImage.cloudinaryId) {
@@ -40,7 +44,7 @@ const updateProduct = async (req, res) => {
         });
       }
 
-      // 🗑️ Borrar anteriores
+      // 🗑️ Borrar imágenes anteriores de Cloudinary
       for (const img of product.images) {
         if (img.cloudinaryId) {
           await cloudinary.uploader.destroy(img.cloudinaryId);
@@ -53,9 +57,13 @@ const updateProduct = async (req, res) => {
         talla: mainImage.talla.trim().toLowerCase(),
         color: mainImage.color.trim().toLowerCase()
       }];
+    } else if (images.length > 1) {
+      return res.status(400).json({
+        message: "⚠️ Solo se permite una imagen principal"
+      });
     }
 
-    // 🎨 Procesar variantes si se mandan nuevas
+    // 👕 Procesar variantes si se incluyen nuevas
     let processedVariants = product.variants;
 
     if (Array.isArray(variants) && variants.length > 0) {
@@ -63,7 +71,7 @@ const updateProduct = async (req, res) => {
         return res.status(400).json({ message: "⚠️ Solo se permiten hasta 4 variantes" });
       }
 
-      // 🗑️ Borrar variantes anteriores
+      // 🗑️ Borrar imágenes anteriores de las variantes
       for (const variant of product.variants) {
         if (variant.cloudinaryId) {
           await cloudinary.uploader.destroy(variant.cloudinaryId);
@@ -71,7 +79,7 @@ const updateProduct = async (req, res) => {
       }
 
       const seen = new Set();
-      processedVariants = variants.map(v => {
+      processedVariants = variants.map((v) => {
         if (!v.imageUrl || !v.talla || !v.color) {
           throw new Error("⚠️ Cada variante debe tener imagen, talla y color");
         }
@@ -87,18 +95,18 @@ const updateProduct = async (req, res) => {
           cloudinaryId: v.cloudinaryId?.trim() || "",
           talla: v.talla.trim().toLowerCase(),
           color: v.color.trim().toLowerCase(),
-          stock: typeof v.stock === "number" ? v.stock : 0
+          stock: typeof v.stock === "number" && v.stock >= 0 ? v.stock : 0
         };
       });
     }
 
-    // 📝 Actualizar campos
+    // 📝 Actualizar campos si fueron enviados
     if (name) product.name = name.trim();
-    if (price !== undefined && typeof price === "number") product.price = price;
+    if (price !== undefined && !isNaN(price)) product.price = Number(price);
     if (category) product.category = category.trim().toLowerCase();
     if (subcategory) product.subcategory = subcategory.trim().toLowerCase();
     if (tallaTipo) product.tallaTipo = tallaTipo.trim().toLowerCase();
-    if (stock !== undefined && typeof stock === "number") product.stock = stock;
+    if (stock !== undefined && !isNaN(stock)) product.stock = Number(stock);
 
     product.featured = featured === true || featured === "true";
     product.images = processedImages;
@@ -106,8 +114,8 @@ const updateProduct = async (req, res) => {
     product.updatedBy = req.user?.username || "admin";
 
     const updated = await product.save();
-    return res.status(200).json(updated);
 
+    return res.status(200).json(updated);
   } catch (error) {
     console.error("❌ Error actualizando producto:", error.message);
     return res.status(500).json({

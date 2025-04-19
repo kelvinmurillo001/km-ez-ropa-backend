@@ -1,10 +1,11 @@
 "use strict";
 
-import { verificarSesion, goBack, mostrarMensaje } from "./admin-utils.js";
+import { verificarSesion, goBack, mostrarMensaje, getUsuarioActivo } from "./admin-utils.js";
 import { API_BASE } from "./config.js";
 
 // 🔐 Verificar sesión
 const token = verificarSesion();
+const user = getUsuarioActivo();
 
 // 🔗 Endpoints
 const API_PRODUCTS = `${API_BASE}/api/products`;
@@ -39,6 +40,7 @@ const tallasPorTipo = {
 document.addEventListener("DOMContentLoaded", async () => {
   await cargarCategorias();
   agregarVariante();
+
   if (localStorage.getItem("modoOscuro") === "true") {
     document.body.classList.add("modo-oscuro");
   }
@@ -201,7 +203,7 @@ form.addEventListener("submit", async e => {
         talla: tallas[0] || "única",
         color: color
       }],
-      createdBy: "admin" // ✅ IMPORTANTE: Coincide con el schema
+      createdBy: user?.name || "admin"
     };
 
     msgEstado.textContent = "⏳ Guardando producto...";
