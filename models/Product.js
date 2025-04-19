@@ -18,7 +18,7 @@ const variantSchema = new mongoose.Schema({
     type: String,
     required: [true, "⚠️ La imagen de la variante es obligatoria"],
     trim: true,
-    match: [/^https?:\/\/.+\.(jpg|jpeg|png|webp|gif)$/i, "⚠️ URL de imagen inválida"]
+    match: [/^https?:\/\/.+\.(jpg|jpeg|png|webp|gif|svg|avif)$/i, "⚠️ URL de imagen inválida"]
   },
   cloudinaryId: {
     type: String,
@@ -83,7 +83,7 @@ const productSchema = new mongoose.Schema({
         type: String,
         required: [true, "⚠️ La imagen principal necesita una URL"],
         trim: true,
-        match: [/^https?:\/\/.+\.(jpg|jpeg|png|webp|gif)$/i, "⚠️ URL inválida"]
+        match: [/^https?:\/\/.+\.(jpg|jpeg|png|webp|gif|svg|avif)$/i, "⚠️ URL inválida"]
       },
       cloudinaryId: {
         type: String,
@@ -137,7 +137,8 @@ const productSchema = new mongoose.Schema({
   createdBy: {
     type: String,
     required: [true, "⚠️ Campo createdBy requerido"],
-    trim: true
+    trim: true,
+    default: "admin" // ✅ Default preventivo
   },
   updatedBy: {
     type: String,

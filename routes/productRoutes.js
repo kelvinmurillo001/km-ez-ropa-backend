@@ -47,7 +47,8 @@ router.post(
       .notEmpty().withMessage('⚠️ La categoría es obligatoria'),
 
     body('subcategory')
-      .notEmpty().withMessage('⚠️ La subcategoría es obligatoria'),
+      .optional({ checkFalsy: true })
+      .isString().withMessage('⚠️ Subcategoría inválida'),
 
     body('tallaTipo')
       .notEmpty().withMessage('⚠️ El tipo de talla es obligatorio'),
