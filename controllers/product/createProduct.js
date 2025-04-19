@@ -1,17 +1,17 @@
 "use strict";
 
-//import { verificarSesion, goBack, mostrarMensaje } from "./admin-utils.js";
+import { verificarSesion, goBack, mostrarMensaje } from "./admin-utils.js";
 import { API_BASE } from "./config.js";
 
 // 🔐 Verificar sesión
 const token = verificarSesion();
 
-// Endpoints
+// 🔗 Endpoints
 const API_PRODUCTS = `${API_BASE}/api/products`;
 const API_CATEGORIES = `${API_BASE}/api/categories`;
 const API_UPLOADS = `${API_BASE}/api/uploads`;
 
-// DOM Elements
+// 🔧 DOM Elements
 const form = document.getElementById("formProducto");
 const imagenInput = document.getElementById("imagenPrincipalInput");
 const previewPrincipal = document.getElementById("previewPrincipal");
@@ -26,15 +26,7 @@ const msgEstado = document.getElementById("msgEstado");
 let variantes = [];
 let categoriasConSubcategorias = [];
 
-document.addEventListener("DOMContentLoaded", async () => {
-  await cargarCategorias();
-  agregarVariante();
-  if (localStorage.getItem("modoOscuro") === "true") {
-    document.body.classList.add("modo-oscuro");
-  }
-});
-
-// 🎯 Predefinir tallas por tipo
+// 🎯 Tallas por tipo
 const tallasPorTipo = {
   adulto: ["S", "M", "L", "XL", "XXL", "XXXL"],
   joven: ["S", "M", "L", "XL"],
@@ -43,17 +35,22 @@ const tallasPorTipo = {
   bebé: ["0-3", "3-6", "6-9", "9-12", "12-18", "18-24"]
 };
 
-// 👕 Cambiar tallas automáticas según tipo
-tallaTipoInput.addEventListener("change", () => {
-  const tipo = tallaTipoInput.value.toLowerCase();
-  if (tallasPorTipo[tipo]) {
-    tallasInput.value = tallasPorTipo[tipo].join(", ");
-  } else {
-    tallasInput.value = "";
+// 🚀 Inicialización
+document.addEventListener("DOMContentLoaded", async () => {
+  await cargarCategorias();
+  agregarVariante();
+  if (localStorage.getItem("modoOscuro") === "true") {
+    document.body.classList.add("modo-oscuro");
   }
 });
 
-// 📷 Vista previa imagen principal
+// 🧠 Autocompletar tallas según tipo
+tallaTipoInput.addEventListener("change", () => {
+  const tipo = tallaTipoInput.value.toLowerCase();
+  tallasInput.value = tallasPorTipo[tipo]?.join(", ") || "";
+});
+
+// 📷 Imagen principal: vista previa
 imagenInput.addEventListener("change", () => {
   const file = imagenInput.files[0];
   if (!file) return;
@@ -72,14 +69,12 @@ async function cargarCategorias() {
     if (!res.ok || !Array.isArray(data)) throw new Error();
 
     categoriasConSubcategorias = data;
-
     categoriaInput.innerHTML = `<option value="">Selecciona categoría</option>` +
       data.map(cat => `<option value="${cat.name}">${cat.name}</option>`).join("");
 
     categoriaInput.addEventListener("change", () => {
       const seleccionada = categoriaInput.value;
       const categoria = categoriasConSubcategorias.find(cat => cat.name === seleccionada);
-
       if (categoria?.subcategories?.length) {
         subcategoriaInput.innerHTML = `<option value="">Selecciona subcategoría</option>` +
           categoria.subcategories.map(sub => `<option value="${sub}">${sub}</option>`).join("");
@@ -96,7 +91,7 @@ async function cargarCategorias() {
   }
 }
 
-// ➕ Variantes
+// ➕ Agregar variante
 btnAgregarVariante.addEventListener("click", () => agregarVariante());
 
 function agregarVariante() {
@@ -106,16 +101,12 @@ function agregarVariante() {
   div.innerHTML = `
     <label>Color Variante (nombre):</label>
     <input type="text" name="colorVariante${index}" placeholder="Ej: rojo, gris" required />
-
     <label>Talla:</label>
     <input type="text" name="tallaVariante${index}" placeholder="Ej: M" required />
-
     <label>Imagen:</label>
     <input type="file" name="imagenVariante${index}" accept="image/*" required />
-
     <label>Stock:</label>
     <input type="number" name="stockVariante${index}" min="0" value="0" required />
-
     <button type="button" class="btn-secundario" onclick="this.parentElement.remove()">❌ Quitar</button>
     <hr />
   `;
@@ -123,7 +114,7 @@ function agregarVariante() {
   variantes.push(index);
 }
 
-// ☁️ Subida de imagen
+// ☁️ Subir imagen
 async function subirImagen(file) {
   const formData = new FormData();
   formData.append("image", file);
@@ -143,7 +134,7 @@ async function subirImagen(file) {
   };
 }
 
-// 📤 Guardar producto
+// 📤 Enviar producto
 form.addEventListener("submit", async e => {
   e.preventDefault();
 
@@ -154,8 +145,8 @@ form.addEventListener("submit", async e => {
   const categoria = categoriaInput.value;
   const subcategoria = subcategoriaInput?.value || null;
   const tallaTipo = tallaTipoInput.value;
-  const destacado = document.getElementById("destacadoInput")?.checked || false;
   const color = form.colorInput.value.trim();
+  const destacado = document.getElementById("destacadoInput")?.checked || false;
   const tallas = tallasInput.value.split(",").map(t => t.trim()).filter(Boolean);
   const filePrincipal = imagenInput.files[0];
 
@@ -168,7 +159,6 @@ form.addEventListener("submit", async e => {
     const imagenPrincipal = await subirImagen(filePrincipal);
 
     const variantesFinales = [];
-
     for (const v of variantesContainer.querySelectorAll(".variante-item")) {
       const colorInput = v.querySelector("input[name^='color']");
       const tallaInput = v.querySelector("input[name^='talla']");
@@ -200,7 +190,7 @@ form.addEventListener("submit", async e => {
       stock,
       category: categoria,
       subcategory: subcategoria,
-      tallaTipo: tallaTipo,
+      tallaTipo,
       color,
       sizes: tallas,
       featured: destacado,

@@ -1,4 +1,4 @@
-// 🌐 Dependencias 
+// 🌐 Dependencias principales
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -7,18 +7,18 @@ const morgan = require('morgan');
 const dotenv = require('dotenv');
 const path = require('path');
 
-// ⚙️ Configuración inicial
+// ⚙️ Configuración inicial del entorno
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// 🛑 Validación de entorno
+// 🛑 Validación crítica: conexión a MongoDB
 if (!process.env.MONGO_URI) {
-  console.error("❌ MONGO_URI no definido en .env");
+  console.error("❌ ERROR: Falta MONGO_URI en el archivo .env");
   process.exit(1);
 }
 
-// 🔐 CORS (ampliado para permitir más dominios en desarrollo o producción)
+// 🔐 CORS configurado para permitir origenes válidos
 const allowedOrigins = [
   'https://km-ez-ropa-frontend.onrender.com',
   'http://localhost:3000'
@@ -34,45 +34,45 @@ app.use(cors({
   credentials: true
 }));
 
-// 🧱 Middlewares
+// 🧱 Middlewares útiles para seguridad y logging
 app.use(express.json({ limit: '5mb' }));
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(morgan('dev'));
 
-// 🖼️ Archivos estáticos (servir imágenes desde /assets)
+// 🖼️ Servir imágenes o recursos estáticos desde carpeta 'frontend/assets'
 const assetsPath = path.join(__dirname, 'frontend', 'assets');
 app.use('/assets', express.static(assetsPath));
 
-// 🔗 Rutas de la API
+// 🔗 Rutas API (divididas por módulos)
 app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
-app.use('/api/promos', require('./routes/promoRoutes')); // ✅ promociones correctamente conectadas
+app.use('/api/promos', require('./routes/promoRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/visitas', require('./routes/visitRoutes'));
 app.use('/api/stats', require('./routes/statsRoutes'));
 app.use('/api/uploads', require('./routes/uploadRoutes'));
 
-// 🧠 Ruta principal
+// ✅ Ruta de prueba para asegurar que todo esté OK
 app.get('/', (req, res) => {
   res.send('🧠 Backend KM-EZ-Ropa funcionando correctamente 🚀');
 });
 
-// ❌ Ruta no encontrada
+// ❌ Manejador de rutas inexistentes
 app.use('*', (req, res) => {
   res.status(404).json({ message: '❌ Ruta no encontrada' });
 });
 
-// 🛡️ Manejador global de errores
+// 🛡️ Manejador global de errores personalizado
 const errorHandler = require('./middleware/errorHandler');
 app.use(errorHandler);
 
-// 🚀 Conexión a MongoDB
+// 🚀 Conexión y arranque del servidor
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
-    console.log('✅ Conectado a MongoDB');
+    console.log('✅ Conectado exitosamente a MongoDB');
     app.listen(PORT, () => {
-      console.log(`🚀 Servidor en http://localhost:${PORT}`);
+      console.log(`🚀 Servidor activo en: http://localhost:${PORT}`);
     });
   })
   .catch(err => {
