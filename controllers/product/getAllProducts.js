@@ -2,17 +2,35 @@ const Product = require('../../models/Product');
 
 /**
  * 📥 Obtener todos los productos visibles (público o para panel admin)
- * @route GET /api/products
+ * ✅ Soporta filtros:
+ * - nombre: búsqueda parcial por nombre (case-insensitive)
+ * - categoria: categoría exacta
+ * 
+ * @route GET /api/products?nombre=camisa&categoria=hombres
  */
 const getAllProducts = async (req, res) => {
   try {
-    const products = await Product.find({
+    const { nombre, categoria } = req.query;
+
+    // 🎯 Filtro base
+    const filtro = {
       name: { $exists: true, $ne: "" },
       price: { $exists: true, $gt: 0 }
-      // 📸 Filtro de imágenes puede agregarse si se requiere en el futuro
-    })
-      .sort({ createdAt: -1 }) // 🕒 Más recientes primero
-      .lean(); // ✅ Objeto plano, más eficiente
+    };
+
+    // 🔍 Búsqueda por nombre (parcial)
+    if (nombre && nombre.trim()) {
+      filtro.name = { $regex: new RegExp(nombre.trim(), "i") };
+    }
+
+    // 🎯 Filtro por categoría
+    if (categoria && categoria.trim()) {
+      filtro.category = categoria.trim().toLowerCase();
+    }
+
+    const products = await Product.find(filtro)
+      .sort({ createdAt: -1 })
+      .lean();
 
     console.log(`✅ ${products.length} productos encontrados`);
     res.status(200).json(products);
