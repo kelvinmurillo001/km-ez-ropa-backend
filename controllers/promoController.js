@@ -25,7 +25,7 @@ const getPromotion = async (req, res) => {
 };
 
 /**
- * 💾 Crear o actualizar promoción
+ * 💾 Crear o actualizar promoción (una a la vez)
  */
 const updatePromotion = async (req, res) => {
   try {
@@ -34,18 +34,30 @@ const updatePromotion = async (req, res) => {
       active = false,
       theme = 'blue',
       startDate,
-      endDate
+      endDate,
+      mediaUrl = null,
+      mediaType = null,
+      pages = [],
+      position = 'top'
     } = req.body;
 
-    // 🛡️ Validación básica
+    // 🛡️ Validaciones básicas
     if (!message || typeof message !== 'string' || message.trim().length < 3) {
       return res.status(400).json({
         message: "⚠️ El mensaje de la promoción es obligatorio y debe tener al menos 3 caracteres"
       });
     }
 
-    const isActive = active === true || active === 'true';
+    if (mediaType && !['image', 'video'].includes(mediaType)) {
+      return res.status(400).json({ message: "⚠️ mediaType debe ser 'image' o 'video'" });
+    }
 
+    const allowedPages = ['home', 'categorias', 'productos', 'checkout', 'panel'];
+    if (!Array.isArray(pages) || pages.some(p => !allowedPages.includes(p))) {
+      return res.status(400).json({ message: "⚠️ Página inválida en pages[]" });
+    }
+
+    const isActive = active === true || active === 'true';
     const parsedStart = startDate ? new Date(startDate) : null;
     const parsedEnd = endDate ? new Date(endDate) : null;
 
@@ -57,12 +69,17 @@ const updatePromotion = async (req, res) => {
       return res.status(400).json({ message: "⚠️ Fecha de fin inválida" });
     }
 
+    // ✅ Guardar nueva promoción
     const promo = new Promotion({
       message: message.trim(),
       active: isActive,
       theme,
       startDate: parsedStart,
       endDate: parsedEnd,
+      mediaUrl,
+      mediaType,
+      pages,
+      position,
       createdBy: req.user?.username || "admin"
     });
 

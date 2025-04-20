@@ -15,14 +15,14 @@ const adminOnly = require('../middleware/adminOnly');
 // 📄 RUTAS DE PROMOCIONES
 
 /**
- * 🔓 Obtener promociones activas y vigentes (PÚBLICO)
- * GET /api/promotions
+ * 🔓 Obtener promoción activa (PÚBLICO)
+ * GET /api/promos
  */
 router.get('/', getPromotion);
 
 /**
- * 🔐 Crear una nueva promoción (SOLO ADMIN)
- * PUT /api/promotions
+ * 🔐 Crear/actualizar promoción (SOLO ADMIN)
+ * PUT /api/promos
  */
 router.put(
   '/',
@@ -48,7 +48,29 @@ router.put(
 
     body('endDate')
       .optional()
-      .isISO8601().withMessage('⚠️ Fecha de fin inválida')
+      .isISO8601().withMessage('⚠️ Fecha de fin inválida'),
+
+    // ✅ Media opcional
+    body('mediaUrl')
+      .optional()
+      .isString().withMessage('⚠️ mediaUrl debe ser texto'),
+
+    body('mediaType')
+      .optional()
+      .isIn(['image', 'video']).withMessage('⚠️ mediaType debe ser "image" o "video"'),
+
+    // ✅ Páginas donde se muestra
+    body('pages')
+      .optional()
+      .isArray({ min: 1 }).withMessage('⚠️ Debes seleccionar al menos una página'),
+
+    body('pages.*')
+      .isIn(['home', 'categorias', 'productos', 'checkout', 'panel']).withMessage('⚠️ Página no válida'),
+
+    // ✅ Posición en pantalla
+    body('position')
+      .optional()
+      .isIn(['top', 'middle', 'bottom']).withMessage('⚠️ Posición no válida')
   ],
   updatePromotion
 );

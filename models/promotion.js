@@ -35,6 +35,30 @@ const promotionSchema = new mongoose.Schema(
       default: null
     },
 
+    // 🖼️ Soporte multimedia
+    mediaUrl: {
+      type: String,
+      default: null
+    },
+    mediaType: {
+      type: String,
+      enum: ['image', 'video', null],
+      default: null
+    },
+
+    // 📄 Páginas donde se mostrará esta promo
+    pages: {
+      type: [String], // Ejemplo: ['home', 'categorias', 'checkout']
+      default: []
+    },
+
+    // 🧭 Posición del bloque de promoción dentro de la página
+    position: {
+      type: String,
+      enum: ['top', 'middle', 'bottom'],
+      default: 'top'
+    },
+
     // ✍️ Usuario que creó la promo
     createdBy: {
       type: String,
