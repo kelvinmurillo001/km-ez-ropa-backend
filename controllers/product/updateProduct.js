@@ -6,7 +6,7 @@ const { validationResult } = require('express-validator');
  * ✏️ Actualizar producto existente
  */
 const updateProduct = async (req, res) => {
-  // ✅ Validación de errores con express-validator
+  // ✅ Validar errores
   const errores = validationResult(req);
   if (!errores.isEmpty()) {
     return res.status(400).json({ errors: errores.array() });
@@ -26,25 +26,27 @@ const updateProduct = async (req, res) => {
       images = []
     } = req.body;
 
-    // ✅ Buscar producto existente
     const product = await Product.findById(id);
     if (!product) {
       return res.status(404).json({ message: "❌ Producto no encontrado" });
     }
 
-    // 📸 Procesar imagen principal si se incluye nueva
+    // =========================
+    // 📸 Imagen Principal
+    // =========================
     let processedImages = product.images;
 
     if (Array.isArray(images) && images.length === 1) {
       const mainImage = images[0];
+      const { url, cloudinaryId, talla, color } = mainImage;
 
-      if (!mainImage.url || !mainImage.talla || !mainImage.color || !mainImage.cloudinaryId) {
+      if (!url || !cloudinaryId || !talla || !color) {
         return res.status(400).json({
-          message: "⚠️ La nueva imagen principal debe incluir URL, talla, color y cloudinaryId"
+          message: "⚠️ La imagen principal requiere url, cloudinaryId, talla y color"
         });
       }
 
-      // 🗑️ Borrar imágenes anteriores de Cloudinary
+      // 🧹 Limpiar imagen anterior
       for (const img of product.images) {
         if (img.cloudinaryId) {
           await cloudinary.uploader.destroy(img.cloudinaryId);
@@ -52,55 +54,59 @@ const updateProduct = async (req, res) => {
       }
 
       processedImages = [{
-        url: mainImage.url.trim(),
-        cloudinaryId: mainImage.cloudinaryId.trim(),
-        talla: mainImage.talla.trim().toLowerCase(),
-        color: mainImage.color.trim().toLowerCase()
+        url: url.trim(),
+        cloudinaryId: cloudinaryId.trim(),
+        talla: talla.trim().toLowerCase(),
+        color: color.trim().toLowerCase()
       }];
     } else if (images.length > 1) {
-      return res.status(400).json({
-        message: "⚠️ Solo se permite una imagen principal"
-      });
+      return res.status(400).json({ message: "⚠️ Solo se permite una imagen principal" });
     }
 
-    // 👕 Procesar variantes si se incluyen nuevas
+    // =========================
+    // 👕 Variantes
+    // =========================
     let processedVariants = product.variants;
 
     if (Array.isArray(variants) && variants.length > 0) {
       if (variants.length > 4) {
-        return res.status(400).json({ message: "⚠️ Solo se permiten hasta 4 variantes" });
-      }
-
-      // 🗑️ Borrar imágenes anteriores de las variantes
-      for (const variant of product.variants) {
-        if (variant.cloudinaryId) {
-          await cloudinary.uploader.destroy(variant.cloudinaryId);
-        }
+        return res.status(400).json({ message: "⚠️ Máximo 4 variantes permitidas" });
       }
 
       const seen = new Set();
-      processedVariants = variants.map((v) => {
-        if (!v.imageUrl || !v.talla || !v.color) {
-          throw new Error("⚠️ Cada variante debe tener imagen, talla y color");
-        }
+      processedVariants = [];
 
-        const key = `${v.talla.trim().toLowerCase()}-${v.color.trim().toLowerCase()}`;
+      // 🧹 Eliminar variantes anteriores
+      for (const v of product.variants) {
+        if (v.cloudinaryId) {
+          await cloudinary.uploader.destroy(v.cloudinaryId);
+        }
+      }
+
+      for (const v of variants) {
+        const key = `${v.talla?.trim().toLowerCase()}-${v.color?.trim().toLowerCase()}`;
         if (seen.has(key)) {
-          throw new Error("⚠️ No puede haber variantes duplicadas (talla + color)");
+          return res.status(400).json({ message: "⚠️ Variantes duplicadas (talla + color)" });
         }
         seen.add(key);
 
-        return {
+        if (!v.imageUrl || !v.talla || !v.color || !v.cloudinaryId) {
+          return res.status(400).json({ message: "⚠️ Cada variante debe tener todos sus campos completos" });
+        }
+
+        processedVariants.push({
           imageUrl: v.imageUrl.trim(),
-          cloudinaryId: v.cloudinaryId?.trim() || "",
+          cloudinaryId: v.cloudinaryId.trim(),
           talla: v.talla.trim().toLowerCase(),
           color: v.color.trim().toLowerCase(),
           stock: typeof v.stock === "number" && v.stock >= 0 ? v.stock : 0
-        };
-      });
+        });
+      }
     }
 
-    // 📝 Actualizar campos si fueron enviados
+    // =========================
+    // 📝 Campos base
+    // =========================
     if (name) product.name = name.trim();
     if (price !== undefined && !isNaN(price)) product.price = Number(price);
     if (category) product.category = category.trim().toLowerCase();
@@ -116,6 +122,7 @@ const updateProduct = async (req, res) => {
     const updated = await product.save();
 
     return res.status(200).json(updated);
+
   } catch (error) {
     console.error("❌ Error actualizando producto:", error.message);
     return res.status(500).json({

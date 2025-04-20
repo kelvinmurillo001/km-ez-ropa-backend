@@ -81,6 +81,9 @@ const updatePromotion = async (req, res) => {
       return res.status(400).json({ message: "⚠️ Fecha de fin inválida" });
     }
 
+    // 🚫 Eliminar promociones anteriores si solo debe haber una vigente (opcional)
+    await Promotion.deleteMany({});
+
     const promo = new Promotion({
       message: message.trim(),
       active: isActive,

@@ -1,5 +1,5 @@
 const express = require('express');
-const { body } = require('express-validator');
+const { body, param } = require('express-validator');
 const router = express.Router();
 
 // 📢 Controladores
@@ -85,12 +85,28 @@ router.put(
  * 🔁 Activar/Desactivar promoción
  * PATCH /api/promos/:id/estado
  */
-router.patch('/:id/estado', authMiddleware, adminOnly, togglePromoActive);
+router.patch(
+  '/:id/estado',
+  authMiddleware,
+  adminOnly,
+  [
+    param('id').isMongoId().withMessage('⚠️ ID inválido')
+  ],
+  togglePromoActive
+);
 
 /**
  * 🗑️ Eliminar promoción
  * DELETE /api/promos/:id
  */
-router.delete('/:id', authMiddleware, adminOnly, deletePromotion);
+router.delete(
+  '/:id',
+  authMiddleware,
+  adminOnly,
+  [
+    param('id').isMongoId().withMessage('⚠️ ID inválido')
+  ],
+  deletePromotion
+);
 
 module.exports = router;

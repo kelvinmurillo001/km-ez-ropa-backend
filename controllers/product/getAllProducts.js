@@ -5,12 +5,14 @@ const Product = require('../../models/Product');
  * ✅ Soporta filtros:
  * - nombre: búsqueda parcial por nombre (case-insensitive)
  * - categoria: categoría exacta
- * 
- * @route GET /api/products?nombre=camisa&categoria=hombres
+ * - subcategoria: subcategoría exacta
+ * - precioMin / precioMax: rango de precio
+ *
+ * @route GET /api/products?nombre=camisa&categoria=hombres&subcategoria=basicas&precioMin=10&precioMax=50
  */
 const getAllProducts = async (req, res) => {
   try {
-    const { nombre, categoria } = req.query;
+    const { nombre, categoria, subcategoria, precioMin, precioMax } = req.query;
 
     // 🎯 Filtro base
     const filtro = {
@@ -18,21 +20,33 @@ const getAllProducts = async (req, res) => {
       price: { $exists: true, $gt: 0 }
     };
 
-    // 🔍 Búsqueda por nombre (parcial)
+    // 🔍 Filtro por nombre (búsqueda parcial e insensible a mayúsculas)
     if (nombre && nombre.trim()) {
       filtro.name = { $regex: new RegExp(nombre.trim(), "i") };
     }
 
-    // 🎯 Filtro por categoría
+    // 🎯 Filtro por categoría exacta
     if (categoria && categoria.trim()) {
       filtro.category = categoria.trim().toLowerCase();
     }
 
-    const products = await Product.find(filtro)
-      .sort({ createdAt: -1 })
-      .lean();
+    // 🧩 Filtro por subcategoría exacta
+    if (subcategoria && subcategoria.trim()) {
+      filtro.subcategory = subcategoria.trim().toLowerCase();
+    }
 
-    console.log(`✅ ${products.length} productos encontrados`);
+    // 💰 Filtro por rango de precio
+    if (!isNaN(precioMin) || !isNaN(precioMax)) {
+      filtro.price = {};
+      if (!isNaN(precioMin)) filtro.price.$gte = parseFloat(precioMin);
+      if (!isNaN(precioMax)) filtro.price.$lte = parseFloat(precioMax);
+    }
+
+    const products = await Product.find(filtro)
+      .sort({ createdAt: -1 }) // 🕒 Más recientes primero
+      .lean(); // ⚡ Mejora de rendimiento
+
+    console.log(`✅ ${products.length} productos encontrados con filtros:`, filtro);
     res.status(200).json(products);
 
   } catch (error) {
