@@ -6,14 +6,13 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
 
-// ⚙️ Configuración central
+// ⚙️ Configuración
 const config = require('./config/configuracionesito');
 const errorHandler = require('./middleware/errorHandler');
 
-// 🧠 Inicializar app
 const app = express();
 
-// 🔐 CORS configurado dinámicamente
+// 🔐 CORS dinámico
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || config.allowedOrigins.includes(origin)) {
@@ -25,48 +24,48 @@ app.use(cors({
   credentials: true
 }));
 
-// 🔒 Seguridad y middlewares comunes
+// 🧱 Seguridad, logging y parsing
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(morgan('dev'));
 app.use(express.json({ limit: '5mb' }));
 
-// 🖼️ Servir recursos estáticos
+// 🖼️ Archivos estáticos
 app.use('/assets', express.static(path.join(__dirname, 'frontend', 'assets')));
 
-// 🔗 Rutas organizadas por módulo
-try {
-  app.use('/api/products', require('./routes/productRoutes'));
-  app.use('/api/auth', require('./routes/authRoutes'));
-  app.use('/api/categories', require('./routes/categoryRoutes'));
-  app.use('/api/promos', require('./routes/promoRoutes'));
-  app.use('/api/orders', require('./routes/orderRoutes'));
-  app.use('/api/visitas', require('./routes/visitRoutes'));
-  app.use('/api/stats', require('./routes/statsRoutes'));
-  app.use('/api/uploads', require('./routes/uploadRoutes'));
-} catch (err) {
-  console.error('❌ Error cargando rutas:', err.message);
-}
+// 🔗 Rutas API
+app.use('/api/products', require('./routes/productRoutes'));
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/categories', require('./routes/categoryRoutes'));
+app.use('/api/promos', require('./routes/promoRoutes'));
+app.use('/api/orders', require('./routes/orderRoutes'));
+app.use('/api/visitas', require('./routes/visitRoutes'));
+app.use('/api/stats', require('./routes/statsRoutes'));
+app.use('/api/uploads', require('./routes/uploadRoutes'));
 
-// ✅ Ruta básica para probar el backend
+// ✅ Ruta de test
 app.get('/', (req, res) => {
   res.send('🧠 Backend KM-EZ-Ropa funcionando correctamente 🚀');
 });
+
+// 🔄 Ruta para monitoreo/uptime
+app.get('/health', (req, res) => res.send('✅ OK'));
 
 // ❌ Rutas no encontradas
 app.use('*', (req, res) => {
   res.status(404).json({ message: '❌ Ruta no encontrada' });
 });
 
-// 🛡️ Middleware de errores
+// 🛡️ Manejo global de errores
 app.use(errorHandler);
 
-// 🚀 Conexión a la base de datos y arranque del servidor
+// 🚀 Conexión a MongoDB y levantar servidor
 (async () => {
   try {
     await mongoose.connect(config.mongoUri);
     console.log('✅ Conectado exitosamente a MongoDB');
     app.listen(config.port, () => {
       console.log(`🚀 Servidor activo en: http://localhost:${config.port}`);
+      console.log(`🌍 Modo: ${process.env.NODE_ENV || 'development'}`);
     });
   } catch (err) {
     console.error('❌ Error conectando a MongoDB:', err.message);
