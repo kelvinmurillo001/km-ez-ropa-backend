@@ -1,3 +1,4 @@
+// 📁 routes/categoryRoutes.js
 const express = require('express');
 const { body, param } = require('express-validator');
 const router = express.Router();
@@ -37,7 +38,11 @@ router.post(
     body('name')
       .trim()
       .notEmpty().withMessage('⚠️ El nombre es obligatorio')
-      .isLength({ min: 2 }).withMessage('⚠️ El nombre debe tener al menos 2 caracteres')
+      .isLength({ min: 2 }).withMessage('⚠️ El nombre debe tener al menos 2 caracteres'),
+
+    body('subcategory')
+      .optional()
+      .isString().withMessage('⚠️ Subcategoría inválida')
   ],
   createCategory
 );

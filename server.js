@@ -6,13 +6,14 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
 
-// ⚙️ Configuración
+// ⚙️ Configuración central
 const config = require('./config/configuracionesito');
 const errorHandler = require('./middleware/errorHandler');
 
+// 🧠 Inicializar app
 const app = express();
 
-// 🔐 CORS dinámico
+// 🔐 CORS configurado dinámicamente
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || config.allowedOrigins.includes(origin)) {
@@ -24,38 +25,42 @@ app.use(cors({
   credentials: true
 }));
 
-// 🧱 Seguridad, logging y JSON
+// 🔒 Seguridad y middlewares comunes
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(morgan('dev'));
 app.use(express.json({ limit: '5mb' }));
 
-// 🖼️ Archivos estáticos
+// 🖼️ Servir recursos estáticos
 app.use('/assets', express.static(path.join(__dirname, 'frontend', 'assets')));
 
-// 🔗 Rutas API
-app.use('/api/products', require('./routes/productRoutes'));
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/categories', require('./routes/categoryRoutes'));
-app.use('/api/promos', require('./routes/promoRoutes'));
-app.use('/api/orders', require('./routes/orderRoutes'));
-app.use('/api/visitas', require('./routes/visitRoutes'));
-app.use('/api/stats', require('./routes/statsRoutes'));
-app.use('/api/uploads', require('./routes/uploadRoutes'));
+// 🔗 Rutas organizadas por módulo
+try {
+  app.use('/api/products', require('./routes/productRoutes'));
+  app.use('/api/auth', require('./routes/authRoutes'));
+  app.use('/api/categories', require('./routes/categoryRoutes'));
+  app.use('/api/promos', require('./routes/promoRoutes'));
+  app.use('/api/orders', require('./routes/orderRoutes'));
+  app.use('/api/visitas', require('./routes/visitRoutes'));
+  app.use('/api/stats', require('./routes/statsRoutes'));
+  app.use('/api/uploads', require('./routes/uploadRoutes'));
+} catch (err) {
+  console.error('❌ Error cargando rutas:', err.message);
+}
 
-// ✅ Ruta simple de estado
+// ✅ Ruta básica para probar el backend
 app.get('/', (req, res) => {
   res.send('🧠 Backend KM-EZ-Ropa funcionando correctamente 🚀');
 });
 
-// ❌ Ruta no encontrada
+// ❌ Rutas no encontradas
 app.use('*', (req, res) => {
   res.status(404).json({ message: '❌ Ruta no encontrada' });
 });
 
-// 🛡️ Error handler global
+// 🛡️ Middleware de errores
 app.use(errorHandler);
 
-// 🚀 Conexión a MongoDB y arranque
+// 🚀 Conexión a la base de datos y arranque del servidor
 (async () => {
   try {
     await mongoose.connect(config.mongoUri);
