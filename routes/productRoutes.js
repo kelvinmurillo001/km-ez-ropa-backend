@@ -15,21 +15,24 @@ const {
 const authMiddleware = require('../middleware/authMiddleware');
 const adminOnly = require('../middleware/adminOnly');
 
-// ====================
+// ============================
 // 📥 Obtener todos los productos (público)
-// ====================
+// GET /api/products
+// ============================
 router.get('/', getAllProducts);
 
-// ====================
+// ============================
 // 🔍 Obtener un producto por ID (público)
-// ====================
+// GET /api/products/:id
+// ============================
 router.get('/:id', [
   param('id').isMongoId().withMessage('⚠️ ID inválido')
 ], getProductById);
 
-// ====================
+// ============================
 // ➕ Crear producto (solo admin)
-// ====================
+// POST /api/products
+// ============================
 router.post(
   '/',
   authMiddleware,
@@ -67,9 +70,10 @@ router.post(
   createProduct
 );
 
-// ====================
+// ============================
 // ✏️ Actualizar producto (solo admin)
-// ====================
+// PUT /api/products/:id
+// ============================
 router.put(
   '/:id',
   authMiddleware,
@@ -100,9 +104,10 @@ router.put(
   updateProduct
 );
 
-// ====================
+// ============================
 // 🗑️ Eliminar producto (solo admin)
-// ====================
+// DELETE /api/products/:id
+// ============================
 router.delete(
   '/:id',
   authMiddleware,
