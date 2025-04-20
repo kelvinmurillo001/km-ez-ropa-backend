@@ -25,6 +25,19 @@ const getPromotion = async (req, res) => {
 };
 
 /**
+ * 📋 Obtener TODAS las promociones (activas e inactivas) - admin
+ */
+const getAllPromotions = async (req, res) => {
+  try {
+    const promos = await Promotion.find().sort({ createdAt: -1 });
+    return res.json(promos);
+  } catch (error) {
+    console.error("❌ Error al obtener todas las promociones:", error);
+    return res.status(500).json({ message: "❌ Error interno al cargar promociones" });
+  }
+};
+
+/**
  * 💾 Crear o actualizar promoción (una a la vez)
  */
 const updatePromotion = async (req, res) => {
@@ -41,7 +54,6 @@ const updatePromotion = async (req, res) => {
       position = 'top'
     } = req.body;
 
-    // 🛡️ Validaciones básicas
     if (!message || typeof message !== 'string' || message.trim().length < 3) {
       return res.status(400).json({
         message: "⚠️ El mensaje de la promoción es obligatorio y debe tener al menos 3 caracteres"
@@ -52,7 +64,7 @@ const updatePromotion = async (req, res) => {
       return res.status(400).json({ message: "⚠️ mediaType debe ser 'image' o 'video'" });
     }
 
-    const allowedPages = ['home', 'categorias', 'productos', 'checkout', 'panel'];
+    const allowedPages = ['home', 'categorias', 'productos', 'checkout', 'detalle', 'carrito'];
     if (!Array.isArray(pages) || pages.some(p => !allowedPages.includes(p))) {
       return res.status(400).json({ message: "⚠️ Página inválida en pages[]" });
     }
@@ -69,7 +81,6 @@ const updatePromotion = async (req, res) => {
       return res.status(400).json({ message: "⚠️ Fecha de fin inválida" });
     }
 
-    // ✅ Guardar nueva promoción
     const promo = new Promotion({
       message: message.trim(),
       active: isActive,
@@ -96,7 +107,51 @@ const updatePromotion = async (req, res) => {
   }
 };
 
+/**
+ * 🔁 Cambiar estado activo/inactivo
+ */
+const togglePromoActive = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const promo = await Promotion.findById(id);
+
+    if (!promo) {
+      return res.status(404).json({ message: "❌ Promoción no encontrada" });
+    }
+
+    promo.active = !promo.active;
+    await promo.save();
+
+    return res.json({ message: `✅ Promoción ${promo.active ? 'activada' : 'desactivada'}`, data: promo });
+  } catch (error) {
+    console.error("❌ Error al cambiar estado de promoción:", error);
+    return res.status(500).json({ message: "❌ Error interno al actualizar promoción" });
+  }
+};
+
+/**
+ * 🗑️ Eliminar una promoción (opcional)
+ */
+const deletePromotion = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const promo = await Promotion.findByIdAndDelete(id);
+
+    if (!promo) {
+      return res.status(404).json({ message: "❌ Promoción no encontrada" });
+    }
+
+    return res.json({ message: "🗑️ Promoción eliminada correctamente" });
+  } catch (error) {
+    console.error("❌ Error al eliminar promoción:", error);
+    return res.status(500).json({ message: "❌ Error interno al eliminar promoción" });
+  }
+};
+
 module.exports = {
   getPromotion,
-  updatePromotion
+  getAllPromotions,
+  updatePromotion,
+  togglePromoActive,
+  deletePromotion
 };

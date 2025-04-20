@@ -5,7 +5,10 @@ const router = express.Router();
 // 📢 Controladores
 const {
   getPromotion,
-  updatePromotion
+  getAllPromotions,
+  updatePromotion,
+  togglePromoActive,
+  deletePromotion
 } = require('../controllers/promoController');
 
 // 🛡️ Middlewares
@@ -15,13 +18,19 @@ const adminOnly = require('../middleware/adminOnly');
 // 📄 RUTAS DE PROMOCIONES
 
 /**
- * 🔓 Obtener promoción activa (PÚBLICO)
+ * 🔓 Obtener promociones activas y vigentes (PÚBLICO)
  * GET /api/promos
  */
 router.get('/', getPromotion);
 
 /**
- * 🔐 Crear/actualizar promoción (SOLO ADMIN)
+ * 🔐 Obtener todas las promociones (ADMIN)
+ * GET /api/promos/admin
+ */
+router.get('/admin', authMiddleware, adminOnly, getAllPromotions);
+
+/**
+ * 🔐 Crear o actualizar promoción
  * PUT /api/promos
  */
 router.put(
@@ -50,7 +59,6 @@ router.put(
       .optional()
       .isISO8601().withMessage('⚠️ Fecha de fin inválida'),
 
-    // ✅ Media opcional
     body('mediaUrl')
       .optional()
       .isString().withMessage('⚠️ mediaUrl debe ser texto'),
@@ -59,20 +67,30 @@ router.put(
       .optional()
       .isIn(['image', 'video']).withMessage('⚠️ mediaType debe ser "image" o "video"'),
 
-    // ✅ Páginas donde se muestra
     body('pages')
       .optional()
       .isArray({ min: 1 }).withMessage('⚠️ Debes seleccionar al menos una página'),
 
     body('pages.*')
-      .isIn(['home', 'categorias', 'productos', 'checkout', 'panel']).withMessage('⚠️ Página no válida'),
+      .isIn(['home', 'categorias', 'productos', 'checkout', 'detalle', 'carrito']).withMessage('⚠️ Página no válida'),
 
-    // ✅ Posición en pantalla
     body('position')
       .optional()
       .isIn(['top', 'middle', 'bottom']).withMessage('⚠️ Posición no válida')
   ],
   updatePromotion
 );
+
+/**
+ * 🔁 Activar/Desactivar promoción
+ * PATCH /api/promos/:id/estado
+ */
+router.patch('/:id/estado', authMiddleware, adminOnly, togglePromoActive);
+
+/**
+ * 🗑️ Eliminar promoción
+ * DELETE /api/promos/:id
+ */
+router.delete('/:id', authMiddleware, adminOnly, deletePromotion);
 
 module.exports = router;
