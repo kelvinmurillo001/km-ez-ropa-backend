@@ -19,8 +19,9 @@ const getResumenEstadisticas = async (req, res) => {
     try {
       const raw = await fs.readFile(visitasPath, "utf-8");
       const json = JSON.parse(raw);
-      if (typeof json.count === "number" && json.count >= 0) {
-        visitas = json.count;
+      const posibleVisitas = json.count ?? json.visitas;
+      if (typeof posibleVisitas === "number" && posibleVisitas >= 0) {
+        visitas = posibleVisitas;
       }
     } catch (err) {
       console.warn("⚠️ No se pudo leer visitas.json, se asume 0 visitas.");
