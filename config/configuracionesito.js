@@ -42,7 +42,8 @@ const config = {
 
   // 🌐 CORS: Dominios permitidos
   allowedOrigins: [
-    'https://km-ez-ropa-frontend.onrender.com',
+    //https://km-ez-ropa-frontend.onrender.com',
+    'https://kmezropacatalogo.com',
     'http://localhost:3000'
   ]
 };
