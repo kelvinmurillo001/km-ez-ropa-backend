@@ -17,7 +17,7 @@ const requiredVars = [
   "CLOUDINARY_API_SECRET"
 ];
 
-// 🚨 Verificación
+// 🚨 Verificación de variables obligatorias
 const missing = requiredVars.filter(key => !process.env[key]);
 if (missing.length > 0) {
   console.error(`❌ Faltan variables obligatorias en el archivo .env:\n🔴 ${missing.join(', ')}`);
