@@ -67,14 +67,14 @@ const productSchema = new mongoose.Schema({
     lowercase: true
   },
 
-  // 🗑️ ⛔ Stock eliminado del producto principal
+  // ⛔ Eliminado campo de stock general
 
   featured: {
     type: Boolean,
     default: false
   },
 
-  // 📸 Imagen principal (1 requerida)
+  // 📸 Imagen principal (debe ser solo 1)
   images: {
     type: [{
       url: {
@@ -107,7 +107,7 @@ const productSchema = new mongoose.Schema({
     }
   },
 
-  // 👕 Variantes con color + talla + stock
+  // 👕 Variantes por talla y color (máx 4 combinaciones)
   variants: {
     type: [variantSchema],
     validate: [
@@ -131,7 +131,7 @@ const productSchema = new mongoose.Schema({
     default: []
   },
 
-  // 🧠 Auditoría
+  // 👤 Auditoría
   createdBy: {
     type: String,
     required: [true, "⚠️ Campo createdBy requerido"],
@@ -144,7 +144,7 @@ const productSchema = new mongoose.Schema({
     trim: true
   },
 
-  // 🔍 SEO opcionales
+  // 🔍 SEO
   slug: {
     type: String,
     trim: true,
@@ -160,7 +160,7 @@ const productSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// 🔎 Búsqueda rápida
+// 🔎 Índice de búsqueda por texto
 productSchema.index({ name: "text", category: 1, subcategory: 1 });
 
 module.exports = mongoose.model("Product", productSchema);
