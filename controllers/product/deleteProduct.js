@@ -9,12 +9,12 @@ const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // 🔎 Validar formato de ID
+    // 🔎 Validar ID de MongoDB
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: '⚠️ ID de producto inválido' });
     }
 
-    // 🔍 Buscar producto
+    // 🔍 Buscar el producto
     const product = await Product.findById(id);
     if (!product) {
       return res.status(404).json({ message: '❌ Producto no encontrado' });
@@ -22,7 +22,7 @@ const deleteProduct = async (req, res) => {
 
     const deletedCloudinaryIds = [];
 
-    // 🧹 Eliminar imágenes principales en Cloudinary
+    // 🧹 Eliminar imagen principal
     if (Array.isArray(product.images)) {
       for (const img of product.images) {
         if (img.cloudinaryId) {
@@ -30,7 +30,7 @@ const deleteProduct = async (req, res) => {
             await cloudinary.uploader.destroy(img.cloudinaryId);
             deletedCloudinaryIds.push(img.cloudinaryId);
           } catch (err) {
-            console.warn(`⚠️ Error al eliminar imagen principal: ${img.cloudinaryId}`, err.message);
+            console.warn(`⚠️ Error eliminando imagen principal: ${img.cloudinaryId}`, err.message);
           }
         }
       }
@@ -44,13 +44,13 @@ const deleteProduct = async (req, res) => {
             await cloudinary.uploader.destroy(variant.cloudinaryId);
             deletedCloudinaryIds.push(variant.cloudinaryId);
           } catch (err) {
-            console.warn(`⚠️ Error al eliminar imagen de variante: ${variant.cloudinaryId}`, err.message);
+            console.warn(`⚠️ Error eliminando imagen de variante: ${variant.cloudinaryId}`, err.message);
           }
         }
       }
     }
 
-    // 🧽 Eliminar producto de la base de datos
+    // 🧽 Eliminar producto en DB
     await product.deleteOne();
 
     return res.status(200).json({

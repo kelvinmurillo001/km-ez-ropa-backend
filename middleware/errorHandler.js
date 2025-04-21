@@ -5,12 +5,18 @@
  */
 const errorHandler = (err, req, res, next) => {
   const isDev = process.env.NODE_ENV === 'development';
+  const statusCode = err.statusCode || 500;
 
-  console.error('❌ Error:', err.stack);
+  console.error('❌ Error:', {
+    mensaje: err.message,
+    ruta: `${req.method} ${req.originalUrl}`,
+    stack: isDev ? err.stack : '🔒 Oculto en producción'
+  });
 
-  res.status(500).json({
-    message: 'Error interno del servidor',
-    ...(isDev && { error: err.message }) // Solo en desarrollo mostrar detalles
+  res.status(statusCode).json({
+    ok: false,
+    message: err.message || '❌ Error interno del servidor',
+    ...(isDev && { error: err.stack })
   });
 };
 

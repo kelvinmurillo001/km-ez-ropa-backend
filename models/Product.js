@@ -41,6 +41,11 @@ const productSchema = new mongoose.Schema({
     minlength: [2, "⚠️ Mínimo 2 caracteres"],
     maxlength: [100, "⚠️ Máximo 100 caracteres"]
   },
+  description: {
+    type: String,
+    trim: true,
+    default: "Sin descripción disponible"
+  },
   price: {
     type: Number,
     required: [true, "⚠️ El precio es obligatorio"],
@@ -67,14 +72,32 @@ const productSchema = new mongoose.Schema({
     lowercase: true
   },
 
-  // ⛔ Eliminado campo de stock general
+  // ✅ NUEVO: Lista de tallas disponibles
+  sizes: {
+    type: [String],
+    default: [],
+    validate: {
+      validator: function (val) {
+        return val.every(t => typeof t === "string" && t.trim().length > 0);
+      },
+      message: "⚠️ Cada talla debe ser un texto válido"
+    }
+  },
+
+  // ✅ NUEVO: Color principal del producto
+  color: {
+    type: String,
+    trim: true,
+    lowercase: true,
+    default: ""
+  },
 
   featured: {
     type: Boolean,
     default: false
   },
 
-  // 📸 Imagen principal (debe ser solo 1)
+  // 📸 Imagen principal
   images: {
     type: [{
       url: {
@@ -107,7 +130,6 @@ const productSchema = new mongoose.Schema({
     }
   },
 
-  // 👕 Variantes por talla y color (máx 4 combinaciones)
   variants: {
     type: [variantSchema],
     validate: [
@@ -131,7 +153,6 @@ const productSchema = new mongoose.Schema({
     default: []
   },
 
-  // 👤 Auditoría
   createdBy: {
     type: String,
     required: [true, "⚠️ Campo createdBy requerido"],
@@ -144,7 +165,6 @@ const productSchema = new mongoose.Schema({
     trim: true
   },
 
-  // 🔍 SEO
   slug: {
     type: String,
     trim: true,
@@ -160,7 +180,6 @@ const productSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// 🔎 Índice de búsqueda por texto
 productSchema.index({ name: "text", category: 1, subcategory: 1 });
 
 module.exports = mongoose.model("Product", productSchema);

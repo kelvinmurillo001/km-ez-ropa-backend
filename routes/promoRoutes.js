@@ -15,7 +15,9 @@ const {
 const authMiddleware = require('../middleware/authMiddleware');
 const adminOnly = require('../middleware/adminOnly');
 
-// 📄 RUTAS DE PROMOCIONES
+/* -------------------------------------------------------------------------- */
+/* 📄 RUTAS DE PROMOCIONES                                                    */
+/* -------------------------------------------------------------------------- */
 
 /**
  * 🔓 Obtener promociones activas y vigentes (PÚBLICO)
@@ -40,6 +42,7 @@ router.put(
   [
     body('message')
       .exists().withMessage('⚠️ El mensaje es obligatorio')
+      .trim()
       .isString().withMessage('⚠️ El mensaje debe ser texto')
       .isLength({ min: 3 }).withMessage('⚠️ El mensaje debe tener al menos 3 caracteres'),
 
@@ -61,6 +64,7 @@ router.put(
 
     body('mediaUrl')
       .optional()
+      .trim()
       .isString().withMessage('⚠️ mediaUrl debe ser texto'),
 
     body('mediaType')

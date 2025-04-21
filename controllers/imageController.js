@@ -1,7 +1,8 @@
 const cloudinary = require('../config/cloudinary');
 
 /**
- * 📂 Listar imágenes desde la carpeta de productos en Cloudinary
+ * 📂 Listar imágenes desde la carpeta "productos_kmezropa" en Cloudinary
+ * @route GET /api/images
  */
 const listImages = async (req, res) => {
   try {
@@ -18,34 +19,54 @@ const listImages = async (req, res) => {
       bytes: img.bytes
     }));
 
-    res.json({ total: imageList.length, images: imageList });
+    return res.status(200).json({
+      total: imageList.length,
+      images: imageList
+    });
+
   } catch (error) {
-    console.error('❌ Error listando imágenes:', error.message || error);
-    res.status(500).json({ message: '❌ Error al obtener imágenes desde Cloudinary' });
+    console.error('❌ Error listando imágenes desde Cloudinary:', error.message || error);
+    return res.status(500).json({
+      message: '❌ Error al obtener imágenes desde Cloudinary',
+      error: error.message || 'Error desconocido'
+    });
   }
 };
 
 /**
- * ❌ Eliminar una imagen específica por su public_id
+ * 🗑️ Eliminar una imagen específica por su public_id
+ * @route DELETE /api/images/:publicId
  */
 const deleteImage = async (req, res) => {
   try {
     const { publicId } = req.params;
 
     if (!publicId || typeof publicId !== 'string') {
-      return res.status(400).json({ message: '⚠️ Se requiere un public_id válido de la imagen' });
+      return res.status(400).json({
+        message: '⚠️ Se requiere un public_id válido de la imagen.'
+      });
     }
 
     const result = await cloudinary.uploader.destroy(publicId);
 
     if (result.result !== 'ok') {
-      return res.status(500).json({ message: '⚠️ No se pudo eliminar la imagen. Verifica el ID.' });
+      return res.status(500).json({
+        message: '⚠️ No se pudo eliminar la imagen. Verifica el ID proporcionado.',
+        result
+      });
     }
 
-    res.json({ message: '✅ Imagen eliminada correctamente', publicId });
+    return res.status(200).json({
+      message: '✅ Imagen eliminada correctamente.',
+      publicId
+    });
+
   } catch (error) {
-    console.error('❌ Error al eliminar imagen:', error.message || error);
-    res.status(500).json({ message: '❌ Error al eliminar imagen desde Cloudinary' });
+    console.error('❌ Error al eliminar imagen desde Cloudinary:', error.message || error);
+    return res.status(500).json({
+      message: '❌ Error interno al eliminar imagen.',
+      error: error.message || 'Error desconocido'
+    });
   }
 };
 

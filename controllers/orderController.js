@@ -1,9 +1,9 @@
 const Order = require('../models/Order');
+const Product = require('../models/Product');
 
 /**
  * 🛒 Crear nuevo pedido (público)
- * - Valida estructura básica
- * - Guarda pedido con estado "pendiente"
+ * - Valida estructura básica y stock disponible
  */
 const createOrder = async (req, res) => {
   try {
@@ -25,13 +25,34 @@ const createOrder = async (req, res) => {
       return res.status(400).json({ message: "⚠️ Total del pedido inválido." });
     }
 
-    // Validaciones opcionales
     if (email && !/^\S+@\S+\.\S+$/.test(email)) {
       return res.status(400).json({ message: "⚠️ Correo electrónico inválido." });
     }
 
     if (telefono && typeof telefono !== 'string') {
       return res.status(400).json({ message: "⚠️ Teléfono inválido." });
+    }
+
+    // ✅ Validar stock disponible por producto y talla
+    for (const item of items) {
+      const producto = await Product.findById(item.id);
+      if (!producto) {
+        return res.status(400).json({ message: `❌ Producto no encontrado: ${item.nombre}` });
+      }
+
+      const variante = producto.variants.find(v =>
+        v.talla === item.talla?.toLowerCase()
+      );
+
+      if (!variante) {
+        return res.status(400).json({ message: `⚠️ Variante no disponible: ${item.nombre} - Talla ${item.talla}` });
+      }
+
+      if (item.cantidad > variante.stock) {
+        return res.status(400).json({
+          message: `❌ No hay suficiente stock de ${item.nombre} (Talla ${item.talla}). Máximo disponible: ${variante.stock}`
+        });
+      }
     }
 
     // Crear pedido
@@ -46,7 +67,19 @@ const createOrder = async (req, res) => {
     });
 
     await newOrder.save();
-    res.status(201).json(newOrder);
+
+    // ✅ Descontar stock
+    for (const item of items) {
+      await Product.findOneAndUpdate(
+        { _id: item.id, "variants.talla": item.talla?.toLowerCase() },
+        { $inc: { "variants.$.stock": -item.cantidad } }
+      );
+    }
+
+    res.status(201).json({
+      message: '✅ Pedido creado exitosamente',
+      pedido: newOrder
+    });
 
   } catch (error) {
     console.error("❌ Error creando pedido:", error);
@@ -116,9 +149,9 @@ const getOrderStats = async (req, res) => {
       cancelado: 0,
       hoy: 0,
       ventasTotales: 0,
-      totalVisitas: 0, // si lo implementas
-      totalProductos: 0, // lo puedes calcular desde otra colección
-      productosDestacados: 0 // por ahora estático
+      totalVisitas: 0,
+      totalProductos: 0,
+      productosDestacados: 0
     };
 
     pedidos.forEach(p => {

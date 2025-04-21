@@ -1,37 +1,28 @@
-// 📁 backend/config/cloudinary.js 
-const cloudinary = require("cloudinary").v2;
-const dotenv = require("dotenv");
+// 📁 backend/config/cloudinary.js
+const { v2: cloudinary } = require("cloudinary");
+const config = require("./configuracionesito");
 
-// ✅ Cargar variables de entorno desde .env
-dotenv.config();
+// ✅ Validar que se tengan los datos necesarios
+const { cloud_name, api_key, api_secret } = config.cloudinary;
 
-// ✅ Validar que las variables de entorno necesarias estén presentes
-const requiredVars = [
-  'CLOUDINARY_CLOUD_NAME',
-  'CLOUDINARY_API_KEY',
-  'CLOUDINARY_API_SECRET'
-];
-
-const missing = requiredVars.filter(key => !process.env[key]);
-if (missing.length > 0) {
-  console.error(`❌ Faltan las siguientes variables de entorno para Cloudinary: ${missing.join(', ')}`);
-  process.exit(1); // ❌ Detiene el servidor si faltan datos críticos
+if (!cloud_name || !api_key || !api_secret) {
+  console.error("❌ Faltan las credenciales de Cloudinary en configuración");
+  process.exit(1);
 }
 
-// 🛠️ Configurar Cloudinary
+// ⚙️ Configurar Cloudinary
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
+  cloud_name,
+  api_key,
+  api_secret
 });
 
 // 🐞 Mostrar info en desarrollo
-if (process.env.NODE_ENV !== 'production') {
-  console.log("🔐 Cloudinary configurado correctamente:", {
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY ? "✓" : "❌",
-    api_secret: process.env.CLOUDINARY_API_SECRET ? "✓" : "❌"
-  });
+if (config.env !== 'production') {
+  console.log("🔐 Cloudinary configurado correctamente:");
+  console.log(`🌩️ cloud_name: ${cloud_name}`);
+  console.log(`🔑 api_key: ${api_key ? "✓" : "❌"}`);
+  console.log(`🔒 api_secret: ${api_secret ? "✓" : "❌"}`);
 }
 
 module.exports = { cloudinary };

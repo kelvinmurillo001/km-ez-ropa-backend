@@ -1,8 +1,10 @@
 const mongoose = require("mongoose");
 
+const allowedPages = ['home', 'categorias', 'productos', 'detalle', 'carrito', 'checkout'];
+
 const promotionSchema = new mongoose.Schema(
   {
-    // 🧾 Mensaje de la promoción (obligatorio, al menos 3 caracteres)
+    // 🧾 Mensaje de la promoción
     message: {
       type: String,
       required: [true, "⚠️ El mensaje de la promoción es obligatorio"],
@@ -10,13 +12,13 @@ const promotionSchema = new mongoose.Schema(
       minlength: [3, "⚠️ El mensaje debe tener al menos 3 caracteres"]
     },
 
-    // ✅ Estado activo/inactivo
+    // ✅ Estado
     active: {
       type: Boolean,
       default: false
     },
 
-    // 🎨 Tema visual de la promoción
+    // 🎨 Tema visual
     theme: {
       type: String,
       enum: ['blue', 'orange', 'green', 'red'],
@@ -25,7 +27,7 @@ const promotionSchema = new mongoose.Schema(
       trim: true
     },
 
-    // 🕓 Fecha de inicio y fin (opcional)
+    // 🕓 Fechas
     startDate: {
       type: Date,
       default: null
@@ -35,10 +37,11 @@ const promotionSchema = new mongoose.Schema(
       default: null
     },
 
-    // 🖼️ Soporte multimedia
+    // 🖼️ Multimedia
     mediaUrl: {
       type: String,
-      default: null
+      default: null,
+      trim: true
     },
     mediaType: {
       type: String,
@@ -46,20 +49,28 @@ const promotionSchema = new mongoose.Schema(
       default: null
     },
 
-    // 📄 Páginas donde se mostrará esta promo
+    // 📄 Páginas válidas
     pages: {
-      type: [String], // Ejemplo: ['home', 'categorias', 'checkout']
-      default: []
+      type: [String],
+      default: [],
+      validate: {
+        validator: function (arr) {
+          return arr.every(p => allowedPages.includes(p));
+        },
+        message: '⚠️ Una o más páginas no son válidas para promociones'
+      }
     },
 
-    // 🧭 Posición del bloque de promoción dentro de la página
+    // 🧭 Posición visual
     position: {
       type: String,
       enum: ['top', 'middle', 'bottom'],
-      default: 'top'
+      default: 'top',
+      lowercase: true,
+      trim: true
     },
 
-    // ✍️ Usuario que creó la promo
+    // ✍️ Auditoría
     createdBy: {
       type: String,
       trim: true,
@@ -67,7 +78,7 @@ const promotionSchema = new mongoose.Schema(
     }
   },
   {
-    timestamps: true // 📅 createdAt y updatedAt automáticos
+    timestamps: true // createdAt y updatedAt
   }
 );
 

@@ -21,7 +21,9 @@ const updateProduct = async (req, res) => {
       tallaTipo,
       featured,
       variants = [],
-      images = []
+      images = [],
+      sizes = [],
+      color = ""
     } = req.body;
 
     const product = await Product.findById(id);
@@ -90,7 +92,7 @@ const updateProduct = async (req, res) => {
 
         if (!v.imageUrl || !v.talla || !v.color || !v.cloudinaryId || typeof v.stock !== "number") {
           return res.status(400).json({
-            message: "⚠️ Cada variante debe tener todos sus campos: imagen, talla, color, cloudinaryId y stock numérico"
+            message: "⚠️ Cada variante debe tener imagen, talla, color, cloudinaryId y stock numérico"
           });
         }
 
@@ -113,6 +115,14 @@ const updateProduct = async (req, res) => {
     if (subcategory) product.subcategory = subcategory.trim().toLowerCase();
     if (tallaTipo) product.tallaTipo = tallaTipo.trim().toLowerCase();
 
+    if (Array.isArray(sizes)) {
+      product.sizes = sizes.map(s => s.trim());
+    }
+
+    if (typeof color === "string") {
+      product.color = color.trim();
+    }
+
     product.featured = featured === true || featured === "true";
     product.images = processedImages;
     product.variants = processedVariants;
@@ -120,12 +130,15 @@ const updateProduct = async (req, res) => {
 
     const updated = await product.save();
 
-    return res.status(200).json(updated);
+    return res.status(200).json({
+      message: "✅ Producto actualizado correctamente",
+      producto: updated
+    });
 
   } catch (error) {
-    console.error("❌ Error actualizando producto:", error.message);
+    console.error("❌ Error actualizando producto:", error);
     return res.status(500).json({
-      message: "❌ Error al actualizar producto",
+      message: "❌ Error interno al actualizar producto",
       error: error.message
     });
   }

@@ -60,12 +60,14 @@ const updatePromotion = async (req, res) => {
       });
     }
 
-    if (mediaType && !['image', 'video'].includes(mediaType)) {
+    if (mediaType && !['image', 'video'].includes(mediaType.toLowerCase())) {
       return res.status(400).json({ message: "⚠️ mediaType debe ser 'image' o 'video'" });
     }
 
     const allowedPages = ['home', 'categorias', 'productos', 'checkout', 'detalle', 'carrito'];
-    if (!Array.isArray(pages) || pages.some(p => !allowedPages.includes(p))) {
+    const lowerPages = Array.isArray(pages) ? pages.map(p => p.toLowerCase()) : [];
+
+    if (!Array.isArray(pages) || lowerPages.some(p => !allowedPages.includes(p))) {
       return res.status(400).json({ message: "⚠️ Página inválida en pages[]" });
     }
 
@@ -81,19 +83,16 @@ const updatePromotion = async (req, res) => {
       return res.status(400).json({ message: "⚠️ Fecha de fin inválida" });
     }
 
-    // 🚫 Eliminar promociones anteriores si solo debe haber una vigente (opcional)
-    await Promotion.deleteMany({});
-
     const promo = new Promotion({
       message: message.trim(),
       active: isActive,
-      theme,
+      theme: theme.toLowerCase(),
       startDate: parsedStart,
       endDate: parsedEnd,
       mediaUrl,
-      mediaType,
-      pages,
-      position,
+      mediaType: mediaType?.toLowerCase() || null,
+      pages: lowerPages,
+      position: position.toLowerCase(),
       createdBy: req.user?.username || "admin"
     });
 
@@ -133,7 +132,7 @@ const togglePromoActive = async (req, res) => {
 };
 
 /**
- * 🗑️ Eliminar una promoción (opcional)
+ * 🗑️ Eliminar una promoción
  */
 const deletePromotion = async (req, res) => {
   try {

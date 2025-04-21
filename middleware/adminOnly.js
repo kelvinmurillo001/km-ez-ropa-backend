@@ -3,22 +3,33 @@
  */
 const adminOnly = (req, res, next) => {
   try {
-    // 🧍‍♂️ Verificar si el usuario está presente (desde authMiddleware)
-    if (!req.user || typeof req.user !== 'object') {
-      return res.status(401).json({ message: '🚫 No autenticado. Acceso restringido.' });
+    const user = req.user;
+
+    // 🧍‍♂️ Usuario no autenticado (authMiddleware debe haberlo agregado)
+    if (!user) {
+      return res.status(401).json({
+        ok: false,
+        message: '🚫 No autenticado. Acceso restringido solo para administradores.'
+      });
     }
 
-    // ✅ Verificar que el usuario tenga rol de admin
-    if (req.user.role === 'admin') {
+    // ✅ Verificación de rol
+    if (user.role === 'admin') {
       return next();
     }
 
-    // ⛔ Usuario autenticado pero sin permiso suficiente
-    return res.status(403).json({ message: '⛔ Acceso denegado. Solo administradores.' });
+    // ⛔ Usuario autenticado pero sin permisos suficientes
+    return res.status(403).json({
+      ok: false,
+      message: '⛔ Acceso denegado. Se requiere rol de administrador.'
+    });
 
   } catch (err) {
-    console.error('❌ Error en middleware adminOnly:', err.message || err);
-    return res.status(500).json({ message: '❌ Error interno del servidor en validación de permisos.' });
+    console.error('❌ Error en adminOnly middleware:', err.message || err);
+    return res.status(500).json({
+      ok: false,
+      message: '❌ Error interno al verificar permisos de administrador.'
+    });
   }
 };
 

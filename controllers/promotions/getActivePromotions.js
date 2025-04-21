@@ -10,14 +10,20 @@ const getActivePromotions = async (req, res) => {
 
     const promocionesActivas = await Promotion.find({
       active: true,
-      startDate: { $lte: now },
-      endDate: { $gte: now }
-    }).sort({ startDate: 1 });
+      $or: [
+        { startDate: { $lte: now }, endDate: { $gte: now } },
+        { startDate: null, endDate: null },
+        { startDate: { $lte: now }, endDate: null },
+        { startDate: null, endDate: { $gte: now } }
+      ]
+    }).sort({ createdAt: -1 });
 
-    res.status(200).json(promocionesActivas);
+    return res.status(200).json(promocionesActivas);
   } catch (error) {
     console.error("❌ Error al obtener promociones activas:", error.message);
-    res.status(500).json({ message: "❌ Error del servidor al obtener promociones activas" });
+    return res.status(500).json({
+      message: "❌ Error del servidor al obtener promociones activas"
+    });
   }
 };
 

@@ -19,7 +19,7 @@ const adminOnly = require('../middleware/adminOnly');
 /* -------------------------------------------------------------------------- */
 
 /**
- * 📥 Crear pedido (PÚBLICO)
+ * 📥 Crear nuevo pedido (PÚBLICO)
  * POST /api/orders
  */
 router.post(
@@ -39,10 +39,22 @@ router.post(
       .isLength({ min: 2 })
       .withMessage('⚠️ El nombre del cliente es obligatorio y debe tener al menos 2 caracteres'),
 
+    body('email')
+      .optional()
+      .isEmail()
+      .withMessage('⚠️ Email inválido'),
+
+    body('telefono')
+      .optional()
+      .isString()
+      .isLength({ min: 7, max: 20 })
+      .withMessage('⚠️ Teléfono inválido'),
+
     body('nota')
       .optional()
       .isString()
-      .withMessage('⚠️ La nota debe ser texto válido')
+      .isLength({ max: 300 })
+      .withMessage('⚠️ La nota debe ser texto válido (hasta 300 caracteres)')
   ],
   createOrder
 );
@@ -51,7 +63,12 @@ router.post(
  * 📋 Obtener todos los pedidos (SOLO ADMIN)
  * GET /api/orders
  */
-router.get('/', authMiddleware, adminOnly, getOrders);
+router.get(
+  '/',
+  authMiddleware,
+  adminOnly,
+  getOrders
+);
 
 /**
  * 🔄 Actualizar estado de un pedido (SOLO ADMIN)
@@ -78,12 +95,22 @@ router.put(
  * 📊 Obtener estadísticas de ventas (SOLO ADMIN)
  * GET /api/orders/stats/ventas
  */
-router.get('/stats/ventas', authMiddleware, adminOnly, getOrderStats);
+router.get(
+  '/stats/ventas',
+  authMiddleware,
+  adminOnly,
+  getOrderStats
+);
 
 /**
  * 📊 Obtener resumen para el DASHBOARD (SOLO ADMIN)
  * GET /api/orders/resumen
  */
-router.get('/resumen', authMiddleware, adminOnly, getOrderStats); // <- ESTA LÍNEA AGREGA SOPORTE PARA EL DASHBOARD
+router.get(
+  '/resumen',
+  authMiddleware,
+  adminOnly,
+  getOrderStats
+);
 
 module.exports = router;

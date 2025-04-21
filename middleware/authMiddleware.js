@@ -10,35 +10,51 @@ const authMiddleware = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
-    // 🛡️ Verificar formato correcto: "Bearer <token>"
-    if (!authHeader || typeof authHeader !== 'string' || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ message: '🔐 Token no proporcionado o mal formado' });
+    // 🛡️ Verificar que el header existe y tiene formato válido
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        ok: false,
+        message: '🔐 Token de autorización no proporcionado o mal formado'
+      });
     }
 
     const token = authHeader.split(' ')[1]?.trim();
-
-    // ❗ Token mínimo de longitud básica
     if (!token || token.length < 10) {
-      return res.status(401).json({ message: '🔒 Token inválido' });
+      return res.status(401).json({
+        ok: false,
+        message: '🔒 Token inválido o demasiado corto'
+      });
     }
 
-    // 🔍 Verificar y decodificar token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      console.error('❌ JWT Error:', err.message || err);
+      return res.status(401).json({
+        ok: false,
+        message: '⛔ Token expirado o inválido'
+      });
+    }
 
-    // 🔎 Buscar usuario sin incluir contraseña
+    // 📥 Buscar usuario sin exponer la contraseña
     const user = await User.findById(decoded.id).select('-password');
-
     if (!user) {
-      return res.status(401).json({ message: '⛔ Usuario no encontrado o eliminado' });
+      return res.status(401).json({
+        ok: false,
+        message: '⛔ Usuario no encontrado o eliminado'
+      });
     }
 
-    // ✅ Usuario válido → adjuntar al request y continuar
     req.user = user;
-    return next();
+    next();
 
   } catch (error) {
-    console.error('❌ Error autenticando JWT:', error.message);
-    return res.status(401).json({ message: '⛔ Token inválido o expirado' });
+    console.error('❌ Error en authMiddleware:', error.message || error);
+    return res.status(500).json({
+      ok: false,
+      message: '❌ Error interno en la autenticación'
+    });
   }
 };
 

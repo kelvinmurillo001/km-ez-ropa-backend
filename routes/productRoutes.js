@@ -1,6 +1,6 @@
 const express = require('express');
-const router = express.Router();
 const { body, param } = require('express-validator');
+const router = express.Router();
 
 // ✅ Controladores
 const {
@@ -15,24 +15,34 @@ const {
 const authMiddleware = require('../middleware/authMiddleware');
 const adminOnly = require('../middleware/adminOnly');
 
-// ============================
-// 📥 Obtener todos los productos (público)
-// GET /api/products
-// ============================
+/* -------------------------------------------------------------------------- */
+/* 📦 RUTAS DE PRODUCTOS                                                      */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * 📥 Obtener todos los productos (PÚBLICO)
+ * GET /api/products
+ */
 router.get('/', getAllProducts);
 
-// ============================
-// 🔍 Obtener un producto por ID (público)
-// GET /api/products/:id
-// ============================
-router.get('/:id', [
-  param('id').isMongoId().withMessage('⚠️ ID inválido')
-], getProductById);
+/**
+ * 🔍 Obtener un producto por ID (PÚBLICO)
+ * GET /api/products/:id
+ */
+router.get(
+  '/:id',
+  [
+    param('id')
+      .isMongoId()
+      .withMessage('⚠️ ID inválido')
+  ],
+  getProductById
+);
 
-// ============================
-// ➕ Crear producto (solo admin)
-// POST /api/products
-// ============================
+/**
+ * ➕ Crear producto (SOLO ADMIN)
+ * POST /api/products
+ */
 router.post(
   '/',
   authMiddleware,
@@ -50,34 +60,38 @@ router.post(
       .notEmpty().withMessage('⚠️ La categoría es obligatoria'),
 
     body('subcategory')
-      .optional({ checkFalsy: true })
-      .isString().withMessage('⚠️ Subcategoría inválida'),
+      .notEmpty().withMessage('⚠️ La subcategoría es obligatoria')
+      .isLength({ min: 2 }).withMessage('⚠️ Mínimo 2 caracteres en la subcategoría'),
 
     body('tallaTipo')
-      .notEmpty().withMessage('⚠️ El tipo de talla es obligatorio'),
-
-    // 🗑️ Eliminado: validación de stock general
+      .notEmpty().withMessage('⚠️ El tipo de talla es obligatorio')
+      .isIn(['adulto', 'niño', 'niña', 'bebé']).withMessage('⚠️ Tipo de talla inválido'),
 
     body('images')
       .isArray({ min: 1, max: 1 }).withMessage('⚠️ Exactamente 1 imagen principal'),
 
     body('variants')
       .optional()
-      .isArray({ max: 4 }).withMessage('⚠️ Máximo 4 variantes permitidas')
+      .isArray({ max: 4 }).withMessage('⚠️ Máximo 4 variantes permitidas'),
+
+    body('sizes')
+      .optional()
+      .isArray().withMessage('⚠️ El campo sizes debe ser un array de tallas')
   ],
   createProduct
 );
 
-// ============================
-// ✏️ Actualizar producto (solo admin)
-// PUT /api/products/:id
-// ============================
+/**
+ * ✏️ Actualizar producto (SOLO ADMIN)
+ * PUT /api/products/:id
+ */
 router.put(
   '/:id',
   authMiddleware,
   adminOnly,
   [
-    param('id').isMongoId().withMessage('⚠️ ID inválido'),
+    param('id')
+      .isMongoId().withMessage('⚠️ ID inválido'),
 
     body('name')
       .optional()
@@ -87,7 +101,17 @@ router.put(
       .optional()
       .isFloat({ min: 0 }).withMessage('⚠️ Precio inválido'),
 
-    // 🗑️ Eliminado: validación de stock general
+    body('category')
+      .optional()
+      .isString().withMessage('⚠️ Categoría inválida'),
+
+    body('subcategory')
+      .optional()
+      .isString().isLength({ min: 2 }).withMessage('⚠️ Subcategoría inválida'),
+
+    body('tallaTipo')
+      .optional()
+      .isIn(['adulto', 'niño', 'niña', 'bebé']).withMessage('⚠️ Tipo de talla inválido'),
 
     body('images')
       .optional()
@@ -95,21 +119,26 @@ router.put(
 
     body('variants')
       .optional()
-      .isArray({ max: 4 }).withMessage('⚠️ Máximo 4 variantes permitidas')
+      .isArray({ max: 4 }).withMessage('⚠️ Máximo 4 variantes permitidas'),
+
+    body('sizes')
+      .optional()
+      .isArray().withMessage('⚠️ El campo sizes debe ser un array de tallas')
   ],
   updateProduct
 );
 
-// ============================
-// 🗑️ Eliminar producto (solo admin)
-// DELETE /api/products/:id
-// ============================
+/**
+ * 🗑️ Eliminar producto (SOLO ADMIN)
+ * DELETE /api/products/:id
+ */
 router.delete(
   '/:id',
   authMiddleware,
   adminOnly,
   [
-    param('id').isMongoId().withMessage('⚠️ ID inválido')
+    param('id')
+      .isMongoId().withMessage('⚠️ ID inválido')
   ],
   deleteProduct
 );

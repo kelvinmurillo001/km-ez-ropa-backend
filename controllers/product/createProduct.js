@@ -80,6 +80,13 @@ const createProduct = async (req, res) => {
       combinaciones.add(clave);
     }
 
+    // Normalizar tallas si se proporcionan
+    const tallasLimpias = Array.isArray(sizes)
+      ? sizes
+          .filter(s => typeof s === "string" && s.trim().length > 0)
+          .map(s => s.trim().toUpperCase())
+      : [];
+
     // Crear nuevo producto
     const producto = new Product({
       name: name.trim(),
@@ -92,7 +99,7 @@ const createProduct = async (req, res) => {
       variants,
       images,
       color: color.trim(),
-      sizes: sizes.map(s => s.trim()),
+      sizes: tallasLimpias,
       createdBy: createdBy.trim()
     });
 

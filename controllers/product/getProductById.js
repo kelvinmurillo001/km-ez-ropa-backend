@@ -9,7 +9,7 @@ const getProductById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // 🔐 Validar formato de ID
+    // 🔐 Validar formato de ObjectId de MongoDB
     if (!mongoose.isValidObjectId(id)) {
       return res.status(400).json({
         message: '⚠️ El ID proporcionado no es válido',
@@ -17,9 +17,10 @@ const getProductById = async (req, res) => {
       });
     }
 
-    // 📥 Buscar producto
+    // 📦 Buscar producto en la base de datos
     const producto = await Product.findById(id).lean();
 
+    // ❌ No encontrado
     if (!producto) {
       return res.status(404).json({
         message: '❌ Producto no encontrado',
@@ -27,13 +28,16 @@ const getProductById = async (req, res) => {
       });
     }
 
-    // ✅ Respuesta exitosa
-    return res.status(200).json(producto);
+    // ✅ Retornar producto encontrado
+    return res.status(200).json({
+      message: '✅ Producto encontrado correctamente',
+      producto
+    });
 
   } catch (error) {
-    console.error("❌ Error en getProductById:", error.message);
+    console.error("❌ Error en getProductById:", error);
     return res.status(500).json({
-      message: '❌ Error del servidor al obtener el producto',
+      message: '❌ Error interno del servidor al obtener el producto',
       error: error.message
     });
   }

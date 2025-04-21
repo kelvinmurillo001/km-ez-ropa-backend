@@ -37,18 +37,19 @@ router.post(
   [
     body('name')
       .trim()
-      .notEmpty().withMessage('⚠️ El nombre es obligatorio')
-      .isLength({ min: 2 }).withMessage('⚠️ El nombre debe tener al menos 2 caracteres'),
+      .notEmpty().withMessage('⚠️ El nombre de la categoría es obligatorio')
+      .isLength({ min: 2 }).withMessage('⚠️ Mínimo 2 caracteres'),
 
     body('subcategory')
       .optional()
       .isString().withMessage('⚠️ Subcategoría inválida')
+      .isLength({ min: 2 }).withMessage('⚠️ La subcategoría debe tener al menos 2 caracteres')
   ],
   createCategory
 );
 
 /**
- * ➕ Agregar subcategoría (SOLO ADMIN)
+ * ➕ Agregar subcategoría a categoría existente (SOLO ADMIN)
  * POST /api/categories/:categoryId/subcategories
  */
 router.post(
@@ -56,7 +57,9 @@ router.post(
   authMiddleware,
   adminOnly,
   [
-    param('categoryId').isMongoId().withMessage('⚠️ ID de categoría inválido'),
+    param('categoryId')
+      .isMongoId().withMessage('⚠️ ID de categoría inválido'),
+
     body('subcategory')
       .trim()
       .notEmpty().withMessage('⚠️ La subcategoría es requerida')
@@ -74,13 +77,14 @@ router.delete(
   authMiddleware,
   adminOnly,
   [
-    param('id').isMongoId().withMessage('⚠️ ID inválido')
+    param('id')
+      .isMongoId().withMessage('⚠️ ID inválido')
   ],
   deleteCategory
 );
 
 /**
- * 🗑️ Eliminar subcategoría específica (SOLO ADMIN)
+ * 🗑️ Eliminar subcategoría específica de una categoría (SOLO ADMIN)
  * DELETE /api/categories/:categoryId/subcategories/:subcategory
  */
 router.delete(
@@ -88,8 +92,12 @@ router.delete(
   authMiddleware,
   adminOnly,
   [
-    param('categoryId').isMongoId().withMessage('⚠️ ID de categoría inválido'),
-    param('subcategory').notEmpty().withMessage('⚠️ Subcategoría requerida')
+    param('categoryId')
+      .isMongoId().withMessage('⚠️ ID de categoría inválido'),
+
+    param('subcategory')
+      .trim()
+      .notEmpty().withMessage('⚠️ Subcategoría requerida')
   ],
   deleteSubcategory
 );

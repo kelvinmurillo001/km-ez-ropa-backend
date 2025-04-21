@@ -6,15 +6,15 @@ const Category = require('../models/category');
 const getAllCategories = async (req, res) => {
   try {
     const categories = await Category.find().sort({ name: 1 });
-    res.json(categories);
+    return res.status(200).json(categories);
   } catch (error) {
     console.error('❌ Error al obtener categorías:', error);
-    res.status(500).json({ message: '❌ Error al obtener las categorías' });
+    return res.status(500).json({ message: '❌ Error al obtener las categorías' });
   }
 };
 
 /**
- * ➕ Crear nueva categoría con o sin subcategoría inicial
+ * ➕ Crear nueva categoría (con o sin subcategoría)
  */
 const createCategory = async (req, res) => {
   try {
@@ -27,26 +27,30 @@ const createCategory = async (req, res) => {
       });
     }
 
-    const existing = await Category.findOne({ name: new RegExp(`^${name}$`, 'i') });
-    if (existing) {
+    const exists = await Category.findOne({
+      name: new RegExp(`^${name}$`, 'i')
+    });
+
+    if (exists) {
       return res.status(400).json({ message: '⚠️ La categoría ya existe' });
     }
 
     const nuevaCategoria = new Category({
-      name,
+      name: name.toLowerCase(),
       subcategories: subcategory ? [subcategory] : []
     });
 
     await nuevaCategoria.save();
-    res.status(201).json(nuevaCategoria);
+    return res.status(201).json(nuevaCategoria);
+
   } catch (error) {
     console.error('❌ Error creando categoría:', error);
-    res.status(500).json({ message: '❌ Error al crear la categoría' });
+    return res.status(500).json({ message: '❌ Error al crear la categoría' });
   }
 };
 
 /**
- * ➕ Agregar subcategoría a una categoría existente
+ * ➕ Agregar subcategoría a categoría existente
  */
 const addSubcategory = async (req, res) => {
   try {
@@ -64,25 +68,30 @@ const addSubcategory = async (req, res) => {
       return res.status(404).json({ message: '❌ Categoría no encontrada' });
     }
 
-    const exists = category.subcategories.some(
+    const alreadyExists = category.subcategories.some(
       sc => sc.toLowerCase() === subcategory.toLowerCase()
     );
-    if (exists) {
+
+    if (alreadyExists) {
       return res.status(400).json({ message: '⚠️ La subcategoría ya existe en esta categoría' });
     }
 
     category.subcategories.push(subcategory);
     await category.save();
 
-    res.json({ message: '✅ Subcategoría agregada correctamente', category });
+    return res.status(200).json({
+      message: '✅ Subcategoría agregada correctamente',
+      category
+    });
+
   } catch (error) {
     console.error('❌ Error agregando subcategoría:', error);
-    res.status(500).json({ message: '❌ Error al agregar la subcategoría' });
+    return res.status(500).json({ message: '❌ Error al agregar la subcategoría' });
   }
 };
 
 /**
- * 🗑️ Eliminar categoría completa
+ * 🗑️ Eliminar categoría completa por ID
  */
 const deleteCategory = async (req, res) => {
   try {
@@ -94,10 +103,11 @@ const deleteCategory = async (req, res) => {
     }
 
     await category.deleteOne();
-    res.json({ message: '✅ Categoría eliminada correctamente' });
+    return res.status(200).json({ message: '✅ Categoría eliminada correctamente' });
+
   } catch (error) {
     console.error('❌ Error eliminando categoría:', error);
-    res.status(500).json({ message: '❌ Error al eliminar la categoría' });
+    return res.status(500).json({ message: '❌ Error al eliminar la categoría' });
   }
 };
 
@@ -124,10 +134,14 @@ const deleteSubcategory = async (req, res) => {
     category.subcategories.splice(index, 1);
     await category.save();
 
-    res.json({ message: '✅ Subcategoría eliminada correctamente', category });
+    return res.status(200).json({
+      message: '✅ Subcategoría eliminada correctamente',
+      category
+    });
+
   } catch (error) {
     console.error('❌ Error eliminando subcategoría:', error);
-    res.status(500).json({ message: '❌ Error al eliminar la subcategoría' });
+    return res.status(500).json({ message: '❌ Error al eliminar la subcategoría' });
   }
 };
 

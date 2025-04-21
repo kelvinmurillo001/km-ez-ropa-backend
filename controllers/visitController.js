@@ -6,8 +6,6 @@ const filePath = path.join(__dirname, '..', 'data', 'visitas.json');
 
 /**
  * 📈 Registrar una nueva visita
- * - Lee el archivo JSON
- * - Incrementa el contador si existe, o lo crea desde 0
  */
 const registrarVisita = async (req, res) => {
   try {
@@ -16,8 +14,12 @@ const registrarVisita = async (req, res) => {
     try {
       const data = await fs.readFile(filePath, 'utf8');
       const json = JSON.parse(data);
-      if (typeof json.count === 'number' && json.count >= 0) {
-        count = json.count;
+      const visitasGuardadas = json.count ?? json.visitas;
+
+      if (typeof visitasGuardadas === 'number' && visitasGuardadas >= 0) {
+        count = visitasGuardadas;
+      } else {
+        console.warn("⚠️ Campo de conteo inválido, se reinicia a 0");
       }
     } catch (error) {
       console.warn("⚠️ visitas.json no existe o está corrupto, se inicia desde cero.");
@@ -26,11 +28,12 @@ const registrarVisita = async (req, res) => {
     count += 1;
 
     await fs.writeFile(filePath, JSON.stringify({ count }, null, 2));
+
     return res.json({ message: '✅ Visita registrada', total: count });
 
   } catch (err) {
     console.error('❌ Error registrando visita:', err);
-    return res.status(500).json({ message: '❌ Error al registrar visita' });
+    return res.status(500).json({ message: '❌ Error interno al registrar visita' });
   }
 };
 
@@ -41,9 +44,10 @@ const obtenerVisitas = async (req, res) => {
   try {
     const data = await fs.readFile(filePath, 'utf8');
     const json = JSON.parse(data);
-    const count = (typeof json.count === 'number' && json.count >= 0) ? json.count : 0;
+    const visitas = json.count ?? json.visitas;
+    const total = (typeof visitas === 'number' && visitas >= 0) ? visitas : 0;
 
-    return res.json({ total: count });
+    return res.json({ total });
 
   } catch (err) {
     console.error('❌ Error leyendo visitas:', err);

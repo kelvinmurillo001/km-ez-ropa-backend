@@ -12,7 +12,7 @@ const cleanOrphanedImages = async (req, res) => {
     // 📦 Obtener todos los productos
     const productos = await Product.find();
 
-    // 🔗 Recoger todos los cloudinaryId usados
+    // 🔗 Recoger todos los cloudinaryId usados en productos
     for (const p of productos) {
       (p.images || []).forEach(img => {
         if (img.cloudinaryId) usedIds.add(img.cloudinaryId);
@@ -22,7 +22,7 @@ const cleanOrphanedImages = async (req, res) => {
       });
     }
 
-    // 🔍 Buscar imágenes en Cloudinary (cambia el folder si es necesario)
+    // 🔍 Buscar imágenes en Cloudinary (asegúrate de ajustar el folder si usas otro)
     const result = await cloudinary.search
       .expression('folder:productos_kmezropa')
       .max_results(100)
@@ -32,19 +32,28 @@ const cleanOrphanedImages = async (req, res) => {
     const eliminadas = [];
 
     for (const img of huérfanas) {
-      await cloudinary.uploader.destroy(img.public_id);
-      eliminadas.push(img.public_id);
+      try {
+        await cloudinary.uploader.destroy(img.public_id);
+        eliminadas.push(img.public_id);
+      } catch (err) {
+        console.warn(`⚠️ No se pudo eliminar ${img.public_id}:`, err.message);
+      }
     }
 
     return res.json({
       message: `🧹 Limpieza completada`,
+      totalEncontradasEnCloudinary: result.resources.length,
+      totalHuérfanas: huérfanas.length,
       totalEliminadas: eliminadas.length,
       eliminadas
     });
 
   } catch (error) {
-    console.error('❌ Error limpiando imágenes huérfanas:', error.message);
-    return res.status(500).json({ message: '❌ Error al limpiar imágenes huérfanas' });
+    console.error('❌ Error limpiando imágenes huérfanas:', error);
+    return res.status(500).json({
+      message: '❌ Error al limpiar imágenes huérfanas',
+      error: error.message
+    });
   }
 };
 

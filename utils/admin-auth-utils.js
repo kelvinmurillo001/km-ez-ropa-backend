@@ -7,7 +7,7 @@
  * @returns {boolean}
  */
 export function esAdmin(usuario) {
-  return usuario?.rol === "admin" || usuario?.isAdmin === true;
+  return usuario?.role === "admin" || usuario?.isAdmin === true;
 }
 
 /**
@@ -16,10 +16,10 @@ export function esAdmin(usuario) {
  * @param {string} mensaje - Mensaje de error
  * @param {number} status - Código de estado HTTP (por defecto 500)
  */
-export function enviarError(res, mensaje = "Error del servidor", status = 500) {
+export function enviarError(res, mensaje = "❌ Error del servidor", status = 500) {
   return res.status(status).json({
     ok: false,
-    message: mensaje,
+    message: mensaje
   });
 }
 
@@ -29,21 +29,25 @@ export function enviarError(res, mensaje = "Error del servidor", status = 500) {
  * @param {any} data - Datos a retornar al cliente
  * @param {string} mensaje - Mensaje opcional de éxito
  */
-export function enviarExito(res, data = {}, mensaje = "Operación exitosa") {
+export function enviarExito(res, data = {}, mensaje = "✅ Operación exitosa") {
   return res.status(200).json({
     ok: true,
     message: mensaje,
-    data,
+    data
   });
 }
 
 /**
- * 🕵️‍♂️ Extrae el token del header Authorization
+ * 🕵️‍♂️ Extrae el token del encabezado Authorization
  * @param {Object} req - Objeto de petición de Express
- * @returns {string|null} - Token extraído o null si no hay
+ * @returns {string|null} - Token extraído o null si no existe
  */
 export function obtenerTokenDesdeHeader(req) {
-  const auth = req.headers.authorization;
-  if (!auth || !auth.startsWith("Bearer ")) return null;
-  return auth.split(" ")[1];
+  const authHeader = req.headers.authorization;
+  if (!authHeader || typeof authHeader !== "string") return null;
+
+  const [bearer, token] = authHeader.split(" ");
+  if (bearer !== "Bearer" || !token) return null;
+
+  return token;
 }

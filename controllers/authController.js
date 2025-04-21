@@ -64,9 +64,13 @@ const loginAdmin = async (req, res) => {
         role: user.role
       }
     });
+
   } catch (error) {
     console.error('❌ Error en loginAdmin:', error.message || error);
-    return res.status(500).json({ message: '❌ Error interno del servidor' });
+    return res.status(500).json({
+      message: '❌ Error interno del servidor',
+      error: error.message
+    });
   }
 };
 
