@@ -10,7 +10,7 @@ const visitasPath = path.join(__dirname, "..", "data", "visitas.json");
  */
 const getResumenEstadisticas = async (req, res) => {
   try {
-    // 🧾 Cargar todos los productos y pedidos
+    // 🧾 Cargar productos y pedidos desde la base de datos
     const productos = await Product.find();
     const pedidos = await Order.find();
 
@@ -27,12 +27,11 @@ const getResumenEstadisticas = async (req, res) => {
       console.warn("⚠️ No se pudo leer visitas.json, se asume 0 visitas.");
     }
 
-    // 🕛 Obtener fecha de hoy a las 00:00
+    // 🕛 Calcular fecha de hoy a las 00:00
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
 
-    // 📦 Cálculos de estadísticas
-    const totalProductos = productos.length;
+    // 📦 Cálculos de métricas
     const productosDestacados = productos.filter(p => p.featured).length;
 
     const pedidosHoy = pedidos.filter(p => {
@@ -49,14 +48,14 @@ const getResumenEstadisticas = async (req, res) => {
       productosPorCategoria[categoria] = (productosPorCategoria[categoria] || 0) + 1;
     }
 
-    // 📤 Respuesta al cliente
+    // 📤 Enviar respuesta
     return res.json({
-      totalProductos,
+      totalProductos: productos.length,
       productosDestacados,
       pedidosTotales: pedidos.length,
       pedidosHoy,
       totalVisitas: visitas,
-      ventasTotales: Number(ventasTotales), // ✅ corregido a tipo number
+      ventasTotales: Number(ventasTotales),
       productosPorCategoria
     });
 
