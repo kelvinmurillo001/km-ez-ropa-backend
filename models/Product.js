@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-// ✅ Subesquema para variantes
+// ✅ Subesquema para variantes (cada color/talla con su propio stock)
 const variantSchema = new mongoose.Schema({
   talla: {
     type: String,
@@ -66,17 +66,15 @@ const productSchema = new mongoose.Schema({
     trim: true,
     lowercase: true
   },
-  stock: {
-    type: Number,
-    required: [true, "⚠️ El stock es obligatorio"],
-    min: [0, "⚠️ El stock no puede ser negativo"]
-  },
+
+  // 🗑️ ⛔ Stock eliminado del producto principal
+
   featured: {
     type: Boolean,
     default: false
   },
 
-  // 📸 Imagen principal
+  // 📸 Imagen principal (1 requerida)
   images: {
     type: [{
       url: {
@@ -109,7 +107,7 @@ const productSchema = new mongoose.Schema({
     }
   },
 
-  // 👕 Variantes adicionales
+  // 👕 Variantes con color + talla + stock
   variants: {
     type: [variantSchema],
     validate: [
@@ -133,12 +131,12 @@ const productSchema = new mongoose.Schema({
     default: []
   },
 
-  // 🧠 Trazabilidad
+  // 🧠 Auditoría
   createdBy: {
     type: String,
     required: [true, "⚠️ Campo createdBy requerido"],
     trim: true,
-    default: "admin" // ✅ Default preventivo
+    default: "admin"
   },
   updatedBy: {
     type: String,
@@ -162,7 +160,7 @@ const productSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// 🔎 Índices para búsquedas de texto y filtros rápidos
+// 🔎 Búsqueda rápida
 productSchema.index({ name: "text", category: 1, subcategory: 1 });
 
 module.exports = mongoose.model("Product", productSchema);

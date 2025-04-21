@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { body, param } = require('express-validator');
 
-// ✅ Controladores centralizados
+// ✅ Controladores
 const {
   getAllProducts,
   getProductById,
@@ -56,9 +56,7 @@ router.post(
     body('tallaTipo')
       .notEmpty().withMessage('⚠️ El tipo de talla es obligatorio'),
 
-    body('stock')
-      .notEmpty().withMessage('⚠️ El stock es obligatorio')
-      .isInt({ min: 0 }).withMessage('⚠️ Debe ser un número igual o mayor a 0'),
+    // 🗑️ Eliminado: validación de stock general
 
     body('images')
       .isArray({ min: 1, max: 1 }).withMessage('⚠️ Exactamente 1 imagen principal'),
@@ -89,9 +87,7 @@ router.put(
       .optional()
       .isFloat({ min: 0 }).withMessage('⚠️ Precio inválido'),
 
-    body('stock')
-      .optional()
-      .isInt({ min: 0 }).withMessage('⚠️ Stock inválido'),
+    // 🗑️ Eliminado: validación de stock general
 
     body('images')
       .optional()

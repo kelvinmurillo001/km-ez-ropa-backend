@@ -6,7 +6,6 @@ const { validationResult } = require('express-validator');
  * ✏️ Actualizar producto existente
  */
 const updateProduct = async (req, res) => {
-  // ✅ Validar errores
   const errores = validationResult(req);
   if (!errores.isEmpty()) {
     return res.status(400).json({ errors: errores.array() });
@@ -20,7 +19,6 @@ const updateProduct = async (req, res) => {
       category,
       subcategory,
       tallaTipo,
-      stock,
       featured,
       variants = [],
       images = []
@@ -46,7 +44,7 @@ const updateProduct = async (req, res) => {
         });
       }
 
-      // 🧹 Limpiar imagen anterior
+      // 🧹 Eliminar imagen anterior
       for (const img of product.images) {
         if (img.cloudinaryId) {
           await cloudinary.uploader.destroy(img.cloudinaryId);
@@ -76,7 +74,7 @@ const updateProduct = async (req, res) => {
       const seen = new Set();
       processedVariants = [];
 
-      // 🧹 Eliminar variantes anteriores
+      // 🧹 Eliminar imágenes de variantes anteriores
       for (const v of product.variants) {
         if (v.cloudinaryId) {
           await cloudinary.uploader.destroy(v.cloudinaryId);
@@ -90,8 +88,10 @@ const updateProduct = async (req, res) => {
         }
         seen.add(key);
 
-        if (!v.imageUrl || !v.talla || !v.color || !v.cloudinaryId) {
-          return res.status(400).json({ message: "⚠️ Cada variante debe tener todos sus campos completos" });
+        if (!v.imageUrl || !v.talla || !v.color || !v.cloudinaryId || typeof v.stock !== "number") {
+          return res.status(400).json({
+            message: "⚠️ Cada variante debe tener todos sus campos: imagen, talla, color, cloudinaryId y stock numérico"
+          });
         }
 
         processedVariants.push({
@@ -99,7 +99,7 @@ const updateProduct = async (req, res) => {
           cloudinaryId: v.cloudinaryId.trim(),
           talla: v.talla.trim().toLowerCase(),
           color: v.color.trim().toLowerCase(),
-          stock: typeof v.stock === "number" && v.stock >= 0 ? v.stock : 0
+          stock: v.stock
         });
       }
     }
@@ -112,7 +112,6 @@ const updateProduct = async (req, res) => {
     if (category) product.category = category.trim().toLowerCase();
     if (subcategory) product.subcategory = subcategory.trim().toLowerCase();
     if (tallaTipo) product.tallaTipo = tallaTipo.trim().toLowerCase();
-    if (stock !== undefined && !isNaN(stock)) product.stock = Number(stock);
 
     product.featured = featured === true || featured === "true";
     product.images = processedImages;
