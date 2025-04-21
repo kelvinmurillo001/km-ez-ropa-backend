@@ -24,6 +24,15 @@ if (missing.length > 0) {
   process.exit(1);
 }
 
+// 🌐 CORS dinámico desde .env
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : [];
+
+if (allowedOrigins.length === 0) {
+  console.warn("⚠️ No se encontraron ALLOWED_ORIGINS definidos en el archivo .env");
+}
+
 // 🌍 Configuración general
 const config = {
   env: process.env.NODE_ENV || 'development',
@@ -41,11 +50,7 @@ const config = {
   },
 
   // 🌐 CORS: Dominios permitidos
-  allowedOrigins: [
-    //https://km-ez-ropa-frontend.onrender.com',
-    'https://kmezropacatalogo.com',
-    'http://localhost:3000'
-  ]
+  allowedOrigins
 };
 
 if (config.env === 'development') {
