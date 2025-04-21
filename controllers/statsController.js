@@ -54,7 +54,7 @@ const getResumenEstadisticas = async (req, res) => {
       pedidosTotales: pedidos.length,
       pedidosHoy,
       totalVisitas: visitas,
-      ventasTotales: ventasTotales.toFixed(2),
+      ventasTotales: Number(ventasTotales), // ✅ ahora es número, no string
       productosPorCategoria
     });
 
