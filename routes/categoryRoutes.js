@@ -1,7 +1,7 @@
 // 📁 routes/categoryRoutes.js
-const express = require('express');
-const { body, param } = require('express-validator');
-const router = express.Router();
+const express = require('express')
+const { body, param } = require('express-validator')
+const router = express.Router()
 
 // 📦 Controladores
 const {
@@ -10,11 +10,11 @@ const {
   addSubcategory,
   deleteCategory,
   deleteSubcategory
-} = require('../controllers/categoryController');
+} = require('../controllers/categoryController')
 
 // 🛡️ Middlewares de autenticación y autorización
-const authMiddleware = require('../middleware/authMiddleware');
-const adminOnly = require('../middleware/adminOnly');
+const authMiddleware = require('../middleware/authMiddleware')
+const adminOnly = require('../middleware/adminOnly')
 
 /* -------------------------------------------------------------------------- */
 /* 🗂️ RUTAS DE CATEGORÍAS                                                    */
@@ -24,7 +24,7 @@ const adminOnly = require('../middleware/adminOnly');
  * 📥 Obtener todas las categorías (PÚBLICO)
  * GET /api/categories
  */
-router.get('/', getAllCategories);
+router.get('/', getAllCategories)
 
 /**
  * ➕ Crear nueva categoría (SOLO ADMIN)
@@ -38,18 +38,22 @@ router.post(
     body('name')
       .trim()
       .escape()
-      .notEmpty().withMessage('⚠️ El nombre de la categoría es obligatorio')
-      .isLength({ min: 2 }).withMessage('⚠️ Mínimo 2 caracteres en la categoría'),
+      .notEmpty()
+      .withMessage('⚠️ El nombre de la categoría es obligatorio')
+      .isLength({ min: 2 })
+      .withMessage('⚠️ Mínimo 2 caracteres en la categoría'),
 
     body('subcategory')
       .optional()
       .trim()
       .escape()
-      .isString().withMessage('⚠️ Subcategoría inválida')
-      .isLength({ min: 2 }).withMessage('⚠️ La subcategoría debe tener al menos 2 caracteres')
+      .isString()
+      .withMessage('⚠️ Subcategoría inválida')
+      .isLength({ min: 2 })
+      .withMessage('⚠️ La subcategoría debe tener al menos 2 caracteres')
   ],
   createCategory
-);
+)
 
 /**
  * ➕ Agregar subcategoría (SOLO ADMIN)
@@ -60,17 +64,18 @@ router.post(
   authMiddleware,
   adminOnly,
   [
-    param('categoryId')
-      .isMongoId().withMessage('⚠️ ID de categoría inválido'),
+    param('categoryId').isMongoId().withMessage('⚠️ ID de categoría inválido'),
 
     body('subcategory')
       .trim()
       .escape()
-      .notEmpty().withMessage('⚠️ La subcategoría es requerida')
-      .isLength({ min: 2 }).withMessage('⚠️ La subcategoría debe tener al menos 2 caracteres')
+      .notEmpty()
+      .withMessage('⚠️ La subcategoría es requerida')
+      .isLength({ min: 2 })
+      .withMessage('⚠️ La subcategoría debe tener al menos 2 caracteres')
   ],
   addSubcategory
-);
+)
 
 /**
  * 🗑️ Eliminar categoría completa (SOLO ADMIN)
@@ -80,12 +85,9 @@ router.delete(
   '/:id',
   authMiddleware,
   adminOnly,
-  [
-    param('id')
-      .isMongoId().withMessage('⚠️ ID inválido')
-  ],
+  [param('id').isMongoId().withMessage('⚠️ ID inválido')],
   deleteCategory
-);
+)
 
 /**
  * 🗑️ Eliminar subcategoría de una categoría (SOLO ADMIN)
@@ -96,19 +98,15 @@ router.delete(
   authMiddleware,
   adminOnly,
   [
-    param('categoryId')
-      .isMongoId().withMessage('⚠️ ID de categoría inválido'),
+    param('categoryId').isMongoId().withMessage('⚠️ ID de categoría inválido'),
 
-    param('subcategory')
-      .trim()
-      .escape()
-      .notEmpty().withMessage('⚠️ Subcategoría requerida')
+    param('subcategory').trim().escape().notEmpty().withMessage('⚠️ Subcategoría requerida')
   ],
   deleteSubcategory
-);
+)
 
 // 🛠️ FUTURAS FUNCIONES:
 // router.put('/:id', ...); // Editar nombre de categoría
 // router.put('/:id/rename-subcategory', ...); // Renombrar subcategoría
 
-module.exports = router;
+module.exports = router

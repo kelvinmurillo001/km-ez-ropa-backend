@@ -1,4 +1,4 @@
-const Promotion = require("../../models/promotion");
+const Promotion = require('../../models/promotion')
 
 /**
  * 📢 Obtener promociones activas y válidas según fechas
@@ -6,7 +6,7 @@ const Promotion = require("../../models/promotion");
  */
 const getActivePromotions = async (req, res) => {
   try {
-    const now = new Date();
+    const now = new Date()
 
     const promocionesActivas = await Promotion.find({
       active: true,
@@ -28,26 +28,25 @@ const getActivePromotions = async (req, res) => {
           endDate: { $gte: now }
         }
       ]
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: -1 })
 
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`📢 Promociones activas encontradas: ${promocionesActivas.length}`);
+      console.log(`📢 Promociones activas encontradas: ${promocionesActivas.length}`)
     }
 
     return res.status(200).json({
       ok: true,
-      message: "✅ Promociones activas obtenidas correctamente",
+      message: '✅ Promociones activas obtenidas correctamente',
       data: promocionesActivas
-    });
-
+    })
   } catch (error) {
-    console.error("❌ Error al obtener promociones activas:", error);
+    console.error('❌ Error al obtener promociones activas:', error)
     return res.status(500).json({
       ok: false,
-      message: "❌ Error interno del servidor al obtener promociones activas",
+      message: '❌ Error interno del servidor al obtener promociones activas',
       error: error.message
-    });
+    })
   }
-};
+}
 
-module.exports = getActivePromotions;
+module.exports = getActivePromotions

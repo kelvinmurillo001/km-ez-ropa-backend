@@ -1,20 +1,20 @@
-const Product = require("../../models/Product");
-const { validationResult } = require("express-validator");
+const Product = require('../../models/Product')
+const { validationResult } = require('express-validator')
 
 /**
  * ✅ Crear nuevo producto
  */
 const createProduct = async (req, res) => {
   // Validación de datos con express-validator
-  const errores = validationResult(req);
+  const errores = validationResult(req)
   if (!errores.isEmpty()) {
-    return res.status(400).json({ errors: errores.array() });
+    return res.status(400).json({ errors: errores.array() })
   }
 
   try {
     const {
       name,
-      description = "",
+      description = '',
       price,
       category,
       subcategory,
@@ -22,10 +22,10 @@ const createProduct = async (req, res) => {
       featured = false,
       variants = [],
       images = [],
-      color = "",
+      color = '',
       sizes = [],
       createdBy
-    } = req.body;
+    } = req.body
 
     // Validación general
     if (
@@ -38,64 +38,64 @@ const createProduct = async (req, res) => {
       !Array.isArray(images) ||
       images.length !== 1
     ) {
-      return res.status(400).json({ message: "⚠️ Faltan campos obligatorios o formato inválido." });
+      return res.status(400).json({ message: '⚠️ Faltan campos obligatorios o formato inválido.' })
     }
 
     // Verificar que el producto no exista (por nombre + subcategoría)
     const existe = await Product.findOne({
       name: name.trim(),
       subcategory: subcategory.trim().toLowerCase()
-    });
+    })
 
     if (existe) {
-      return res.status(409).json({ message: "⚠️ Ya existe un producto con ese nombre y subcategoría." });
+      return res
+        .status(409)
+        .json({ message: '⚠️ Ya existe un producto con ese nombre y subcategoría.' })
     }
 
     // Validación de imagen principal
-    const [mainImage] = images;
-    if (
-      !mainImage.url ||
-      !mainImage.cloudinaryId ||
-      !mainImage.talla ||
-      !mainImage.color
-    ) {
-      return res.status(400).json({ message: "⚠️ Imagen principal incompleta o inválida." });
+    const [mainImage] = images
+    if (!mainImage.url || !mainImage.cloudinaryId || !mainImage.talla || !mainImage.color) {
+      return res.status(400).json({ message: '⚠️ Imagen principal incompleta o inválida.' })
     }
 
     // Validación de variantes
     if (!Array.isArray(variants)) {
-      return res.status(400).json({ message: "⚠️ Formato inválido para variantes." });
+      return res.status(400).json({ message: '⚠️ Formato inválido para variantes.' })
     }
 
     if (variants.length > 4) {
-      return res.status(400).json({ message: "⚠️ Máximo 4 variantes permitidas." });
+      return res.status(400).json({ message: '⚠️ Máximo 4 variantes permitidas.' })
     }
 
-    const combinaciones = new Set();
+    const combinaciones = new Set()
     for (const v of variants) {
-      const talla = v.talla?.toLowerCase()?.trim();
-      const color = v.color?.toLowerCase()?.trim();
-      const stock = v.stock;
+      const talla = v.talla?.toLowerCase()?.trim()
+      const color = v.color?.toLowerCase()?.trim()
+      const stock = v.stock
 
-      if (!talla || !color || !v.imageUrl || !v.cloudinaryId || typeof stock !== "number") {
+      if (!talla || !color || !v.imageUrl || !v.cloudinaryId || typeof stock !== 'number') {
         return res.status(400).json({
-          message: "⚠️ Cada variante debe tener talla, color, imagen, cloudinaryId y stock numérico."
-        });
+          message:
+            '⚠️ Cada variante debe tener talla, color, imagen, cloudinaryId y stock numérico.'
+        })
       }
 
-      const clave = `${talla}-${color}`;
+      const clave = `${talla}-${color}`
       if (combinaciones.has(clave)) {
-        return res.status(400).json({ message: "⚠️ Variantes duplicadas detectadas (talla + color)." });
+        return res
+          .status(400)
+          .json({ message: '⚠️ Variantes duplicadas detectadas (talla + color).' })
       }
-      combinaciones.add(clave);
+      combinaciones.add(clave)
     }
 
     // Limpieza de tallas (si se proporcionan)
     const tallasLimpias = Array.isArray(sizes)
       ? sizes
-          .filter(s => typeof s === "string" && s.trim().length > 0)
+          .filter(s => typeof s === 'string' && s.trim().length > 0)
           .map(s => s.trim().toUpperCase())
-      : [];
+      : []
 
     // 🔧 Crear producto normalizado
     const producto = new Product({
@@ -111,19 +111,18 @@ const createProduct = async (req, res) => {
       color: color.trim(),
       sizes: tallasLimpias,
       createdBy: createdBy.trim()
-    });
+    })
 
     // 📦 Guardar en base de datos
-    const saved = await producto.save();
-    return res.status(201).json(saved);
-
+    const saved = await producto.save()
+    return res.status(201).json(saved)
   } catch (error) {
-    console.error("❌ Error al crear producto:", error);
+    console.error('❌ Error al crear producto:', error)
     return res.status(500).json({
-      message: "❌ Error interno al crear producto",
+      message: '❌ Error interno al crear producto',
       error: error.message
-    });
+    })
   }
-};
+}
 
-module.exports = createProduct;
+module.exports = createProduct

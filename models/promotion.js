@@ -1,15 +1,15 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose')
 
-const allowedPages = ['home', 'categorias', 'productos', 'detalle', 'carrito', 'checkout'];
+const allowedPages = ['home', 'categorias', 'productos', 'detalle', 'carrito', 'checkout']
 
 const promotionSchema = new mongoose.Schema(
   {
     // 🧾 Mensaje de la promoción
     message: {
       type: String,
-      required: [true, "⚠️ El mensaje de la promoción es obligatorio"],
+      required: [true, '⚠️ El mensaje de la promoción es obligatorio'],
       trim: true,
-      minlength: [3, "⚠️ El mensaje debe tener al menos 3 caracteres"]
+      minlength: [3, '⚠️ El mensaje debe tener al menos 3 caracteres']
     },
 
     // ✅ Estado activo/inactivo
@@ -44,9 +44,9 @@ const promotionSchema = new mongoose.Schema(
       trim: true,
       validate: {
         validator: function (url) {
-          return !url || /^https?:\/\/.+\.(jpg|jpeg|png|webp|mp4|gif|svg|avif)$/i.test(url);
+          return !url || /^https?:\/\/.+\.(jpg|jpeg|png|webp|mp4|gif|svg|avif)$/i.test(url)
         },
-        message: "⚠️ URL de multimedia no válida"
+        message: '⚠️ URL de multimedia no válida'
       }
     },
     mediaType: {
@@ -61,7 +61,7 @@ const promotionSchema = new mongoose.Schema(
       default: [],
       validate: {
         validator: function (arr) {
-          return arr.every(p => allowedPages.includes(p));
+          return arr.every(p => allowedPages.includes(p))
         },
         message: '⚠️ Una o más páginas no son válidas para promociones'
       }
@@ -80,7 +80,7 @@ const promotionSchema = new mongoose.Schema(
     createdBy: {
       type: String,
       trim: true,
-      default: "admin"
+      default: 'admin'
     },
 
     // 🌐 Slug opcional para URLs
@@ -93,22 +93,22 @@ const promotionSchema = new mongoose.Schema(
   {
     timestamps: true
   }
-);
+)
 
 // 🔍 Índices útiles para obtener campañas activas y ordenar por fecha
-promotionSchema.index({ active: 1, startDate: 1, endDate: 1 });
+promotionSchema.index({ active: 1, startDate: 1, endDate: 1 })
 
 // 🔁 Hook para crear slug automáticamente si no existe
-promotionSchema.pre("save", function (next) {
+promotionSchema.pre('save', function (next) {
   if (!this.slug && this.message) {
     this.slug = this.message
       .toLowerCase()
       .trim()
       .replace(/\s+/g, '-')
       .replace(/[^\w\-]/g, '')
-      .substring(0, 100);
+      .substring(0, 100)
   }
-  next();
-});
+  next()
+})
 
-module.exports = mongoose.model("Promotion", promotionSchema);
+module.exports = mongoose.model('Promotion', promotionSchema)

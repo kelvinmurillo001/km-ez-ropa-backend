@@ -1,64 +1,63 @@
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const jwt = require('jsonwebtoken')
+const User = require('../models/User')
 
 /**
  * 🔐 Middleware para proteger rutas usando JWT
  */
 const authMiddleware = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
+    const authHeader = req.headers.authorization
 
     // 🔎 Verificar encabezado Authorization
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({
         ok: false,
         message: '🔐 Token no proporcionado o con formato incorrecto'
-      });
+      })
     }
 
-    const token = authHeader.split(' ')[1]?.trim();
+    const token = authHeader.split(' ')[1]?.trim()
 
     if (!token || token.length < 10) {
       return res.status(401).json({
         ok: false,
         message: '🔒 Token inválido o muy corto'
-      });
+      })
     }
 
     // ✅ Verificar JWT
-    let decoded;
+    let decoded
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
+      decoded = jwt.verify(token, process.env.JWT_SECRET)
     } catch (err) {
-      console.warn('⛔ JWT inválido:', err.message);
+      console.warn('⛔ JWT inválido:', err.message)
       return res.status(401).json({
         ok: false,
         message: '⛔ Token expirado o inválido'
-      });
+      })
     }
 
     // 👤 Buscar usuario en DB
-    const user = await User.findById(decoded.id).select('-password');
+    const user = await User.findById(decoded.id).select('-password')
 
     if (!user) {
       return res.status(401).json({
         ok: false,
         message: '⛔ Usuario no encontrado o eliminado'
-      });
+      })
     }
 
     // 💾 Adjuntar usuario al request
-    req.user = user;
-    next();
-
+    req.user = user
+    next()
   } catch (error) {
-    console.error('❌ Error en authMiddleware:', error);
+    console.error('❌ Error en authMiddleware:', error)
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno en autenticación',
       error: error.message
-    });
+    })
   }
-};
+}
 
-module.exports = authMiddleware;
+module.exports = authMiddleware

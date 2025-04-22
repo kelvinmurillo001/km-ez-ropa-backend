@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require('mongoose')
 
 // 🧾 Esquema del Pedido
 const orderSchema = new mongoose.Schema(
@@ -7,63 +7,63 @@ const orderSchema = new mongoose.Schema(
       {
         productId: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "Product",
-          required: [true, "⚠️ ID de producto requerido"]
+          ref: 'Product',
+          required: [true, '⚠️ ID de producto requerido']
         },
         name: {
           type: String,
-          required: [true, "⚠️ Nombre del producto requerido"],
+          required: [true, '⚠️ Nombre del producto requerido'],
           trim: true,
-          minlength: [2, "⚠️ Mínimo 2 caracteres"]
+          minlength: [2, '⚠️ Mínimo 2 caracteres']
         },
         talla: {
           type: String,
           trim: true,
-          default: "Única"
+          default: 'Única'
         },
         cantidad: {
           type: Number,
           required: true,
-          min: [1, "⚠️ Cantidad mínima es 1"]
+          min: [1, '⚠️ Cantidad mínima es 1']
         },
         precio: {
           type: Number,
           required: true,
-          min: [0, "⚠️ El precio no puede ser negativo"]
+          min: [0, '⚠️ El precio no puede ser negativo']
         }
       }
     ],
     total: {
       type: Number,
       required: true,
-      min: [0, "⚠️ Total no puede ser negativo"]
+      min: [0, '⚠️ Total no puede ser negativo']
     },
     nombreCliente: {
       type: String,
-      required: [true, "⚠️ Nombre del cliente requerido"],
+      required: [true, '⚠️ Nombre del cliente requerido'],
       trim: true,
-      minlength: [2, "⚠️ Mínimo 2 caracteres"],
+      minlength: [2, '⚠️ Mínimo 2 caracteres'],
       maxlength: 100
     },
     email: {
       type: String,
-      required: [true, "⚠️ Correo requerido"],
+      required: [true, '⚠️ Correo requerido'],
       trim: true,
       lowercase: true,
       match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, '⚠️ Email inválido']
     },
     telefono: {
       type: String,
-      required: [true, "⚠️ Teléfono requerido"],
+      required: [true, '⚠️ Teléfono requerido'],
       trim: true,
-      minlength: [7, "⚠️ Teléfono demasiado corto"],
-      maxlength: [20, "⚠️ Teléfono demasiado largo"]
+      minlength: [7, '⚠️ Teléfono demasiado corto'],
+      maxlength: [20, '⚠️ Teléfono demasiado largo']
     },
     nota: {
       type: String,
       default: '',
       trim: true,
-      maxlength: [300, "⚠️ Nota demasiado larga"]
+      maxlength: [300, '⚠️ Nota demasiado larga']
     },
     estado: {
       type: String,
@@ -79,9 +79,9 @@ const orderSchema = new mongoose.Schema(
   {
     timestamps: true // 🕒 createdAt, updatedAt
   }
-);
+)
 
 // 🔍 Índice por estado + fecha para panel de administración
-orderSchema.index({ estado: 1, createdAt: -1 });
+orderSchema.index({ estado: 1, createdAt: -1 })
 
-module.exports = mongoose.model('Order', orderSchema);
+module.exports = mongoose.model('Order', orderSchema)

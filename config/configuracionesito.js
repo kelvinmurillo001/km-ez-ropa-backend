@@ -1,9 +1,9 @@
 // 📁 backend/config/configuracionesito.js
-const path = require('path');
-const dotenv = require('dotenv');
+const path = require('path')
+const dotenv = require('dotenv')
 
 // ✅ Cargar variables de entorno desde el archivo .env
-dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
+dotenv.config({ path: path.resolve(__dirname, '..', '.env') })
 
 // 🧩 Lista de variables obligatorias
 const requiredVars = [
@@ -16,20 +16,21 @@ const requiredVars = [
   'CLOUDINARY_API_KEY',
   'CLOUDINARY_API_SECRET',
   'ALLOWED_ORIGINS'
-];
+]
 
 // 🚨 Validar que todas las variables estén presentes
-const missing = requiredVars.filter((key) => !process.env[key]);
+const missing = requiredVars.filter(key => !process.env[key])
 if (missing.length > 0) {
-  console.error(`❌ Error: Faltan variables obligatorias en el archivo .env:\n🔴 ${missing.join(', ')}`);
-  process.exit(1);
+  console.error(
+    `❌ Error: Faltan variables obligatorias en el archivo .env:\n🔴 ${missing.join(', ')}`
+  )
+  process.exit(1)
 }
 
 // 🌐 CORS - Limpiar y normalizar orígenes permitidos
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  .split(',')
-  .map((origin) => origin.trim().replace(/\/$/, ''))
-  .filter((origin) => /^https?:\/\/.+/.test(origin)); // Validar formato
+const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',')
+  .map(origin => origin.trim().replace(/\/$/, ''))
+  .filter(origin => /^https?:\/\/.+/.test(origin)) // Validar formato
 
 // 🛡️ Configuración central exportada
 const config = {
@@ -54,14 +55,14 @@ const config = {
   enableCors: process.env.CORS_ENABLED === 'true',
   rateLimitWindow: parseInt(process.env.RATE_LIMIT_WINDOW) || 15,
   rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX) || 100
-};
+}
 
 // 🧪 Mostrar información solo en entorno local
 if (config.env === 'development') {
-  console.log('🧪 Modo de desarrollo activo');
-  console.log('🌐 CORS Allowed Origins:', config.allowedOrigins);
-  console.log('☁️ Cloudinary config ✅');
-  console.log('🔑 JWT_SECRET presente:', !!config.jwtSecret);
+  console.log('🧪 Modo de desarrollo activo')
+  console.log('🌐 CORS Allowed Origins:', config.allowedOrigins)
+  console.log('☁️ Cloudinary config ✅')
+  console.log('🔑 JWT_SECRET presente:', !!config.jwtSecret)
 }
 
-module.exports = config;
+module.exports = config

@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+const mongoose = require('mongoose')
+const bcrypt = require('bcryptjs')
 
 const userSchema = new mongoose.Schema(
   {
@@ -47,25 +47,25 @@ const userSchema = new mongoose.Schema(
   {
     timestamps: true // 🕒 createdAt / updatedAt
   }
-);
+)
 
 // 🔐 Hashear contraseña antes de guardar
 userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
+  if (!this.isModified('password')) return next()
 
   try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
+    const salt = await bcrypt.genSalt(10)
+    this.password = await bcrypt.hash(this.password, salt)
+    next()
   } catch (err) {
-    console.error('❌ Error al hashear contraseña:', err);
-    next(err);
+    console.error('❌ Error al hashear contraseña:', err)
+    next(err)
   }
-});
+})
 
 // 🔑 Método para comparar contraseñas
 userSchema.methods.matchPassword = async function (enteredPassword) {
-  return this.password ? await bcrypt.compare(enteredPassword, this.password) : false;
-};
+  return this.password ? await bcrypt.compare(enteredPassword, this.password) : false
+}
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model('User', userSchema)

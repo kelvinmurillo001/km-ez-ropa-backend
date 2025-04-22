@@ -1,4 +1,4 @@
-"use strict";
+'use strict'
 
 /**
  * ✅ Verifica si el usuario tiene rol de administrador
@@ -6,7 +6,7 @@
  * @returns {boolean}
  */
 function esAdmin(usuario) {
-  return usuario?.role?.toLowerCase?.() === "admin" || usuario?.isAdmin === true;
+  return usuario?.role?.toLowerCase?.() === 'admin' || usuario?.isAdmin === true
 }
 
 /**
@@ -15,16 +15,16 @@ function esAdmin(usuario) {
  * @param {string} mensaje - Mensaje de error
  * @param {number} status - Código de estado HTTP (por defecto 500)
  */
-function enviarError(res, mensaje = "❌ Error del servidor", status = 500) {
-  if (!res || typeof res.status !== "function") {
-    console.warn("⚠️ Se intentó enviar error pero el objeto res no es válido");
-    return;
+function enviarError(res, mensaje = '❌ Error del servidor', status = 500) {
+  if (!res || typeof res.status !== 'function') {
+    console.warn('⚠️ Se intentó enviar error pero el objeto res no es válido')
+    return
   }
 
   return res.status(status).json({
     ok: false,
     message: mensaje
-  });
+  })
 }
 
 /**
@@ -33,17 +33,17 @@ function enviarError(res, mensaje = "❌ Error del servidor", status = 500) {
  * @param {any} data - Datos a retornar al cliente
  * @param {string} mensaje - Mensaje opcional de éxito
  */
-function enviarExito(res, data = {}, mensaje = "✅ Operación exitosa") {
-  if (!res || typeof res.status !== "function") {
-    console.warn("⚠️ Se intentó enviar éxito pero el objeto res no es válido");
-    return;
+function enviarExito(res, data = {}, mensaje = '✅ Operación exitosa') {
+  if (!res || typeof res.status !== 'function') {
+    console.warn('⚠️ Se intentó enviar éxito pero el objeto res no es válido')
+    return
   }
 
   return res.status(200).json({
     ok: true,
     message: mensaje,
     data
-  });
+  })
 }
 
 /**
@@ -52,13 +52,13 @@ function enviarExito(res, data = {}, mensaje = "✅ Operación exitosa") {
  * @returns {string|null} - Token extraído o null si no existe
  */
 function obtenerTokenDesdeHeader(req) {
-  const authHeader = req?.headers?.authorization;
-  if (!authHeader || typeof authHeader !== "string") return null;
+  const authHeader = req?.headers?.authorization
+  if (!authHeader || typeof authHeader !== 'string') return null
 
-  const [bearer, token] = authHeader.split(" ");
-  if (bearer?.toLowerCase() !== "bearer" || !token || token.length < 10) return null;
+  const [bearer, token] = authHeader.split(' ')
+  if (bearer?.toLowerCase() !== 'bearer' || !token || token.length < 10) return null
 
-  return token.trim();
+  return token.trim()
 }
 
 // 🌍 Exportación común (CommonJS)
@@ -67,4 +67,4 @@ module.exports = {
   enviarError,
   enviarExito,
   obtenerTokenDesdeHeader
-};
+}
