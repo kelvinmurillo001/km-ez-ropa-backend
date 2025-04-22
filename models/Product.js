@@ -165,15 +165,14 @@ const productSchema = new mongoose.Schema({
     trim: true,
     maxlength: 160
   }
-
 }, {
   timestamps: true
 });
 
-// ✅ Índice combinado con configuración de fondo para evitar duplicados
+// ✅ Índice combinado (evita conflictos y mejora búsquedas)
 productSchema.index(
   { name: "text", category: 1, subcategory: 1 },
-  { background: true }
+  { background: true } // Recomendado para producción
 );
 
 module.exports = mongoose.model("Product", productSchema);
