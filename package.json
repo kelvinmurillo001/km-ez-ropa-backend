@@ -4,7 +4,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "lint": "eslint ."
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
@@ -23,11 +24,14 @@
     "streamifier": "^0.1.1"
   },
   "devDependencies": {
-    "eslint": "^8.57.1",
+    "@eslint/js": "^9.25.1",
+    "eslint": "^9.25.1",
     "eslint-config-standard": "^17.1.0",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-n": "^16.6.2",
     "eslint-plugin-promise": "^6.6.0",
+    "globals": "^16.0.0",
     "nodemon": "^3.1.9"
   }
+
 }
