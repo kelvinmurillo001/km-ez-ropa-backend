@@ -1,12 +1,13 @@
-const streamifier = require('streamifier')
-const { cloudinary } = require('../config/cloudinary')
+// 📁 backend/controllers/uploadController.js
+import streamifier from 'streamifier'
+import { cloudinary } from '../config/cloudinary.js'
 
 /**
  * 📤 Subir una imagen a Cloudinary
  */
-const uploadImage = async (req, res) => {
+export const uploadImage = async (req, res) => {
   try {
-    // Validar archivo
+    // 🔍 Validar existencia del archivo
     if (!req.file?.buffer) {
       return res.status(400).json({
         ok: false,
@@ -15,15 +16,16 @@ const uploadImage = async (req, res) => {
     }
 
     const mimeType = req.file.mimetype
-    if (!mimeType.startsWith('image/')) {
+    if (!mimeType || !mimeType.startsWith('image/')) {
       return res.status(400).json({
         ok: false,
         message: '⚠️ Solo se permiten archivos de imagen.'
       })
     }
 
-    // 📁 Carpeta destino
-    const folder = (req.body.folder || 'promociones').trim().toLowerCase()
+    // 📂 Determinar carpeta destino
+    const folderInput = req.body.folder || 'promociones'
+    const folder = folderInput.trim().toLowerCase()
 
     const allowedFolders = ['promociones', 'productos_kmezropa', 'banners', 'temp']
     if (!allowedFolders.includes(folder)) {
@@ -33,23 +35,16 @@ const uploadImage = async (req, res) => {
       })
     }
 
-    // 📤 Función de subida a Cloudinary
-    const uploadToCloudinary = () => {
-      return new Promise((resolve, reject) => {
+    // 📤 Subir usando Cloudinary con streaming
+    const uploadToCloudinary = () =>
+      new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
-          {
-            folder,
-            resource_type: 'image'
-          },
-          (error, result) => {
-            if (error) reject(error)
-            else resolve(result)
-          }
+          { folder, resource_type: 'image' },
+          (error, result) => (error ? reject(error) : resolve(result))
         )
 
         streamifier.createReadStream(req.file.buffer).pipe(stream)
       })
-    }
 
     const result = await uploadToCloudinary()
 
@@ -69,8 +64,4 @@ const uploadImage = async (req, res) => {
       error: err.message
     })
   }
-}
-
-module.exports = {
-  uploadImage
 }

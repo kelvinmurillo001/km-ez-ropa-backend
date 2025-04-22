@@ -1,6 +1,11 @@
 // 📁 backend/config/configuracionesito.js
-const path = require('path')
-const dotenv = require('dotenv')
+import path from 'path'
+import dotenv from 'dotenv'
+import { fileURLToPath } from 'url'
+
+// 📍 Corrección para __dirname en ESModules
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 // ✅ Cargar variables de entorno desde el archivo .env
 dotenv.config({ path: path.resolve(__dirname, '..', '.env') })
@@ -57,7 +62,7 @@ const config = {
   rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX) || 100
 }
 
-// 🧪 Mostrar información solo en entorno local
+// 🧪 Mostrar información solo en desarrollo
 if (config.env === 'development') {
   console.log('🧪 Modo de desarrollo activo')
   console.log('🌐 CORS Allowed Origins:', config.allowedOrigins)
@@ -65,4 +70,4 @@ if (config.env === 'development') {
   console.log('🔑 JWT_SECRET presente:', !!config.jwtSecret)
 }
 
-module.exports = config
+export default config

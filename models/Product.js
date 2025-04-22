@@ -1,6 +1,7 @@
-const mongoose = require('mongoose')
+// 📁 backend/models/Product.js
+import mongoose from 'mongoose'
 
-// ✅ Subesquema para variantes de producto
+// ✅ Subesquema para variantes (talla + color + imagen + stock)
 const variantSchema = new mongoose.Schema(
   {
     talla: {
@@ -80,7 +81,7 @@ const productSchema = new mongoose.Schema(
       default: [],
       validate: {
         validator: val => val.every(t => typeof t === 'string' && t.trim().length > 0),
-        message: '⚠️ Cada talla debe ser un texto válido'
+        message: '⚠️ Cada talla debe ser texto válido'
       }
     },
     color: {
@@ -95,7 +96,7 @@ const productSchema = new mongoose.Schema(
     },
     isActive: {
       type: Boolean,
-      default: true // 🔒 Control de visibilidad sin eliminar producto
+      default: true
     },
     images: {
       type: [
@@ -179,7 +180,7 @@ const productSchema = new mongoose.Schema(
   }
 )
 
-// 🔁 Hook para crear slug automáticamente
+// 🧠 Hook para generar slug automáticamente
 productSchema.pre('save', function (next) {
   if (!this.slug && this.name) {
     this.slug = this.name
@@ -192,9 +193,9 @@ productSchema.pre('save', function (next) {
   next()
 })
 
-// 🔍 Índices para búsquedas y panel
+// 🔍 Índices útiles para búsquedas
 productSchema.index({ name: 'text', category: 1, subcategory: 1 }, { background: true })
-productSchema.index({ category: 1, subcategory: 1, tallaTipo: 1 }) // Para filtros en catálogo
+productSchema.index({ category: 1, subcategory: 1, tallaTipo: 1 })
 
-// 🚀 Exportar modelo
-module.exports = mongoose.model('Product', productSchema)
+const Product = mongoose.model('Product', productSchema)
+export default Product

@@ -1,11 +1,9 @@
-'use strict'
-
 /**
  * ✅ Verifica si el usuario tiene rol de administrador
  * @param {Object} usuario - Objeto de usuario desde el token o sesión
  * @returns {boolean}
  */
-function esAdmin(usuario) {
+export function esAdmin(usuario) {
   return usuario?.role?.toLowerCase?.() === 'admin' || usuario?.isAdmin === true
 }
 
@@ -15,7 +13,7 @@ function esAdmin(usuario) {
  * @param {string} mensaje - Mensaje de error
  * @param {number} status - Código de estado HTTP (por defecto 500)
  */
-function enviarError(res, mensaje = '❌ Error del servidor', status = 500) {
+export function enviarError(res, mensaje = '❌ Error del servidor', status = 500) {
   if (!res || typeof res.status !== 'function') {
     console.warn('⚠️ Se intentó enviar error pero el objeto res no es válido')
     return
@@ -33,7 +31,7 @@ function enviarError(res, mensaje = '❌ Error del servidor', status = 500) {
  * @param {any} data - Datos a retornar al cliente
  * @param {string} mensaje - Mensaje opcional de éxito
  */
-function enviarExito(res, data = {}, mensaje = '✅ Operación exitosa') {
+export function enviarExito(res, data = {}, mensaje = '✅ Operación exitosa') {
   if (!res || typeof res.status !== 'function') {
     console.warn('⚠️ Se intentó enviar éxito pero el objeto res no es válido')
     return
@@ -51,7 +49,7 @@ function enviarExito(res, data = {}, mensaje = '✅ Operación exitosa') {
  * @param {Object} req - Objeto de petición de Express
  * @returns {string|null} - Token extraído o null si no existe
  */
-function obtenerTokenDesdeHeader(req) {
+export function obtenerTokenDesdeHeader(req) {
   const authHeader = req?.headers?.authorization
   if (!authHeader || typeof authHeader !== 'string') return null
 
@@ -59,12 +57,4 @@ function obtenerTokenDesdeHeader(req) {
   if (bearer?.toLowerCase() !== 'bearer' || !token || token.length < 10) return null
 
   return token.trim()
-}
-
-// 🌍 Exportación común (CommonJS)
-module.exports = {
-  esAdmin,
-  enviarError,
-  enviarExito,
-  obtenerTokenDesdeHeader
 }

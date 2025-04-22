@@ -1,15 +1,16 @@
-const { cloudinary } = require('../config/cloudinary')
+// 📁 backend/controllers/imageController.js
+import { cloudinary } from '../config/cloudinary.js'
 
 /**
  * 📂 Listar imágenes de Cloudinary (carpeta productos_kmezropa)
  * @route GET /api/images
  */
-const listImages = async (req, res) => {
+export const listImages = async (req, res) => {
   try {
     const result = await cloudinary.search
       .expression('folder:productos_kmezropa')
       .sort_by('created_at', 'desc')
-      .max_results(100) // máximo permitido por Cloudinary
+      .max_results(100)
       .execute()
 
     const imageList = result.resources.map(img => ({
@@ -41,7 +42,7 @@ const listImages = async (req, res) => {
  * 🗑️ Eliminar una imagen específica por su public_id
  * @route DELETE /api/images/:publicId
  */
-const deleteImage = async (req, res) => {
+export const deleteImage = async (req, res) => {
   try {
     const { publicId } = req.params
 
@@ -77,9 +78,4 @@ const deleteImage = async (req, res) => {
       error: error.message
     })
   }
-}
-
-module.exports = {
-  listImages,
-  deleteImage
 }

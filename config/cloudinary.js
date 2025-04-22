@@ -1,6 +1,6 @@
 // 📁 backend/config/cloudinary.js
-const { v2: cloudinary } = require('cloudinary')
-const config = require('./configuracionesito')
+import { v2 as cloudinary } from 'cloudinary'
+import config from './configuracionesito.js'
 
 // ✅ Extraemos credenciales de Cloudinary
 const { cloud_name, api_key, api_secret } = config.cloudinary || {}
@@ -28,4 +28,4 @@ if (config.env !== 'production') {
   // api_secret JAMÁS se debe mostrar, incluso en desarrollo
 }
 
-module.exports = { cloudinary }
+export { cloudinary }

@@ -1,4 +1,5 @@
-const Promotion = require('../../models/promotion')
+// 📁 backend/controllers/promotions/getActivePromotions.js
+import Promotion from '../../models/promotion.js'
 
 /**
  * 📢 Obtener promociones activas y válidas según fechas
@@ -11,22 +12,10 @@ const getActivePromotions = async (req, res) => {
     const promocionesActivas = await Promotion.find({
       active: true,
       $or: [
-        {
-          startDate: { $lte: now },
-          endDate: { $gte: now }
-        },
-        {
-          startDate: null,
-          endDate: null
-        },
-        {
-          startDate: { $lte: now },
-          endDate: null
-        },
-        {
-          startDate: null,
-          endDate: { $gte: now }
-        }
+        { startDate: { $lte: now }, endDate: { $gte: now } },
+        { startDate: null, endDate: null },
+        { startDate: { $lte: now }, endDate: null },
+        { startDate: null, endDate: { $gte: now } }
       ]
     }).sort({ createdAt: -1 })
 
@@ -49,4 +38,4 @@ const getActivePromotions = async (req, res) => {
   }
 }
 
-module.exports = getActivePromotions
+export default getActivePromotions

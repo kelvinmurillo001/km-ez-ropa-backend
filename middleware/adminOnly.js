@@ -1,3 +1,5 @@
+// 📁 backend/middleware/adminOnly.js
+
 /**
  * 🔒 Middleware para restringir el acceso a rutas solo para administradores
  */
@@ -33,4 +35,4 @@ const adminOnly = (req, res, next) => {
   }
 }
 
-module.exports = adminOnly
+export default adminOnly

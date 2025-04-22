@@ -1,19 +1,19 @@
-const express = require('express')
-const { body, param } = require('express-validator')
-const router = express.Router()
+// 📁 routes/promoRoutes.js
+import express from 'express'
+import { body, param } from 'express-validator'
 
-// 📢 Controladores
-const {
+import {
   getPromotion,
   getAllPromotions,
   updatePromotion,
   togglePromoActive,
   deletePromotion
-} = require('../controllers/promoController')
+} from '../controllers/promoController.js'
 
-// 🛡️ Middlewares
-const authMiddleware = require('../middleware/authMiddleware')
-const adminOnly = require('../middleware/adminOnly')
+import authMiddleware from '../middleware/authMiddleware.js'
+import adminOnly from '../middleware/adminOnly.js'
+
+const router = express.Router()
 
 /* -------------------------------------------------------------------------- */
 /* 📄 RUTAS DE PROMOCIONES                                                    */
@@ -110,4 +110,4 @@ router.delete(
   deletePromotion
 )
 
-module.exports = router
+export default router

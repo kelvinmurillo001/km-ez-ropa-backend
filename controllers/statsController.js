@@ -1,25 +1,34 @@
-const Product = require('../models/Product')
-const Order = require('../models/Order')
-const fs = require('fs').promises
-const path = require('path')
+// 📁 backend/controllers/statsController.js
+import Product from '../models/Product.js'
+import Order from '../models/Order.js'
+import { promises as fs } from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
+// Necesario para __dirname en ES Modules
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+// 📍 Ruta al archivo de visitas
 const visitasPath = path.join(__dirname, '..', 'data', 'visitas.json')
 
 /**
  * 📊 Obtener estadísticas generales para dashboard admin
  */
-const getResumenEstadisticas = async (req, res) => {
+export const getResumenEstadisticas = async (req, res) => {
   try {
-    const productos = await Product.find()
-    const pedidos = await Order.find()
+    // 🔍 Obtener productos y pedidos
+    const [productos, pedidos] = await Promise.all([
+      Product.find(),
+      Order.find()
+    ])
 
-    // 👁️ Leer visitas desde archivo JSON
+    // 👁️ Leer visitas desde archivo local
     let visitas = 0
     try {
       const raw = await fs.readFile(visitasPath, 'utf-8')
       const json = JSON.parse(raw)
       const visitasLeidas = json.count ?? json.visitas
-
       if (typeof visitasLeidas === 'number' && visitasLeidas >= 0) {
         visitas = visitasLeidas
       }
@@ -27,28 +36,28 @@ const getResumenEstadisticas = async (req, res) => {
       console.warn(`⚠️ No se pudo leer visitas desde visitas.json: ${err.message}`)
     }
 
-    // 📅 Fecha de hoy (00:00)
+    // 📅 Calcular fecha de hoy (inicio del día)
     const hoy = new Date()
     hoy.setHours(0, 0, 0, 0)
 
-    // 🔢 Cálculos
+    // 🧮 Cálculos
     const productosDestacados = productos.filter(p => p.featured).length
 
     const pedidosHoy = pedidos.filter(p => {
-      const fecha = new Date(p.createdAt)
-      return fecha >= hoy && !isNaN(fecha)
+      const fechaPedido = new Date(p.createdAt)
+      return !isNaN(fechaPedido) && fechaPedido >= hoy
     }).length
 
     const pedidosEnviados = pedidos.filter(p => p.estado === 'enviado')
     const ventasTotales = pedidosEnviados.reduce((sum, p) => sum + parseFloat(p.total || 0), 0)
 
-    const productosPorCategoria = {}
-    for (const p of productos) {
-      const categoria = (p.category || 'sin categoría').trim().toLowerCase()
-      productosPorCategoria[categoria] = (productosPorCategoria[categoria] || 0) + 1
-    }
+    const productosPorCategoria = productos.reduce((acc, p) => {
+      const cat = (p.category || 'sin categoría').trim().toLowerCase()
+      acc[cat] = (acc[cat] || 0) + 1
+      return acc
+    }, {})
 
-    // 📤 Respuesta final
+    // 📤 Respuesta al cliente
     return res.status(200).json({
       ok: true,
       message: '✅ Estadísticas generales obtenidas correctamente',
@@ -70,8 +79,4 @@ const getResumenEstadisticas = async (req, res) => {
       error: err.message
     })
   }
-}
-
-module.exports = {
-  getResumenEstadisticas
 }

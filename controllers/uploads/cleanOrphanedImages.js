@@ -1,27 +1,28 @@
-const Product = require('../../models/Product')
-const { cloudinary } = require('../../config/cloudinary')
+import Product from '../../models/Product.js'
+import { cloudinary } from '../../config/cloudinary.js'
 
 /**
  * 🧹 Limpia imágenes huérfanas de Cloudinary
- * - Compara los cloudinaryId usados en la DB vs los existentes en Cloudinary
- * - Solo debería usarse por el administrador
+ * - Busca en Cloudinary las imágenes subidas
+ * - Compara con los cloudinaryId utilizados en productos (images y variants)
+ * - Elimina las que no se usan en la DB
  */
 const cleanOrphanedImages = async (req, res) => {
   try {
     const usedIds = new Set()
 
-    // 📦 Obtener productos y recoger sus cloudinaryIds
+    // 🔍 Recolectar todos los cloudinaryId usados en productos
     const productos = await Product.find()
-    for (const p of productos) {
-      ;(p.images || []).forEach(img => {
+    for (const producto of productos) {
+      for (const img of producto.images || []) {
         if (img.cloudinaryId) usedIds.add(img.cloudinaryId)
-      })
-      ;(p.variants || []).forEach(v => {
-        if (v.cloudinaryId) usedIds.add(v.cloudinaryId)
-      })
+      }
+      for (const variante of producto.variants || []) {
+        if (variante.cloudinaryId) usedIds.add(variante.cloudinaryId)
+      }
     }
 
-    // 🧠 Cloudinary tiene un límite de 100 por búsqueda. Considerar paginación futura.
+    // 🔎 Buscar imágenes en Cloudinary (limite: 100)
     const result = await cloudinary.search
       .expression('folder:productos_kmezropa')
       .max_results(100)
@@ -36,14 +37,15 @@ const cleanOrphanedImages = async (req, res) => {
         await cloudinary.uploader.destroy(img.public_id)
         eliminadas.push(img.public_id)
       } catch (err) {
-        console.warn(`⚠️ Error al eliminar imagen huérfana (${img.public_id}):`, err.message)
+        console.warn(`⚠️ Error al eliminar (${img.public_id}):`, err.message)
         fallidas.push({ public_id: img.public_id, error: err.message })
       }
     }
 
+    // 🧪 Logs solo en desarrollo
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`🧼 Total imágenes en Cloudinary: ${result.resources.length}`)
-      console.log(`🔍 Huérfanas encontradas: ${huérfanas.length}`)
+      console.log(`🧼 Cloudinary total: ${result.resources.length}`)
+      console.log(`🔍 Huérfanas detectadas: ${huérfanas.length}`)
       console.log(`✅ Eliminadas: ${eliminadas.length}`)
     }
 
@@ -56,17 +58,17 @@ const cleanOrphanedImages = async (req, res) => {
         totalHuérfanas: huérfanas.length,
         totalEliminadas: eliminadas.length,
         eliminadas,
-        errores: fallidas.length ? fallidas : undefined
+        ...(fallidas.length > 0 && { errores: fallidas })
       }
     })
   } catch (error) {
     console.error('❌ Error limpiando imágenes huérfanas:', error)
     return res.status(500).json({
       ok: false,
-      message: '❌ Error al limpiar imágenes huérfanas',
+      message: '❌ Error interno al limpiar imágenes huérfanas',
       error: error.message
     })
   }
 }
 
-module.exports = { cleanOrphanedImages }
+export { cleanOrphanedImages }

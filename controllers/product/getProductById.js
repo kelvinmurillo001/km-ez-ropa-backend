@@ -1,5 +1,6 @@
-const mongoose = require('mongoose')
-const Product = require('../../models/Product')
+// 📁 backend/controllers/products/getProductById.js
+import mongoose from 'mongoose'
+import Product from '../../models/Product.js'
 
 /**
  * 🔍 Obtener un producto por su ID
@@ -45,4 +46,4 @@ const getProductById = async (req, res) => {
   }
 }
 
-module.exports = getProductById
+export default getProductById

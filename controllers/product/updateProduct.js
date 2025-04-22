@@ -1,6 +1,7 @@
-const Product = require('../../models/Product')
-const { cloudinary } = require('../../config/cloudinary')
-const { validationResult } = require('express-validator')
+// 📁 backend/controllers/products/updateProduct.js
+import Product from '../../models/Product.js'
+import { cloudinary } from '../../config/cloudinary.js'
+import { validationResult } from 'express-validator'
 
 /**
  * ✏️ Actualizar un producto existente
@@ -44,11 +45,8 @@ const updateProduct = async (req, res) => {
         })
       }
 
-      // Eliminar imágenes anteriores
       for (const img of product.images) {
-        if (img.cloudinaryId) {
-          await cloudinary.uploader.destroy(img.cloudinaryId)
-        }
+        if (img.cloudinaryId) await cloudinary.uploader.destroy(img.cloudinaryId)
       }
 
       processedImages = [
@@ -74,11 +72,8 @@ const updateProduct = async (req, res) => {
       const seen = new Set()
       processedVariants = []
 
-      // Eliminar imágenes anteriores
       for (const old of product.variants) {
-        if (old.cloudinaryId) {
-          await cloudinary.uploader.destroy(old.cloudinaryId)
-        }
+        if (old.cloudinaryId) await cloudinary.uploader.destroy(old.cloudinaryId)
       }
 
       for (const v of variants) {
@@ -90,8 +85,7 @@ const updateProduct = async (req, res) => {
 
         if (!v.imageUrl || !v.cloudinaryId || !v.talla || !v.color || typeof v.stock !== 'number') {
           return res.status(400).json({
-            message:
-              '⚠️ Cada variante debe tener imagen, talla, color, cloudinaryId y stock numérico'
+            message: '⚠️ Cada variante debe tener imagen, talla, color, cloudinaryId y stock numérico'
           })
         }
 
@@ -134,4 +128,4 @@ const updateProduct = async (req, res) => {
   }
 }
 
-module.exports = updateProduct
+export default updateProduct

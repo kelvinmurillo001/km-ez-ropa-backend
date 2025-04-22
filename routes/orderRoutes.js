@@ -1,18 +1,20 @@
-const express = require('express')
-const { body, param } = require('express-validator')
-const router = express.Router()
+// 📁 routes/orderRoutes.js
+import express from 'express'
+import { body, param } from 'express-validator'
 
 // 🧠 Controladores
-const {
+import {
   createOrder,
   getOrders,
   actualizarEstadoPedido,
   getOrderStats
-} = require('../controllers/orderController')
+} from '../controllers/orderController.js'
 
 // 🛡️ Middlewares
-const authMiddleware = require('../middleware/authMiddleware')
-const adminOnly = require('../middleware/adminOnly')
+import authMiddleware from '../middleware/authMiddleware.js'
+import adminOnly from '../middleware/adminOnly.js'
+
+const router = express.Router()
 
 /* -------------------------------------------------------------------------- */
 /* 🛒 RUTAS DE PEDIDOS                                                        */
@@ -20,7 +22,6 @@ const adminOnly = require('../middleware/adminOnly')
 
 /**
  * 🛍️ Crear nuevo pedido (PÚBLICO)
- * POST /api/orders
  */
 router.post(
   '/',
@@ -62,13 +63,11 @@ router.post(
 
 /**
  * 📋 Obtener todos los pedidos (SOLO ADMIN)
- * GET /api/orders
  */
 router.get('/', authMiddleware, adminOnly, getOrders)
 
 /**
  * 🔄 Actualizar estado de un pedido (SOLO ADMIN)
- * PUT /api/orders/:id/estado
  */
 router.put(
   '/:id/estado',
@@ -90,14 +89,12 @@ router.put(
 
 /**
  * 📊 Estadísticas de pedidos (DASHBOARD)
- * GET /api/orders/resumen
  */
 router.get('/resumen', authMiddleware, adminOnly, getOrderStats)
 
 /**
  * 📊 Alias para estadísticas de ventas (SOLO ADMIN)
- * GET /api/orders/stats/ventas
  */
 router.get('/stats/ventas', authMiddleware, adminOnly, getOrderStats)
 
-module.exports = router
+export default router

@@ -1,12 +1,12 @@
-const express = require('express')
+// 📁 routes/statsRoutes.js
+import express from 'express'
+
+import authMiddleware from '../middleware/authMiddleware.js'
+import adminOnly from '../middleware/adminOnly.js'
+
+import { getResumenEstadisticas } from '../controllers/statsController.js'
+
 const router = express.Router()
-
-// 🛡️ Middlewares de seguridad
-const authMiddleware = require('../middleware/authMiddleware')
-const adminOnly = require('../middleware/adminOnly')
-
-// 📊 Controladores
-const { getResumenEstadisticas } = require('../controllers/statsController')
 
 /* -------------------------------------------------------------------------- */
 /* 📈 RUTAS DE ESTADÍSTICAS (SOLO ADMIN)                                      */
@@ -15,18 +15,7 @@ const { getResumenEstadisticas } = require('../controllers/statsController')
 /**
  * 📊 Obtener resumen de estadísticas para el panel administrativo
  * GET /api/stats/resumen
- *
- * Incluye:
- * - Total de productos
- * - Productos destacados
- * - Pedidos del día
- * - Total de pedidos
- * - Ventas totales
- * - Visitas acumuladas
- * - Agrupación de productos por categoría
- *
- * 🔒 Acceso restringido a administradores
  */
 router.get('/resumen', authMiddleware, adminOnly, getResumenEstadisticas)
 
-module.exports = router
+export default router

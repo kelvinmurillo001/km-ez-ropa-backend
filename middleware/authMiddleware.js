@@ -1,5 +1,6 @@
-const jwt = require('jsonwebtoken')
-const User = require('../models/User')
+// 📁 backend/middleware/authMiddleware.js
+import jwt from 'jsonwebtoken'
+import User from '../models/User.js'
 
 /**
  * 🔐 Middleware para proteger rutas usando JWT
@@ -37,9 +38,8 @@ const authMiddleware = async (req, res, next) => {
       })
     }
 
-    // 👤 Buscar usuario en DB
+    // 👤 Buscar usuario en la base de datos
     const user = await User.findById(decoded.id).select('-password')
-
     if (!user) {
       return res.status(401).json({
         ok: false,
@@ -60,4 +60,4 @@ const authMiddleware = async (req, res, next) => {
   }
 }
 
-module.exports = authMiddleware
+export default authMiddleware

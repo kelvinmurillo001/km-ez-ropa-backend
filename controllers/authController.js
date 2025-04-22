@@ -1,10 +1,13 @@
-const jwt = require('jsonwebtoken')
-const User = require('../models/User')
+// 📁 backend/controllers/authController.js
+import jwt from 'jsonwebtoken'
+import User from '../models/User.js'
 
 /**
- * 🎟️ Genera un token JWT válido por 7 días
+ * 🎟️ Genera un JWT válido por 7 días
+ * @param {Object} user - Objeto de usuario autenticado
+ * @returns {string} JWT
  */
-const generateToken = user => {
+const generateToken = (user) => {
   return jwt.sign(
     {
       id: user._id,
@@ -18,14 +21,15 @@ const generateToken = user => {
 
 /**
  * 🔐 Login exclusivo para administradores
- * @route POST /api/auth/admin
+ * @route POST /api/auth/login
+ * @access Público (autenticación inicial)
  */
 const loginAdmin = async (req, res) => {
   try {
     const username = req.body.username?.trim()
     const password = req.body.password
 
-    // 🧪 Validaciones iniciales
+    // ⚠️ Validación de campos básicos
     if (!username || username.length < 3) {
       return res.status(400).json({
         ok: false,
@@ -40,10 +44,10 @@ const loginAdmin = async (req, res) => {
       })
     }
 
-    // 🔍 Buscar usuario y obtener contraseña
+    // 🔍 Buscar usuario (con contraseña incluida)
     const user = await User.findOne({ username }).select('+password')
 
-    // 🛡️ Seguridad: nunca revelar si falló usuario o contraseña
+    // ❌ Usuario no existe o no es administrador
     if (!user || user.role !== 'admin') {
       return res.status(401).json({
         ok: false,
@@ -51,7 +55,7 @@ const loginAdmin = async (req, res) => {
       })
     }
 
-    // 🔑 Verificar contraseña
+    // ✅ Verificar contraseña
     const isMatch = await user.matchPassword(password)
     if (!isMatch) {
       return res.status(401).json({
@@ -60,9 +64,10 @@ const loginAdmin = async (req, res) => {
       })
     }
 
-    // 🎫 Generar token
+    // 🎫 Generar JWT
     const token = generateToken(user)
 
+    // ✅ Respuesta exitosa
     return res.status(200).json({
       ok: true,
       message: '✅ Login exitoso',
@@ -79,9 +84,9 @@ const loginAdmin = async (req, res) => {
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno del servidor',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     })
   }
 }
 
-module.exports = { loginAdmin }
+export { loginAdmin }

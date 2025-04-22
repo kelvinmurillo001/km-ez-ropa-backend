@@ -1,11 +1,11 @@
-const Product = require('../../models/Product')
-const { validationResult } = require('express-validator')
+// 📁 backend/controllers/products/createProduct.js
+import Product from '../../models/Product.js'
+import { validationResult } from 'express-validator'
 
 /**
  * ✅ Crear nuevo producto
  */
 const createProduct = async (req, res) => {
-  // Validación de datos con express-validator
   const errores = validationResult(req)
   if (!errores.isEmpty()) {
     return res.status(400).json({ errors: errores.array() })
@@ -41,7 +41,6 @@ const createProduct = async (req, res) => {
       return res.status(400).json({ message: '⚠️ Faltan campos obligatorios o formato inválido.' })
     }
 
-    // Verificar que el producto no exista (por nombre + subcategoría)
     const existe = await Product.findOne({
       name: name.trim(),
       subcategory: subcategory.trim().toLowerCase()
@@ -53,13 +52,11 @@ const createProduct = async (req, res) => {
         .json({ message: '⚠️ Ya existe un producto con ese nombre y subcategoría.' })
     }
 
-    // Validación de imagen principal
     const [mainImage] = images
     if (!mainImage.url || !mainImage.cloudinaryId || !mainImage.talla || !mainImage.color) {
       return res.status(400).json({ message: '⚠️ Imagen principal incompleta o inválida.' })
     }
 
-    // Validación de variantes
     if (!Array.isArray(variants)) {
       return res.status(400).json({ message: '⚠️ Formato inválido para variantes.' })
     }
@@ -76,8 +73,7 @@ const createProduct = async (req, res) => {
 
       if (!talla || !color || !v.imageUrl || !v.cloudinaryId || typeof stock !== 'number') {
         return res.status(400).json({
-          message:
-            '⚠️ Cada variante debe tener talla, color, imagen, cloudinaryId y stock numérico.'
+          message: '⚠️ Cada variante debe tener talla, color, imagen, cloudinaryId y stock numérico.'
         })
       }
 
@@ -90,14 +86,12 @@ const createProduct = async (req, res) => {
       combinaciones.add(clave)
     }
 
-    // Limpieza de tallas (si se proporcionan)
     const tallasLimpias = Array.isArray(sizes)
       ? sizes
           .filter(s => typeof s === 'string' && s.trim().length > 0)
           .map(s => s.trim().toUpperCase())
       : []
 
-    // 🔧 Crear producto normalizado
     const producto = new Product({
       name: name.trim(),
       description: description.trim(),
@@ -113,7 +107,6 @@ const createProduct = async (req, res) => {
       createdBy: createdBy.trim()
     })
 
-    // 📦 Guardar en base de datos
     const saved = await producto.save()
     return res.status(201).json(saved)
   } catch (error) {
@@ -125,4 +118,4 @@ const createProduct = async (req, res) => {
   }
 }
 
-module.exports = createProduct
+export default createProduct

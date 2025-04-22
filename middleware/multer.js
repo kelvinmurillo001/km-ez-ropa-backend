@@ -1,9 +1,10 @@
-const multer = require('multer')
-const path = require('path')
-const fs = require('fs')
+// 📁 backend/middleware/multer.js
+import multer from 'multer'
+import path from 'path'
+import fs from 'fs'
 
-// 📁 Ruta de la carpeta de uploads
-const uploadDir = path.join(__dirname, '..', 'uploads')
+// 📁 Ruta para subir archivos
+const uploadDir = path.resolve('uploads')
 
 // 📂 Crear carpeta si no existe
 if (!fs.existsSync(uploadDir)) {
@@ -11,16 +12,16 @@ if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true })
     console.log("📁 Carpeta 'uploads' creada correctamente")
   } catch (err) {
-    console.error('❌ Error creando carpeta de uploads:', err.message)
+    console.error('❌ Error creando carpeta uploads:', err.message)
   }
 }
 
-// 🔒 Configuración de seguridad
-const MAX_SIZE = 2 * 1024 * 1024 // 2 MB
+// 🔒 Reglas de validación
+const MAX_SIZE = 2 * 1024 * 1024 // 2MB
 const ALLOWED_EXT = ['.jpg', '.jpeg', '.png', '.webp']
 const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp']
 
-// 💾 Almacenamiento en disco
+// 💾 Configuración de almacenamiento
 const storage = multer.diskStorage({
   destination: (_, __, cb) => cb(null, uploadDir),
   filename: (_, file, cb) => {
@@ -37,28 +38,24 @@ const storage = multer.diskStorage({
   }
 })
 
-// 🧪 Validación de archivo
+// 🧪 Validación de archivos
 const fileFilter = (req, file, cb) => {
   const ext = path.extname(file.originalname).toLowerCase()
   const mime = file.mimetype
 
-  const isValid = ALLOWED_EXT.includes(ext) && ALLOWED_MIME.includes(mime)
-
-  if (isValid) {
+  if (ALLOWED_EXT.includes(ext) && ALLOWED_MIME.includes(mime)) {
     cb(null, true)
   } else {
-    console.warn(`⚠️ Archivo rechazado por tipo: ${file.originalname}`)
-    cb(new Error('❌ Solo se permiten imágenes JPG, PNG, o WEBP'))
+    console.warn(`⚠️ Archivo rechazado: ${file.originalname}`)
+    cb(new Error('❌ Solo se permiten imágenes JPG, PNG o WEBP'))
   }
 }
 
-// 📦 Inicializar Multer con todo configurado
+// 🚀 Exportar instancia configurada
 const upload = multer({
   storage,
   fileFilter,
-  limits: {
-    fileSize: MAX_SIZE
-  }
+  limits: { fileSize: MAX_SIZE }
 })
 
-module.exports = upload
+export default upload

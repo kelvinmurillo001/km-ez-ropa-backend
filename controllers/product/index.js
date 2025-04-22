@@ -1,13 +1,12 @@
-/**
- * 📦 Controladores de productos
- */
-const getAllProducts = require('./getAllProducts') // GET /api/products
-const getProductById = require('./getProductById') // GET /api/products/:id
-const createProduct = require('./createProduct') // POST /api/products
-const updateProduct = require('./updateProduct') // PUT /api/products/:id
-const deleteProduct = require('./deleteProduct') // DELETE /api/products/:id
+// 📁 backend/controllers/products/index.js
 
-module.exports = {
+import getAllProducts from './getAllProducts.js'     // GET /api/products
+import getProductById from './getProductById.js'     // GET /api/products/:id
+import createProduct from './createProduct.js'       // POST /api/products
+import updateProduct from './updateProduct.js'       // PUT /api/products/:id
+import deleteProduct from './deleteProduct.js'       // DELETE /api/products/:id
+
+export {
   getAllProducts,
   getProductById,
   createProduct,

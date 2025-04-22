@@ -1,3 +1,5 @@
+// 📁 backend/middleware/errorHandler.js
+
 /**
  * ❌ Middleware de manejo global de errores
  * - Provee respuestas uniformes
@@ -8,18 +10,20 @@ const errorHandler = (err, req, res, next) => {
   const statusCode = err.statusCode && Number(err.statusCode) < 600 ? err.statusCode : 500
   const message = err.message || '❌ Error interno del servidor'
 
-  // 🪵 Log solo en desarrollo
-  console.error('❌ Error detectado:', {
-    ruta: `${req.method} ${req.originalUrl}`,
-    mensaje: message,
-    stack: isDev ? err.stack : '🔒 Oculto en producción'
-  })
+  // 🪵 Log sólo en desarrollo
+  if (isDev) {
+    console.error('❌ Error detectado:', {
+      ruta: `${req.method} ${req.originalUrl}`,
+      mensaje: message,
+      stack: err.stack
+    })
+  }
 
-  return res.status(statusCode).json({
+  res.status(statusCode).json({
     ok: false,
     message,
     ...(isDev && { error: err.stack })
   })
 }
 
-module.exports = errorHandler
+export default errorHandler

@@ -1,7 +1,8 @@
-const Category = require('../models/category')
+// 📁 backend/controllers/categoryController.js
+import Category from '../models/category.js'
 
 /**
- * 📥 Obtener todas las categorías
+ * 📥 Obtener todas las categorías ordenadas
  */
 const getAllCategories = async (req, res) => {
   try {
@@ -32,7 +33,7 @@ const createCategory = async (req, res) => {
     if (!name || name.length < 2) {
       return res.status(400).json({
         ok: false,
-        message: '⚠️ El nombre de la categoría es obligatorio y debe tener al menos 2 caracteres'
+        message: '⚠️ El nombre de la categoría debe tener al menos 2 caracteres'
       })
     }
 
@@ -46,7 +47,7 @@ const createCategory = async (req, res) => {
 
     const nuevaCategoria = new Category({
       name,
-      subcategories: subcategory ? [subcategory.trim()] : []
+      subcategories: subcategory ? [subcategory] : []
     })
 
     await nuevaCategoria.save()
@@ -66,7 +67,7 @@ const createCategory = async (req, res) => {
 }
 
 /**
- * ➕ Agregar subcategoría a categoría existente
+ * ➕ Agregar subcategoría
  */
 const addSubcategory = async (req, res) => {
   try {
@@ -76,7 +77,7 @@ const addSubcategory = async (req, res) => {
     if (!subcategory || subcategory.length < 2) {
       return res.status(400).json({
         ok: false,
-        message: '⚠️ La subcategoría es obligatoria y debe tener al menos 2 caracteres'
+        message: '⚠️ Subcategoría inválida (mínimo 2 caracteres)'
       })
     }
 
@@ -88,16 +89,15 @@ const addSubcategory = async (req, res) => {
       })
     }
 
-    const exists = category.subcategories.some(sc => sc.toLowerCase() === subcategory.toLowerCase())
-
+    const exists = category.subcategories.includes(subcategory.toLowerCase())
     if (exists) {
       return res.status(400).json({
         ok: false,
-        message: '⚠️ La subcategoría ya existe en esta categoría'
+        message: '⚠️ Subcategoría ya existente en esta categoría'
       })
     }
 
-    category.subcategories.push(subcategory.trim())
+    category.subcategories.push(subcategory.toLowerCase())
     await category.save()
 
     return res.status(200).json({
@@ -109,20 +109,20 @@ const addSubcategory = async (req, res) => {
     console.error('❌ Error agregando subcategoría:', error)
     return res.status(500).json({
       ok: false,
-      message: '❌ Error interno al agregar la subcategoría',
+      message: '❌ Error interno al agregar subcategoría',
       error: error.message
     })
   }
 }
 
 /**
- * 🗑️ Eliminar categoría completa por ID
+ * 🗑️ Eliminar categoría
  */
 const deleteCategory = async (req, res) => {
   try {
     const { id } = req.params
-
     const category = await Category.findById(id)
+
     if (!category) {
       return res.status(404).json({
         ok: false,
@@ -139,7 +139,7 @@ const deleteCategory = async (req, res) => {
     console.error('❌ Error eliminando categoría:', error)
     return res.status(500).json({
       ok: false,
-      message: '❌ Error interno al eliminar la categoría',
+      message: '❌ Error interno al eliminar categoría',
       error: error.message
     })
   }
@@ -183,13 +183,13 @@ const deleteSubcategory = async (req, res) => {
     console.error('❌ Error eliminando subcategoría:', error)
     return res.status(500).json({
       ok: false,
-      message: '❌ Error interno al eliminar la subcategoría',
+      message: '❌ Error interno al eliminar subcategoría',
       error: error.message
     })
   }
 }
 
-module.exports = {
+export {
   getAllCategories,
   createCategory,
   addSubcategory,

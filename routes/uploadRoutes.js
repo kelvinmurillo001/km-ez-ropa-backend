@@ -1,17 +1,14 @@
-const express = require('express')
+// 📁 routes/uploadRoutes.js
+import express from 'express'
+import multer from 'multer'
+import streamifier from 'streamifier'
+import { cloudinary } from '../config/cloudinary.js'
+
+import authMiddleware from '../middleware/authMiddleware.js'
+import adminOnly from '../middleware/adminOnly.js'
+import { cleanOrphanedImages } from '../controllers/uploads/cleanOrphanedImages.js'
+
 const router = express.Router()
-const multer = require('multer')
-const streamifier = require('streamifier')
-const { cloudinary } = require('../config/cloudinary')
-
-// 🛡️ Middlewares
-const authMiddleware = require('../middleware/authMiddleware')
-const adminOnly = require('../middleware/adminOnly')
-
-// 📁 Función externa
-const { cleanOrphanedImages } = require('../controllers/uploads/cleanOrphanedImages')
-
-// 🔧 Configuración general
 const CLOUDINARY_FOLDER = 'productos_kmezropa'
 
 // 🎒 Multer config: almacenamiento en memoria
@@ -28,9 +25,7 @@ const upload = multer({
   }
 })
 
-/* -------------------------------------------------------------------------- */
-/* 📤 SUBIR IMAGEN                                                            */
-/* -------------------------------------------------------------------------- */
+/* 📤 SUBIR IMAGEN */
 router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
   try {
     if (!req.file?.buffer) {
@@ -38,10 +33,7 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
     }
 
     const stream = cloudinary.uploader.upload_stream(
-      {
-        folder: CLOUDINARY_FOLDER,
-        resource_type: 'image'
-      },
+      { folder: CLOUDINARY_FOLDER, resource_type: 'image' },
       (error, result) => {
         if (error) {
           console.error('❌ Error al subir a Cloudinary:', error)
@@ -63,9 +55,7 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
   }
 })
 
-/* -------------------------------------------------------------------------- */
-/* 🗑️ ELIMINAR IMAGEN POR PARAMS (publicId)                                  */
-/* -------------------------------------------------------------------------- */
+/* 🗑️ ELIMINAR IMAGEN POR PARAMS */
 router.delete('/:publicId', authMiddleware, async (req, res) => {
   try {
     const { publicId } = req.params
@@ -91,9 +81,7 @@ router.delete('/:publicId', authMiddleware, async (req, res) => {
   }
 })
 
-/* -------------------------------------------------------------------------- */
-/* 🗑️ ELIMINAR IMAGEN POR BODY (cloudinaryId)                                */
-/* -------------------------------------------------------------------------- */
+/* 🗑️ ELIMINAR IMAGEN POR BODY */
 router.post('/delete', authMiddleware, async (req, res) => {
   try {
     const { cloudinaryId } = req.body
@@ -119,9 +107,7 @@ router.post('/delete', authMiddleware, async (req, res) => {
   }
 })
 
-/* -------------------------------------------------------------------------- */
-/* 📃 LISTAR IMÁGENES SUBIDAS                                                */
-/* -------------------------------------------------------------------------- */
+/* 📃 LISTAR IMÁGENES */
 router.get('/list', authMiddleware, async (req, res) => {
   try {
     const result = await cloudinary.search
@@ -147,9 +133,7 @@ router.get('/list', authMiddleware, async (req, res) => {
   }
 })
 
-/* -------------------------------------------------------------------------- */
-/* 🧹 LIMPIAR IMÁGENES HUÉRFANAS (SOLO ADMIN)                                 */
-/* -------------------------------------------------------------------------- */
+/* 🧹 LIMPIAR HUÉRFANAS */
 router.get('/limpiar-huerfanas', authMiddleware, adminOnly, cleanOrphanedImages)
 
-module.exports = router
+export default router

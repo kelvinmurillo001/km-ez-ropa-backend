@@ -1,40 +1,46 @@
-const fs = require('fs').promises
-const path = require('path')
+// 📁 backend/controllers/visitController.js
+import fs from 'fs/promises'
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+// 🧭 Ruta absoluta segura (para __dirname en ESM)
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 const filePath = path.join(__dirname, '..', 'data', 'visitas.json')
 
 /**
+ * 🧮 Leer visitas desde archivo
+ */
+const leerVisitas = async () => {
+  try {
+    const data = await fs.readFile(filePath, 'utf8')
+    const json = JSON.parse(data)
+    const visitas = json.count ?? json.visitas
+    return typeof visitas === 'number' && visitas >= 0 ? visitas : 0
+  } catch (error) {
+    console.warn('⚠️ Archivo de visitas no encontrado o corrupto. Se usa 0.')
+    return 0
+  }
+}
+
+/**
  * 📈 Registrar una nueva visita
  */
-const registrarVisita = async (req, res) => {
+export const registrarVisita = async (req, res) => {
   try {
-    let count = 0
+    const visitasActuales = await leerVisitas()
+    const nuevasVisitas = visitasActuales + 1
 
-    try {
-      const data = await fs.readFile(filePath, 'utf8')
-      const json = JSON.parse(data)
-      const visitasPrevias = json.count ?? json.visitas
-
-      if (typeof visitasPrevias === 'number' && visitasPrevias >= 0) {
-        count = visitasPrevias
-      } else {
-        console.warn('⚠️ Valor de visitas inválido, se reinicia a 0.')
-      }
-    } catch (error) {
-      console.warn('⚠️ visitas.json no existe o está corrupto. Se inicia en 0.')
-    }
-
-    count += 1
-
-    await fs.writeFile(filePath, JSON.stringify({ count }, null, 2))
+    await fs.writeFile(filePath, JSON.stringify({ count: nuevasVisitas }, null, 2))
 
     return res.status(200).json({
       ok: true,
       message: '✅ Visita registrada correctamente',
-      data: { total: count }
+      data: { total: nuevasVisitas }
     })
   } catch (err) {
-    console.error('❌ Error registrando visita:', err)
+    console.error('❌ Error al registrar visita:', err)
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al registrar visita',
@@ -46,12 +52,9 @@ const registrarVisita = async (req, res) => {
 /**
  * 📊 Obtener total de visitas
  */
-const obtenerVisitas = async (req, res) => {
+export const obtenerVisitas = async (req, res) => {
   try {
-    const data = await fs.readFile(filePath, 'utf8')
-    const json = JSON.parse(data)
-    const visitas = json.count ?? json.visitas
-    const total = typeof visitas === 'number' && visitas >= 0 ? visitas : 0
+    const total = await leerVisitas()
 
     return res.status(200).json({
       ok: true,
@@ -59,16 +62,11 @@ const obtenerVisitas = async (req, res) => {
       data: { total }
     })
   } catch (err) {
-    console.error('❌ Error leyendo visitas:', err)
+    console.error('❌ Error al obtener visitas:', err)
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al obtener visitas',
       error: err.message
     })
   }
-}
-
-module.exports = {
-  registrarVisita,
-  obtenerVisitas
 }

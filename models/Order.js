@@ -1,38 +1,49 @@
-const mongoose = require('mongoose')
+// 📁 backend/models/Order.js
+import mongoose from 'mongoose'
 
-// 🧾 Esquema del Pedido
+// 📦 Subesquema de ítems del pedido
+const orderItemSchema = new mongoose.Schema(
+  {
+    productId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Product',
+      required: [true, '⚠️ ID de producto requerido']
+    },
+    name: {
+      type: String,
+      required: [true, '⚠️ Nombre del producto requerido'],
+      trim: true,
+      minlength: [2, '⚠️ Mínimo 2 caracteres']
+    },
+    talla: {
+      type: String,
+      trim: true,
+      default: 'Única'
+    },
+    cantidad: {
+      type: Number,
+      required: true,
+      min: [1, '⚠️ Cantidad mínima es 1']
+    },
+    precio: {
+      type: Number,
+      required: true,
+      min: [0, '⚠️ El precio no puede ser negativo']
+    }
+  },
+  { _id: false }
+)
+
+// 🧾 Esquema principal del Pedido
 const orderSchema = new mongoose.Schema(
   {
-    items: [
-      {
-        productId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: 'Product',
-          required: [true, '⚠️ ID de producto requerido']
-        },
-        name: {
-          type: String,
-          required: [true, '⚠️ Nombre del producto requerido'],
-          trim: true,
-          minlength: [2, '⚠️ Mínimo 2 caracteres']
-        },
-        talla: {
-          type: String,
-          trim: true,
-          default: 'Única'
-        },
-        cantidad: {
-          type: Number,
-          required: true,
-          min: [1, '⚠️ Cantidad mínima es 1']
-        },
-        precio: {
-          type: Number,
-          required: true,
-          min: [0, '⚠️ El precio no puede ser negativo']
-        }
+    items: {
+      type: [orderItemSchema],
+      validate: {
+        validator: arr => Array.isArray(arr) && arr.length > 0,
+        message: '⚠️ El pedido debe contener al menos un producto'
       }
-    ],
+    },
     total: {
       type: Number,
       required: true,
@@ -61,9 +72,9 @@ const orderSchema = new mongoose.Schema(
     },
     nota: {
       type: String,
-      default: '',
       trim: true,
-      maxlength: [300, '⚠️ Nota demasiado larga']
+      maxlength: [300, '⚠️ Nota demasiado larga'],
+      default: ''
     },
     estado: {
       type: String,
@@ -71,7 +82,7 @@ const orderSchema = new mongoose.Schema(
       default: 'pendiente'
     }
 
-    // 🚚 Futuras mejoras:
+    // 🚀 Futuro: integrar envío y pago
     // direccionEnvio: { type: String, trim: true },
     // metodoPago: { type: String, enum: ['efectivo', 'tarjeta'], default: 'efectivo' },
     // seguimiento: { type: String, trim: true }
@@ -81,7 +92,8 @@ const orderSchema = new mongoose.Schema(
   }
 )
 
-// 🔍 Índice por estado + fecha para panel de administración
+// 🔍 Índices útiles para búsquedas por estado y fecha
 orderSchema.index({ estado: 1, createdAt: -1 })
 
-module.exports = mongoose.model('Order', orderSchema)
+const Order = mongoose.model('Order', orderSchema)
+export default Order

@@ -1,12 +1,13 @@
-const express = require('express')
+// 📁 routes/visitRoutes.js
+import express from 'express'
 const router = express.Router()
 
 // 🧾 Controladores
-const { registrarVisita, obtenerVisitas } = require('../controllers/visitController')
+import { registrarVisita, obtenerVisitas } from '../controllers/visitController.js'
 
 // 🛡️ Middlewares
-const authMiddleware = require('../middleware/authMiddleware')
-const adminOnly = require('../middleware/adminOnly')
+import authMiddleware from '../middleware/authMiddleware.js'
+import adminOnly from '../middleware/adminOnly.js'
 
 /* -------------------------------------------------------------------------- */
 /* 📈 RUTAS DE VISITAS                                                        */
@@ -15,12 +16,10 @@ const adminOnly = require('../middleware/adminOnly')
 /**
  * 📌 Registrar una nueva visita (PÚBLICO)
  * POST /api/visitas/registrar
- * - Ruta pública sin autenticación
  */
 router.post(
   '/registrar',
   (req, res, next) => {
-    // 🧯 Opcional: bloquear bots comunes o abuse headers
     const userAgent = req.headers['user-agent'] || ''
     if (/curl|postman|bot|crawler/i.test(userAgent)) {
       return res.status(403).json({ message: '🚫 Acceso automatizado denegado' })
@@ -36,4 +35,4 @@ router.post(
  */
 router.get('/', authMiddleware, adminOnly, obtenerVisitas)
 
-module.exports = router
+export default router

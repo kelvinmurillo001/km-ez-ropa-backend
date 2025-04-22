@@ -1,9 +1,10 @@
-const Promotion = require('../models/promotion')
+// 📁 backend/controllers/promoController.js
+import Promotion from '../models/promotion.js'
 
 /**
  * 📥 Obtener promociones activas vigentes
  */
-const getPromotion = async (req, res) => {
+export const getPromotion = async (req, res) => {
   try {
     const now = new Date()
     const activePromos = await Promotion.find({
@@ -34,7 +35,7 @@ const getPromotion = async (req, res) => {
 /**
  * 📋 Obtener todas las promociones (admin)
  */
-const getAllPromotions = async (req, res) => {
+export const getAllPromotions = async (req, res) => {
   try {
     const promos = await Promotion.find().sort({ createdAt: -1 })
     return res.status(200).json({
@@ -55,7 +56,7 @@ const getAllPromotions = async (req, res) => {
 /**
  * 💾 Crear o actualizar una promoción
  */
-const updatePromotion = async (req, res) => {
+export const updatePromotion = async (req, res) => {
   try {
     const {
       message,
@@ -69,11 +70,8 @@ const updatePromotion = async (req, res) => {
       position = 'top'
     } = req.body
 
-    // Validaciones
     if (!message || typeof message !== 'string' || message.trim().length < 3) {
-      return res
-        .status(400)
-        .json({ ok: false, message: '⚠️ El mensaje debe tener al menos 3 caracteres' })
+      return res.status(400).json({ ok: false, message: '⚠️ El mensaje debe tener al menos 3 caracteres' })
     }
 
     if (mediaType && !['image', 'video'].includes(mediaType.toLowerCase())) {
@@ -87,21 +85,20 @@ const updatePromotion = async (req, res) => {
       return res.status(400).json({ ok: false, message: '⚠️ Página inválida en el array pages[]' })
     }
 
-    const isActive = active === true || active === 'true'
     const parsedStart = startDate ? new Date(startDate) : null
     const parsedEnd = endDate ? new Date(endDate) : null
 
-    if (parsedStart && isNaN(parsedStart)) {
+    if (parsedStart && isNaN(parsedStart.getTime())) {
       return res.status(400).json({ ok: false, message: '⚠️ Fecha de inicio inválida' })
     }
 
-    if (parsedEnd && isNaN(parsedEnd)) {
+    if (parsedEnd && isNaN(parsedEnd.getTime())) {
       return res.status(400).json({ ok: false, message: '⚠️ Fecha de fin inválida' })
     }
 
     const promo = new Promotion({
       message: message.trim(),
-      active: isActive,
+      active: Boolean(active),
       theme: theme.toLowerCase(),
       startDate: parsedStart,
       endDate: parsedEnd,
@@ -132,7 +129,7 @@ const updatePromotion = async (req, res) => {
 /**
  * 🔁 Activar o desactivar promoción
  */
-const togglePromoActive = async (req, res) => {
+export const togglePromoActive = async (req, res) => {
   try {
     const { id } = req.params
     const promo = await Promotion.findById(id)
@@ -162,7 +159,7 @@ const togglePromoActive = async (req, res) => {
 /**
  * 🗑️ Eliminar promoción
  */
-const deletePromotion = async (req, res) => {
+export const deletePromotion = async (req, res) => {
   try {
     const { id } = req.params
     const promo = await Promotion.findByIdAndDelete(id)
@@ -183,12 +180,4 @@ const deletePromotion = async (req, res) => {
       error: error.message
     })
   }
-}
-
-module.exports = {
-  getPromotion,
-  getAllPromotions,
-  updatePromotion,
-  togglePromoActive,
-  deletePromotion
 }

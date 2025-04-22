@@ -1,17 +1,16 @@
-const Order = require('../models/Order')
-const Product = require('../models/Product')
+// 📁 backend/controllers/orderController.js
+import Order from '../models/Order.js'
+import Product from '../models/Product.js'
 
 /**
  * 🛒 Crear nuevo pedido (público)
  */
-const createOrder = async (req, res) => {
+export const createOrder = async (req, res) => {
   try {
     const { items, total, nombreCliente, nota, email, telefono } = req.body
 
     if (!Array.isArray(items) || items.length === 0) {
-      return res
-        .status(400)
-        .json({ ok: false, message: '⚠️ El pedido debe contener al menos un producto.' })
+      return res.status(400).json({ ok: false, message: '⚠️ El pedido debe contener al menos un producto.' })
     }
 
     if (!nombreCliente || typeof nombreCliente !== 'string' || nombreCliente.trim().length < 2) {
@@ -35,13 +34,10 @@ const createOrder = async (req, res) => {
     for (const item of items) {
       const producto = await Product.findById(item.id)
       if (!producto) {
-        return res
-          .status(400)
-          .json({ ok: false, message: `❌ Producto no encontrado: ${item.nombre}` })
+        return res.status(404).json({ ok: false, message: `❌ Producto no encontrado: ${item.nombre}` })
       }
 
       const variante = producto.variants.find(v => v.talla === item.talla?.toLowerCase())
-
       if (!variante) {
         return res.status(400).json({
           ok: false,
@@ -57,7 +53,7 @@ const createOrder = async (req, res) => {
       }
     }
 
-    // ✅ Crear y guardar pedido
+    // ✅ Crear pedido
     const newOrder = new Order({
       items,
       total: totalParsed,
@@ -70,7 +66,7 @@ const createOrder = async (req, res) => {
 
     await newOrder.save()
 
-    // 🧮 Descontar stock
+    // 📉 Descontar stock
     for (const item of items) {
       await Product.findOneAndUpdate(
         { _id: item.id, 'variants.talla': item.talla?.toLowerCase() },
@@ -88,7 +84,7 @@ const createOrder = async (req, res) => {
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al crear el pedido.',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     })
   }
 }
@@ -96,7 +92,7 @@ const createOrder = async (req, res) => {
 /**
  * 📋 Obtener todos los pedidos (admin)
  */
-const getOrders = async (req, res) => {
+export const getOrders = async (req, res) => {
   try {
     const orders = await Order.find().sort({ createdAt: -1 })
     return res.status(200).json({
@@ -113,7 +109,7 @@ const getOrders = async (req, res) => {
 /**
  * 🔄 Actualizar estado de un pedido (admin)
  */
-const actualizarEstadoPedido = async (req, res) => {
+export const actualizarEstadoPedido = async (req, res) => {
   try {
     const { id } = req.params
     const { estado } = req.body
@@ -137,16 +133,18 @@ const actualizarEstadoPedido = async (req, res) => {
     })
   } catch (error) {
     console.error('❌ Error actualizando estado del pedido:', error)
-    return res
-      .status(500)
-      .json({ ok: false, message: '❌ Error al actualizar el estado del pedido.' })
+    return res.status(500).json({
+      ok: false,
+      message: '❌ Error al actualizar el estado del pedido.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    })
   }
 }
 
 /**
- * 📊 Obtener resumen de estadísticas del dashboard (admin)
+ * 📊 Obtener estadísticas de pedidos (admin)
  */
-const getOrderStats = async (req, res) => {
+export const getOrderStats = async (req, res) => {
   try {
     const pedidos = await Order.find()
     const hoy = new Date().setHours(0, 0, 0, 0)
@@ -164,10 +162,7 @@ const getOrderStats = async (req, res) => {
     for (const p of pedidos) {
       const estado = (p.estado || 'pendiente').toLowerCase()
       if (resumen.hasOwnProperty(estado)) resumen[estado]++
-
-      if (estado === 'enviado') {
-        resumen.ventasTotales += parseFloat(p.total || 0)
-      }
+      if (estado === 'enviado') resumen.ventasTotales += parseFloat(p.total || 0)
 
       const fechaPedido = new Date(p.createdAt).setHours(0, 0, 0, 0)
       if (fechaPedido === hoy) resumen.hoy++
@@ -182,13 +177,10 @@ const getOrderStats = async (req, res) => {
     })
   } catch (error) {
     console.error('❌ Error obteniendo estadísticas de pedidos:', error)
-    return res.status(500).json({ ok: false, message: '❌ Error al obtener estadísticas.' })
+    return res.status(500).json({
+      ok: false,
+      message: '❌ Error al obtener estadísticas.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    })
   }
-}
-
-module.exports = {
-  createOrder,
-  getOrders,
-  actualizarEstadoPedido,
-  getOrderStats
 }

@@ -1,19 +1,19 @@
-const express = require('express')
-const { body, param } = require('express-validator')
-const router = express.Router()
+// 📁 routes/productRoutes.js
+import express from 'express'
+import { body, param } from 'express-validator'
 
-// ✅ Controladores
-const {
+import {
   getAllProducts,
   getProductById,
   createProduct,
   updateProduct,
   deleteProduct
-} = require('../controllers/product')
+} from '../controllers/product/index.js'
 
-// 🔐 Middlewares
-const authMiddleware = require('../middleware/authMiddleware')
-const adminOnly = require('../middleware/adminOnly')
+import authMiddleware from '../middleware/authMiddleware.js'
+import adminOnly from '../middleware/adminOnly.js'
+
+const router = express.Router()
 
 /* -------------------------------------------------------------------------- */
 /* 📦 RUTAS DE PRODUCTOS                                                      */
@@ -21,13 +21,11 @@ const adminOnly = require('../middleware/adminOnly')
 
 /**
  * 📥 Obtener todos los productos (PÚBLICO)
- * GET /api/products
  */
 router.get('/', getAllProducts)
 
 /**
  * 🔍 Obtener un producto por ID (PÚBLICO)
- * GET /api/products/:id
  */
 router.get(
   '/:id',
@@ -37,7 +35,6 @@ router.get(
 
 /**
  * ➕ Crear producto (SOLO ADMIN)
- * POST /api/products
  */
 router.post(
   '/',
@@ -79,16 +76,21 @@ router.post(
       .isArray({ min: 1, max: 1 })
       .withMessage('⚠️ Se requiere exactamente 1 imagen principal'),
 
-    body('variants').optional().isArray({ max: 4 }).withMessage('⚠️ Máximo 4 variantes permitidas'),
+    body('variants')
+      .optional()
+      .isArray({ max: 4 })
+      .withMessage('⚠️ Máximo 4 variantes permitidas'),
 
-    body('sizes').optional().isArray().withMessage('⚠️ sizes debe ser un array')
+    body('sizes')
+      .optional()
+      .isArray()
+      .withMessage('⚠️ sizes debe ser un array')
   ],
   createProduct
 )
 
 /**
  * ✏️ Actualizar producto (SOLO ADMIN)
- * PUT /api/products/:id
  */
 router.put(
   '/:id',
@@ -104,9 +106,17 @@ router.put(
       .isLength({ min: 2, max: 100 })
       .withMessage('⚠️ Nombre inválido'),
 
-    body('price').optional().isFloat({ min: 0 }).withMessage('⚠️ Precio inválido'),
+    body('price')
+      .optional()
+      .isFloat({ min: 0 })
+      .withMessage('⚠️ Precio inválido'),
 
-    body('category').optional().trim().escape().isString().withMessage('⚠️ Categoría inválida'),
+    body('category')
+      .optional()
+      .trim()
+      .escape()
+      .isString()
+      .withMessage('⚠️ Categoría inválida'),
 
     body('subcategory')
       .optional()
@@ -127,16 +137,21 @@ router.put(
       .isArray({ max: 1 })
       .withMessage('⚠️ Solo se permite una imagen principal'),
 
-    body('variants').optional().isArray({ max: 4 }).withMessage('⚠️ Máximo 4 variantes permitidas'),
+    body('variants')
+      .optional()
+      .isArray({ max: 4 })
+      .withMessage('⚠️ Máximo 4 variantes permitidas'),
 
-    body('sizes').optional().isArray().withMessage('⚠️ sizes debe ser un array')
+    body('sizes')
+      .optional()
+      .isArray()
+      .withMessage('⚠️ sizes debe ser un array')
   ],
   updateProduct
 )
 
 /**
  * 🗑️ Eliminar producto (SOLO ADMIN)
- * DELETE /api/products/:id
  */
 router.delete(
   '/:id',
@@ -146,4 +161,4 @@ router.delete(
   deleteProduct
 )
 
-module.exports = router
+export default router

@@ -1,4 +1,5 @@
-const mongoose = require('mongoose')
+// 📁 backend/models/Category.js
+import mongoose from 'mongoose'
 
 // 📦 Esquema de categoría con subcategorías embebidas
 const categorySchema = new mongoose.Schema(
@@ -18,9 +19,12 @@ const categorySchema = new mongoose.Schema(
       default: [],
       validate: {
         validator: function (arr) {
-          return arr.every(sub => typeof sub === 'string' && sub.trim().length >= 2)
+          return arr.every(
+            sub => typeof sub === 'string' && sub.trim().length >= 2
+          )
         },
-        message: '⚠️ Cada subcategoría debe ser una cadena válida de al menos 2 caracteres'
+        message:
+          '⚠️ Cada subcategoría debe ser una cadena válida de al menos 2 caracteres'
       },
       set: function (arr) {
         return arr.map(sub => sub.trim().toLowerCase())
@@ -36,14 +40,14 @@ const categorySchema = new mongoose.Schema(
   }
 )
 
-// 🔍 Índice con sensibilidad a idioma español e insensible a mayúsculas
+// 🔍 Índice único e insensible a mayúsculas/minúsculas
 categorySchema.index(
   { name: 1 },
   {
     unique: true,
-    collation: { locale: 'es', strength: 2 }
+    collation: { locale: 'es', strength: 2 } // fuerza 2 ignora acentos y case
   }
 )
 
-// 🚀 Exportar modelo
-module.exports = mongoose.model('Category', categorySchema)
+const Category = mongoose.model('Category', categorySchema)
+export default Category

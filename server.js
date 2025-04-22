@@ -1,15 +1,20 @@
 // 🌐 Dependencias principales
-const express = require('express')
-const mongoose = require('mongoose')
-const cors = require('cors')
-const helmet = require('helmet')
-const morgan = require('morgan')
-const compression = require('compression')
-const path = require('path')
+import express from 'express'
+import mongoose from 'mongoose'
+import cors from 'cors'
+import helmet from 'helmet'
+import morgan from 'morgan'
+import compression from 'compression'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
 // ⚙️ Configuración personalizada
-const config = require('./config/configuracionesito')
-const errorHandler = require('./middleware/errorHandler')
+import config from './config/configuracionesito.js'
+import errorHandler from './middleware/errorHandler.js'
+
+// 📍 Corrección para __dirname en ESModules
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 const app = express()
 
@@ -38,14 +43,23 @@ app.use(compression())
 app.use('/assets', express.static(path.join(__dirname, 'frontend', 'assets')))
 
 // 🔗 Rutas API
-app.use('/api/auth', require('./routes/authRoutes'))
-app.use('/api/products', require('./routes/productRoutes'))
-app.use('/api/categories', require('./routes/categoryRoutes'))
-app.use('/api/promos', require('./routes/promoRoutes'))
-app.use('/api/orders', require('./routes/orderRoutes'))
-app.use('/api/visitas', require('./routes/visitRoutes'))
-app.use('/api/stats', require('./routes/statsRoutes'))
-app.use('/api/uploads', require('./routes/uploadRoutes'))
+import authRoutes from './routes/authRoutes.js'
+import productRoutes from './routes/productRoutes.js'
+import categoryRoutes from './routes/categoryRoutes.js'
+import promoRoutes from './routes/promoRoutes.js'
+import orderRoutes from './routes/orderRoutes.js'
+import visitRoutes from './routes/visitRoutes.js'
+import statsRoutes from './routes/statsRoutes.js'
+import uploadRoutes from './routes/uploadRoutes.js'
+
+app.use('/api/auth', authRoutes)
+app.use('/api/products', productRoutes)
+app.use('/api/categories', categoryRoutes)
+app.use('/api/promos', promoRoutes)
+app.use('/api/orders', orderRoutes)
+app.use('/api/visitas', visitRoutes)
+app.use('/api/stats', statsRoutes)
+app.use('/api/uploads', uploadRoutes)
 
 // ✅ Ruta de test
 app.get('/', (req, res) => {
@@ -64,23 +78,19 @@ app.use('*', (req, res) => {
 app.use(errorHandler)
 
 // 🚀 Conexión MongoDB y arranque del servidor
-;(async () => {
-  try {
-    await mongoose.connect(config.mongoUri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    })
-    console.log('✅ Conectado exitosamente a MongoDB')
+try {
+  await mongoose.connect(config.mongoUri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  })
+  console.log('✅ Conectado exitosamente a MongoDB')
 
-    app.listen(config.port, () => {
-      console.log(`🚀 Servidor activo en http://localhost:${config.port}`)
-      console.log(`🌍 Modo: ${config.env}`)
-    })
-  } catch (err) {
-    console.error('❌ Error al conectar con MongoDB:', err.message)
-    console.error(
-      '🔍 Asegúrate de que tu IP esté permitida en MongoDB Atlas y las credenciales sean correctas.'
-    )
-    process.exit(1)
-  }
-})()
+  app.listen(config.port, () => {
+    console.log(`🚀 Servidor activo en http://localhost:${config.port}`)
+    console.log(`🌍 Modo: ${config.env}`)
+  })
+} catch (err) {
+  console.error('❌ Error al conectar con MongoDB:', err.message)
+  console.error('🔍 Verifica IP autorizada en MongoDB Atlas y credenciales .env.')
+  process.exit(1)
+}

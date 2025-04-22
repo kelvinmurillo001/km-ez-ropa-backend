@@ -1,20 +1,21 @@
 // 📁 routes/categoryRoutes.js
-const express = require('express')
-const { body, param } = require('express-validator')
-const router = express.Router()
+import express from 'express'
+import { body, param } from 'express-validator'
 
 // 📦 Controladores
-const {
+import {
   getAllCategories,
   createCategory,
   addSubcategory,
   deleteCategory,
   deleteSubcategory
-} = require('../controllers/categoryController')
+} from '../controllers/categoryController.js'
 
-// 🛡️ Middlewares de autenticación y autorización
-const authMiddleware = require('../middleware/authMiddleware')
-const adminOnly = require('../middleware/adminOnly')
+// 🛡️ Middlewares
+import authMiddleware from '../middleware/authMiddleware.js'
+import adminOnly from '../middleware/adminOnly.js'
+
+const router = express.Router()
 
 /* -------------------------------------------------------------------------- */
 /* 🗂️ RUTAS DE CATEGORÍAS                                                    */
@@ -22,13 +23,11 @@ const adminOnly = require('../middleware/adminOnly')
 
 /**
  * 📥 Obtener todas las categorías (PÚBLICO)
- * GET /api/categories
  */
 router.get('/', getAllCategories)
 
 /**
  * ➕ Crear nueva categoría (SOLO ADMIN)
- * POST /api/categories
  */
 router.post(
   '/',
@@ -57,7 +56,6 @@ router.post(
 
 /**
  * ➕ Agregar subcategoría (SOLO ADMIN)
- * POST /api/categories/:categoryId/subcategories
  */
 router.post(
   '/:categoryId/subcategories',
@@ -79,7 +77,6 @@ router.post(
 
 /**
  * 🗑️ Eliminar categoría completa (SOLO ADMIN)
- * DELETE /api/categories/:id
  */
 router.delete(
   '/:id',
@@ -91,7 +88,6 @@ router.delete(
 
 /**
  * 🗑️ Eliminar subcategoría de una categoría (SOLO ADMIN)
- * DELETE /api/categories/:categoryId/subcategories/:subcategory
  */
 router.delete(
   '/:categoryId/subcategories/:subcategory',
@@ -99,14 +95,13 @@ router.delete(
   adminOnly,
   [
     param('categoryId').isMongoId().withMessage('⚠️ ID de categoría inválido'),
-
-    param('subcategory').trim().escape().notEmpty().withMessage('⚠️ Subcategoría requerida')
+    param('subcategory')
+      .trim()
+      .escape()
+      .notEmpty()
+      .withMessage('⚠️ Subcategoría requerida')
   ],
   deleteSubcategory
 )
 
-// 🛠️ FUTURAS FUNCIONES:
-// router.put('/:id', ...); // Editar nombre de categoría
-// router.put('/:id/rename-subcategory', ...); // Renombrar subcategoría
-
-module.exports = router
+export default router

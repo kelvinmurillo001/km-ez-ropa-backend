@@ -1,6 +1,7 @@
-const Product = require('../../models/Product')
-const { cloudinary } = require('../../config/cloudinary')
-const mongoose = require('mongoose')
+// 📁 backend/controllers/products/deleteProduct.js
+import Product from '../../models/Product.js'
+import { cloudinary } from '../../config/cloudinary.js'
+import mongoose from 'mongoose'
 
 /**
  * 🗑️ Eliminar un producto completo (incluye imágenes en Cloudinary)
@@ -71,4 +72,4 @@ const deleteProduct = async (req, res) => {
   }
 }
 
-module.exports = deleteProduct
+export default deleteProduct

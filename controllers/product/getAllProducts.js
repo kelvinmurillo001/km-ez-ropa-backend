@@ -1,4 +1,5 @@
-const Product = require('../../models/Product')
+// 📁 backend/controllers/products/getAllProducts.js
+import Product from '../../models/Product.js'
 
 /**
  * 📥 Obtener todos los productos (para catálogo o panel)
@@ -59,4 +60,4 @@ const getAllProducts = async (req, res) => {
   }
 }
 
-module.exports = getAllProducts
+export default getAllProducts

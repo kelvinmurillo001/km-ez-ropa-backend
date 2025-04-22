@@ -1,7 +1,9 @@
-const express = require('express')
+// 📁 backend/routes/authRoutes.js
+import express from 'express'
+import { body } from 'express-validator'
+import { loginAdmin } from '../controllers/authController.js'
+
 const router = express.Router()
-const { body } = require('express-validator')
-const { loginAdmin } = require('../controllers/authController')
 
 /* -------------------------------------------------------------------------- */
 /* 🔐 RUTA DE AUTENTICACIÓN ADMINISTRADOR                                     */
@@ -24,7 +26,7 @@ router.post(
       .withMessage('⚠️ El nombre de usuario es obligatorio')
       .isLength({ min: 3 })
       .withMessage('⚠️ Mínimo 3 caracteres en el nombre de usuario')
-      .escape(), // 🔐 Sanitiza HTML/script
+      .escape(),
 
     body('password')
       .trim()
@@ -32,13 +34,13 @@ router.post(
       .withMessage('⚠️ La contraseña es obligatoria')
       .isLength({ min: 6 })
       .withMessage('⚠️ Mínimo 6 caracteres en la contraseña')
-      .escape() // 🔐 Sanitiza para evitar inyecciones
+      .escape()
   ],
   loginAdmin
 )
 
-// 🚀 Futuras rutas podrían ir aquí:
+// 🚀 Futuras rutas podrían ir aquí
 // router.post('/logout', ...);
 // router.get('/me', authMiddleware, ...);
 
-module.exports = router
+export default router
