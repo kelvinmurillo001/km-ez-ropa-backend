@@ -1,4 +1,4 @@
-// 🌐 Dependencias principales 
+// 🌐 Dependencias principales  
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -9,6 +9,7 @@ const path = require('path');
 require('dotenv').config(); // Seguridad para ejecución directa
 
 // ⚙️ Configuración personalizada
+const config = require('./config/configuracionesito'); // << NECESARIA: estaba faltando
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
@@ -65,12 +66,12 @@ app.use(errorHandler);
 // 🚀 Conexión a MongoDB + Arranque de servidor
 (async () => {
   try {
-    await mongoose.connect(config.mongoUri); // Opciones ya no necesarias desde mongoose v6
+    await mongoose.connect(config.mongoUri); // Mongoose v6+ no necesita opciones extra
     console.log('✅ Conectado exitosamente a MongoDB');
 
     app.listen(config.port, () => {
       console.log(`🚀 Servidor activo en http://localhost:${config.port}`);
-      console.log(`🌍 Modo: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🌍 Modo: ${config.env}`);
     });
   } catch (err) {
     console.error('❌ Error al conectar con MongoDB:', err.message);
