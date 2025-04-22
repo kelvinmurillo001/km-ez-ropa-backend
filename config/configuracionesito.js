@@ -9,7 +9,6 @@ const path = require('path');
 require('dotenv').config(); // Seguridad para ejecución directa
 
 // ⚙️ Configuración personalizada
-const config = require('./config/configuracionesito');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
