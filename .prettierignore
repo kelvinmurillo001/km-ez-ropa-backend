@@ -1,0 +1,24 @@
+# Dependencias
+node_modules
+package-lock.json
+
+# Archivos temporales y del sistema
+.DS_Store
+.env
+.env.*
+
+# Archivos de salida o compilados
+dist
+build
+uploads
+logs
+*.log
+
+# Archivos estáticos o multimedia
+public
+assets
+frontend/assets
+
+# Archivos de control de Git
+.git
+.gitignore

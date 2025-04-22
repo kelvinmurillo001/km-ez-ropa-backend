@@ -43,12 +43,10 @@ const createOrder = async (req, res) => {
       const variante = producto.variants.find(v => v.talla === item.talla?.toLowerCase())
 
       if (!variante) {
-        return res
-          .status(400)
-          .json({
-            ok: false,
-            message: `⚠️ Variante no disponible: ${item.nombre} - Talla ${item.talla}`
-          })
+        return res.status(400).json({
+          ok: false,
+          message: `⚠️ Variante no disponible: ${item.nombre} - Talla ${item.talla}`
+        })
       }
 
       if (item.cantidad > variante.stock) {
