@@ -71,8 +71,6 @@ const productSchema = new mongoose.Schema({
     trim: true,
     lowercase: true
   },
-
-  // ✅ NUEVO: Lista de tallas disponibles
   sizes: {
     type: [String],
     default: [],
@@ -83,21 +81,16 @@ const productSchema = new mongoose.Schema({
       message: "⚠️ Cada talla debe ser un texto válido"
     }
   },
-
-  // ✅ NUEVO: Color principal del producto
   color: {
     type: String,
     trim: true,
     lowercase: true,
     default: ""
   },
-
   featured: {
     type: Boolean,
     default: false
   },
-
-  // 📸 Imagen principal
   images: {
     type: [{
       url: {
@@ -129,7 +122,6 @@ const productSchema = new mongoose.Schema({
       message: "⚠️ Debes proporcionar exactamente 1 imagen principal"
     }
   },
-
   variants: {
     type: [variantSchema],
     validate: [
@@ -152,7 +144,6 @@ const productSchema = new mongoose.Schema({
     ],
     default: []
   },
-
   createdBy: {
     type: String,
     required: [true, "⚠️ Campo createdBy requerido"],
@@ -164,7 +155,6 @@ const productSchema = new mongoose.Schema({
     default: "",
     trim: true
   },
-
   slug: {
     type: String,
     trim: true,
@@ -180,6 +170,10 @@ const productSchema = new mongoose.Schema({
   timestamps: true
 });
 
-productSchema.index({ name: "text", category: 1, subcategory: 1 });
+// ✅ Índice combinado con configuración de fondo para evitar duplicados
+productSchema.index(
+  { name: "text", category: 1, subcategory: 1 },
+  { background: true }
+);
 
 module.exports = mongoose.model("Product", productSchema);
