@@ -28,11 +28,12 @@ app.use(cors({
 
 // 🧱 Middlewares esenciales
 app.use(helmet({ crossOriginResourcePolicy: false }));
+app.use(helmet.hsts({ maxAge: 31536000 })); // 🌐 HSTS por 1 año
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'tiny' : 'dev'));
 app.use(express.json({ limit: '5mb' }));
 app.use(compression()); // 🧩 Mejora la velocidad de respuesta
 
-// 🖼️ Archivos estáticos públicos
+// 📁 Archivos estáticos públicos (si aplica)
 app.use('/assets', express.static(path.join(__dirname, 'frontend', 'assets')));
 
 // 🔗 Rutas API modulares
@@ -64,7 +65,9 @@ app.use(errorHandler);
 // 🚀 Conexión a MongoDB + Arranque de servidor
 (async () => {
   try {
-    await mongoose.connect(config.mongoUri); // Opciones ya no necesarias desde mongoose v6
+    await mongoose.connect(config.mongoUri, {
+      serverSelectionTimeoutMS: 10000 // ⏱️ Tiempo máximo de espera
+    });
     console.log('✅ Conectado exitosamente a MongoDB');
 
     app.listen(config.port, () => {
@@ -73,6 +76,7 @@ app.use(errorHandler);
     });
   } catch (err) {
     console.error('❌ Error al conectar con MongoDB:', err.message);
+    console.error('🔍 Asegúrate de que tu IP esté permitida en MongoDB Atlas y que las credenciales sean correctas.');
     process.exit(1);
   }
 })();
