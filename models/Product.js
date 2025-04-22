@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-// ✅ Subesquema para variantes (cada color/talla con su propio stock)
+// ✅ Subesquema para variantes de producto
 const variantSchema = new mongoose.Schema({
   talla: {
     type: String,
@@ -16,7 +16,7 @@ const variantSchema = new mongoose.Schema({
   },
   imageUrl: {
     type: String,
-    required: [true, "⚠️ La imagen de la variante es obligatoria"],
+    required: [true, "⚠️ Imagen de variante obligatoria"],
     trim: true,
     match: [/^https?:\/\/.+\.(jpg|jpeg|png|webp|gif|svg|avif)$/i, "⚠️ URL de imagen inválida"]
   },
@@ -75,9 +75,7 @@ const productSchema = new mongoose.Schema({
     type: [String],
     default: [],
     validate: {
-      validator: function (val) {
-        return val.every(t => typeof t === "string" && t.trim().length > 0);
-      },
+      validator: val => val.every(t => typeof t === "string" && t.trim().length > 0),
       message: "⚠️ Cada talla debe ser un texto válido"
     }
   },
@@ -90,6 +88,10 @@ const productSchema = new mongoose.Schema({
   featured: {
     type: Boolean,
     default: false
+  },
+  isActive: {
+    type: Boolean,
+    default: true // 🔒 Control de visibilidad sin eliminar producto
   },
   images: {
     type: [{
@@ -169,10 +171,22 @@ const productSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// ✅ Índice combinado (único, limpio y sin duplicación)
-productSchema.index(
-  { name: "text", category: 1, subcategory: 1 },
-  { background: true }
-);
+// 🔁 Hook para crear slug automáticamente
+productSchema.pre("save", function (next) {
+  if (!this.slug && this.name) {
+    this.slug = this.name
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/[^\w\-]/g, "")
+      .substring(0, 100);
+  }
+  next();
+});
 
+// 🔍 Índices para búsquedas y panel
+productSchema.index({ name: "text", category: 1, subcategory: 1 }, { background: true });
+productSchema.index({ category: 1, subcategory: 1, tallaTipo: 1 }); // Para filtros en catálogo
+
+// 🚀 Exportar modelo
 module.exports = mongoose.model("Product", productSchema);

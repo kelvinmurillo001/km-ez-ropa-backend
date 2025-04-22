@@ -12,6 +12,7 @@ const categorySchema = new mongoose.Schema(
       minlength: [2, '⚠️ El nombre debe tener al menos 2 caracteres'],
       maxlength: [50, '⚠️ El nombre no debe superar los 50 caracteres']
     },
+
     subcategories: {
       type: [String],
       default: [],
@@ -24,7 +25,7 @@ const categorySchema = new mongoose.Schema(
       set: function (arr) {
         return arr.map(sub => sub.trim().toLowerCase());
       }
-    }
+    },
 
     // 🧩 Futuras mejoras:
     // icon: { type: String, trim: true },
@@ -35,8 +36,11 @@ const categorySchema = new mongoose.Schema(
   }
 );
 
-// 🔍 Índice sensible al idioma español e insensible a mayúsculas
-categorySchema.index({ name: 1 }, { unique: true, collation: { locale: 'es', strength: 2 } });
+// 🔍 Índice con sensibilidad a idioma español e insensible a mayúsculas
+categorySchema.index({ name: 1 }, {
+  unique: true,
+  collation: { locale: 'es', strength: 2 }
+});
 
-// Exportar modelo
+// 🚀 Exportar modelo
 module.exports = mongoose.model("Category", categorySchema);

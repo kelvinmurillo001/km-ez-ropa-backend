@@ -1,21 +1,23 @@
 /**
- * ❌ Middleware centralizado de manejo de errores
- * - Captura errores no manejados en rutas o middlewares
- * - Devuelve mensaje genérico (excepto en desarrollo)
+ * ❌ Middleware de manejo global de errores
+ * - Provee respuestas uniformes
+ * - Oculta detalles en producción
  */
 const errorHandler = (err, req, res, next) => {
   const isDev = process.env.NODE_ENV === 'development';
-  const statusCode = err.statusCode || 500;
+  const statusCode = err.statusCode && Number(err.statusCode) < 600 ? err.statusCode : 500;
+  const message = err.message || '❌ Error interno del servidor';
 
-  console.error('❌ Error:', {
-    mensaje: err.message,
+  // 🪵 Log solo en desarrollo
+  console.error('❌ Error detectado:', {
     ruta: `${req.method} ${req.originalUrl}`,
+    mensaje: message,
     stack: isDev ? err.stack : '🔒 Oculto en producción'
   });
 
-  res.status(statusCode).json({
+  return res.status(statusCode).json({
     ok: false,
-    message: err.message || '❌ Error interno del servidor',
+    message,
     ...(isDev && { error: err.stack })
   });
 };

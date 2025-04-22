@@ -1,7 +1,6 @@
 const fs = require('fs').promises;
 const path = require('path');
 
-// 📁 Ruta del archivo donde se almacenan las visitas
 const filePath = path.join(__dirname, '..', 'data', 'visitas.json');
 
 /**
@@ -14,31 +13,39 @@ const registrarVisita = async (req, res) => {
     try {
       const data = await fs.readFile(filePath, 'utf8');
       const json = JSON.parse(data);
-      const visitasGuardadas = json.count ?? json.visitas;
+      const visitasPrevias = json.count ?? json.visitas;
 
-      if (typeof visitasGuardadas === 'number' && visitasGuardadas >= 0) {
-        count = visitasGuardadas;
+      if (typeof visitasPrevias === 'number' && visitasPrevias >= 0) {
+        count = visitasPrevias;
       } else {
-        console.warn("⚠️ Campo de conteo inválido, se reinicia a 0");
+        console.warn("⚠️ Valor de visitas inválido, se reinicia a 0.");
       }
     } catch (error) {
-      console.warn("⚠️ visitas.json no existe o está corrupto, se inicia desde cero.");
+      console.warn("⚠️ visitas.json no existe o está corrupto. Se inicia en 0.");
     }
 
     count += 1;
 
     await fs.writeFile(filePath, JSON.stringify({ count }, null, 2));
 
-    return res.json({ message: '✅ Visita registrada', total: count });
+    return res.status(200).json({
+      ok: true,
+      message: '✅ Visita registrada correctamente',
+      data: { total: count }
+    });
 
   } catch (err) {
     console.error('❌ Error registrando visita:', err);
-    return res.status(500).json({ message: '❌ Error interno al registrar visita' });
+    return res.status(500).json({
+      ok: false,
+      message: '❌ Error interno al registrar visita',
+      error: err.message
+    });
   }
 };
 
 /**
- * 📊 Obtener total de visitas acumuladas
+ * 📊 Obtener total de visitas
  */
 const obtenerVisitas = async (req, res) => {
   try {
@@ -47,11 +54,19 @@ const obtenerVisitas = async (req, res) => {
     const visitas = json.count ?? json.visitas;
     const total = (typeof visitas === 'number' && visitas >= 0) ? visitas : 0;
 
-    return res.json({ total });
+    return res.status(200).json({
+      ok: true,
+      message: '✅ Total de visitas obtenido correctamente',
+      data: { total }
+    });
 
   } catch (err) {
     console.error('❌ Error leyendo visitas:', err);
-    return res.status(500).json({ message: '❌ Error al obtener visitas' });
+    return res.status(500).json({
+      ok: false,
+      message: '❌ Error interno al obtener visitas',
+      error: err.message
+    });
   }
 };
 

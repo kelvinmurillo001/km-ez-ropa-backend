@@ -4,15 +4,16 @@ const { body } = require('express-validator');
 const { loginAdmin } = require('../controllers/authController');
 
 /* -------------------------------------------------------------------------- */
-/* 🔐 RUTA DE AUTENTICACIÓN ADMIN                                            */
+/* 🔐 RUTA DE AUTENTICACIÓN ADMINISTRADOR                                     */
 /* -------------------------------------------------------------------------- */
 
 /**
- * 🔐 Login de administrador
- * POST /api/auth/login
- * Validaciones:
- * - username requerido y mínimo 3 caracteres
- * - password requerido y mínimo 6 caracteres
+ * 🎫 POST /api/auth/login
+ * Inicia sesión como administrador
+ *
+ * ✅ Validaciones:
+ * - username obligatorio (mínimo 3 caracteres)
+ * - password obligatorio (mínimo 6 caracteres)
  */
 router.post(
   '/login',
@@ -20,14 +21,20 @@ router.post(
     body('username')
       .trim()
       .notEmpty().withMessage('⚠️ El nombre de usuario es obligatorio')
-      .isLength({ min: 3 }).withMessage('⚠️ El nombre de usuario debe tener al menos 3 caracteres'),
+      .isLength({ min: 3 }).withMessage('⚠️ Mínimo 3 caracteres en el nombre de usuario')
+      .escape(), // 🔐 Sanitiza HTML/script
 
     body('password')
       .trim()
       .notEmpty().withMessage('⚠️ La contraseña es obligatoria')
-      .isLength({ min: 6 }).withMessage('⚠️ La contraseña debe tener al menos 6 caracteres')
+      .isLength({ min: 6 }).withMessage('⚠️ Mínimo 6 caracteres en la contraseña')
+      .escape() // 🔐 Sanitiza para evitar inyecciones
   ],
   loginAdmin
 );
+
+// 🚀 Futuras rutas podrían ir aquí:
+// router.post('/logout', ...);
+// router.get('/me', authMiddleware, ...);
 
 module.exports = router;

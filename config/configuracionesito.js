@@ -1,11 +1,11 @@
-// backend/config/configuracionesito.js
+// 📁 backend/config/configuracionesito.js
 const path = require('path');
 const dotenv = require('dotenv');
 
-// 📦 Cargar archivo .env desde la raíz del backend
+// ✅ Cargar variables de entorno desde el archivo .env
 dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
 
-// 🧩 Variables obligatorias
+// 🧩 Lista de variables obligatorias
 const requiredVars = [
   'PORT',
   'MONGO_URI',
@@ -18,22 +18,23 @@ const requiredVars = [
   'ALLOWED_ORIGINS'
 ];
 
-// 🚨 Verificación de variables obligatorias
-const missing = requiredVars.filter(key => !process.env[key]);
+// 🚨 Validar que todas las variables estén presentes
+const missing = requiredVars.filter((key) => !process.env[key]);
 if (missing.length > 0) {
-  console.error(`❌ Faltan variables en .env:\n🔴 ${missing.join(', ')}`);
+  console.error(`❌ Error: Faltan variables obligatorias en el archivo .env:\n🔴 ${missing.join(', ')}`);
   process.exit(1);
 }
 
-// 🌐 CORS dinámico desde .env (limpieza de espacios y slashes finales)
+// 🌐 CORS - Limpiar y normalizar orígenes permitidos
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   .split(',')
-  .map(origin => origin.trim().replace(/\/$/, ''));
+  .map((origin) => origin.trim().replace(/\/$/, ''))
+  .filter((origin) => /^https?:\/\/.+/.test(origin)); // Validar formato
 
-// 🌍 Configuración general
+// 🛡️ Configuración central exportada
 const config = {
   env: process.env.NODE_ENV || 'development',
-  port: process.env.PORT,
+  port: Number(process.env.PORT) || 5000,
   mongoUri: process.env.MONGO_URI,
   jwtSecret: process.env.JWT_SECRET,
   adminUser: process.env.ADMIN_USER,
@@ -46,17 +47,21 @@ const config = {
     api_secret: process.env.CLOUDINARY_API_SECRET
   },
 
-  // 🌐 Lista blanca CORS limpia
-  allowedOrigins
+  // 🌐 Lista blanca para CORS
+  allowedOrigins,
+
+  // 🚀 Opcional: otros flags de entorno
+  enableCors: process.env.CORS_ENABLED === 'true',
+  rateLimitWindow: parseInt(process.env.RATE_LIMIT_WINDOW) || 15,
+  rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX) || 100
 };
 
+// 🧪 Mostrar información solo en entorno local
 if (config.env === 'development') {
-  console.log('🔧 Modo de desarrollo activo');
-  console.log('🌍 Orígenes permitidos CORS:', allowedOrigins);
-  console.log('🔐 Cloudinary configurado correctamente:');
-  console.log('🌩️ cloud_name:', config.cloudinary.cloud_name);
-  console.log('🔑 api_key: ✓');
-  console.log('🔒 api_secret: ✓');
+  console.log('🧪 Modo de desarrollo activo');
+  console.log('🌐 CORS Allowed Origins:', config.allowedOrigins);
+  console.log('☁️ Cloudinary config ✅');
+  console.log('🔑 JWT_SECRET presente:', !!config.jwtSecret);
 }
 
 module.exports = config;

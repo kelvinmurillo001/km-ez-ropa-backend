@@ -41,10 +41,9 @@ router.put(
   adminOnly,
   [
     body('message')
-      .exists().withMessage('⚠️ El mensaje es obligatorio')
       .trim()
-      .isString().withMessage('⚠️ El mensaje debe ser texto')
-      .isLength({ min: 3 }).withMessage('⚠️ El mensaje debe tener al menos 3 caracteres'),
+      .notEmpty().withMessage('⚠️ El mensaje de la promoción es obligatorio')
+      .isLength({ min: 3 }).withMessage('⚠️ Debe tener al menos 3 caracteres'),
 
     body('theme')
       .optional()
@@ -52,7 +51,7 @@ router.put(
 
     body('active')
       .optional()
-      .isBoolean().withMessage('⚠️ El campo active debe ser booleano'),
+      .isBoolean().withMessage('⚠️ El campo "active" debe ser booleano'),
 
     body('startDate')
       .optional()
@@ -65,7 +64,7 @@ router.put(
     body('mediaUrl')
       .optional()
       .trim()
-      .isString().withMessage('⚠️ mediaUrl debe ser texto'),
+      .isString().withMessage('⚠️ La mediaUrl debe ser una cadena de texto'),
 
     body('mediaType')
       .optional()
@@ -76,17 +75,18 @@ router.put(
       .isArray({ min: 1 }).withMessage('⚠️ Debes seleccionar al menos una página'),
 
     body('pages.*')
-      .isIn(['home', 'categorias', 'productos', 'checkout', 'detalle', 'carrito']).withMessage('⚠️ Página no válida'),
+      .isIn(['home', 'categorias', 'productos', 'checkout', 'detalle', 'carrito'])
+      .withMessage('⚠️ Página no válida para promoción'),
 
     body('position')
       .optional()
-      .isIn(['top', 'middle', 'bottom']).withMessage('⚠️ Posición no válida')
+      .isIn(['top', 'middle', 'bottom']).withMessage('⚠️ Posición inválida')
   ],
   updatePromotion
 );
 
 /**
- * 🔁 Activar/Desactivar promoción
+ * 🔁 Activar o desactivar promoción
  * PATCH /api/promos/:id/estado
  */
 router.patch(
@@ -94,13 +94,13 @@ router.patch(
   authMiddleware,
   adminOnly,
   [
-    param('id').isMongoId().withMessage('⚠️ ID inválido')
+    param('id').isMongoId().withMessage('⚠️ ID de promoción inválido')
   ],
   togglePromoActive
 );
 
 /**
- * 🗑️ Eliminar promoción
+ * 🗑️ Eliminar una promoción
  * DELETE /api/promos/:id
  */
 router.delete(
@@ -108,7 +108,7 @@ router.delete(
   authMiddleware,
   adminOnly,
   [
-    param('id').isMongoId().withMessage('⚠️ ID inválido')
+    param('id').isMongoId().withMessage('⚠️ ID inválido para eliminar promoción')
   ],
   deletePromotion
 );

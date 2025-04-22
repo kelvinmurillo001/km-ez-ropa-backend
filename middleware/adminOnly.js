@@ -1,15 +1,15 @@
 /**
- * 🔒 Middleware que restringe el acceso a rutas solo a usuarios con rol "admin"
+ * 🔒 Middleware para restringir el acceso a rutas solo para administradores
  */
 const adminOnly = (req, res, next) => {
   try {
     const user = req.user;
 
-    // 🧍‍♂️ Usuario no autenticado (authMiddleware debe haberlo agregado)
+    // 🔐 Verificar autenticación
     if (!user) {
       return res.status(401).json({
         ok: false,
-        message: '🚫 No autenticado. Acceso restringido solo para administradores.'
+        message: '🚫 No autenticado. Se requiere login de administrador.'
       });
     }
 
@@ -18,17 +18,18 @@ const adminOnly = (req, res, next) => {
       return next();
     }
 
-    // ⛔ Usuario autenticado pero sin permisos suficientes
+    // ⛔ Usuario autenticado pero no es admin
     return res.status(403).json({
       ok: false,
-      message: '⛔ Acceso denegado. Se requiere rol de administrador.'
+      message: '⛔ Acceso denegado. Esta operación requiere privilegios de administrador.'
     });
 
   } catch (err) {
-    console.error('❌ Error en adminOnly middleware:', err.message || err);
+    console.error('❌ Error en adminOnly middleware:', err);
     return res.status(500).json({
       ok: false,
-      message: '❌ Error interno al verificar permisos de administrador.'
+      message: '❌ Error interno al verificar permisos de administrador',
+      error: err.message
     });
   }
 };

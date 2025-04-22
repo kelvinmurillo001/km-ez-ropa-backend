@@ -12,7 +12,7 @@ const {
   deleteSubcategory
 } = require('../controllers/categoryController');
 
-// 🛡️ Middlewares
+// 🛡️ Middlewares de autenticación y autorización
 const authMiddleware = require('../middleware/authMiddleware');
 const adminOnly = require('../middleware/adminOnly');
 
@@ -37,11 +37,14 @@ router.post(
   [
     body('name')
       .trim()
+      .escape()
       .notEmpty().withMessage('⚠️ El nombre de la categoría es obligatorio')
-      .isLength({ min: 2 }).withMessage('⚠️ Mínimo 2 caracteres'),
+      .isLength({ min: 2 }).withMessage('⚠️ Mínimo 2 caracteres en la categoría'),
 
     body('subcategory')
       .optional()
+      .trim()
+      .escape()
       .isString().withMessage('⚠️ Subcategoría inválida')
       .isLength({ min: 2 }).withMessage('⚠️ La subcategoría debe tener al menos 2 caracteres')
   ],
@@ -49,7 +52,7 @@ router.post(
 );
 
 /**
- * ➕ Agregar subcategoría a categoría existente (SOLO ADMIN)
+ * ➕ Agregar subcategoría (SOLO ADMIN)
  * POST /api/categories/:categoryId/subcategories
  */
 router.post(
@@ -62,6 +65,7 @@ router.post(
 
     body('subcategory')
       .trim()
+      .escape()
       .notEmpty().withMessage('⚠️ La subcategoría es requerida')
       .isLength({ min: 2 }).withMessage('⚠️ La subcategoría debe tener al menos 2 caracteres')
   ],
@@ -84,7 +88,7 @@ router.delete(
 );
 
 /**
- * 🗑️ Eliminar subcategoría específica de una categoría (SOLO ADMIN)
+ * 🗑️ Eliminar subcategoría de una categoría (SOLO ADMIN)
  * DELETE /api/categories/:categoryId/subcategories/:subcategory
  */
 router.delete(
@@ -97,9 +101,14 @@ router.delete(
 
     param('subcategory')
       .trim()
+      .escape()
       .notEmpty().withMessage('⚠️ Subcategoría requerida')
   ],
   deleteSubcategory
 );
+
+// 🛠️ FUTURAS FUNCIONES:
+// router.put('/:id', ...); // Editar nombre de categoría
+// router.put('/:id/rename-subcategory', ...); // Renombrar subcategoría
 
 module.exports = router;

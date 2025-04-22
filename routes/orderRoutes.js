@@ -19,42 +19,38 @@ const adminOnly = require('../middleware/adminOnly');
 /* -------------------------------------------------------------------------- */
 
 /**
- * 📥 Crear nuevo pedido (PÚBLICO)
+ * 🛍️ Crear nuevo pedido (PÚBLICO)
  * POST /api/orders
  */
 router.post(
   '/',
   [
     body('items')
-      .isArray({ min: 1 })
-      .withMessage('⚠️ El pedido debe contener al menos un producto'),
+      .isArray({ min: 1 }).withMessage('⚠️ El pedido debe contener al menos un producto'),
 
     body('total')
-      .isFloat({ min: 0.01 })
-      .withMessage('⚠️ El total debe ser un número mayor a 0'),
+      .isFloat({ min: 0.01 }).withMessage('⚠️ El total debe ser un número mayor a 0'),
 
     body('nombreCliente')
-      .notEmpty()
-      .isString()
-      .isLength({ min: 2 })
-      .withMessage('⚠️ El nombre del cliente es obligatorio y debe tener al menos 2 caracteres'),
+      .trim().escape()
+      .notEmpty().withMessage('⚠️ El nombre del cliente es obligatorio')
+      .isLength({ min: 2 }).withMessage('⚠️ Mínimo 2 caracteres'),
 
     body('email')
       .optional()
-      .isEmail()
-      .withMessage('⚠️ Email inválido'),
+      .isEmail().withMessage('⚠️ Email inválido')
+      .normalizeEmail(),
 
     body('telefono')
       .optional()
-      .isString()
-      .isLength({ min: 7, max: 20 })
-      .withMessage('⚠️ Teléfono inválido'),
+      .isString().withMessage('⚠️ El teléfono debe ser texto')
+      .isLength({ min: 7, max: 20 }).withMessage('⚠️ Teléfono inválido'),
 
     body('nota')
       .optional()
-      .isString()
-      .isLength({ max: 300 })
-      .withMessage('⚠️ La nota debe ser texto válido (hasta 300 caracteres)')
+      .trim().escape()
+      .isString().withMessage('⚠️ La nota debe ser texto válido')
+      .isLength({ max: 300 }).withMessage('⚠️ Nota demasiado larga')
   ],
   createOrder
 );
@@ -80,34 +76,34 @@ router.put(
   adminOnly,
   [
     param('id')
-      .isMongoId()
-      .withMessage('⚠️ ID de pedido inválido'),
+      .isMongoId().withMessage('⚠️ ID de pedido inválido'),
 
     body('estado')
-      .notEmpty()
-      .isString()
-      .withMessage('⚠️ El estado es requerido y debe ser un string')
+      .trim().escape()
+      .notEmpty().withMessage('⚠️ El estado es obligatorio')
+      .isIn(['pendiente', 'en_proceso', 'enviado', 'cancelado'])
+      .withMessage('⚠️ Estado no válido')
   ],
   actualizarEstadoPedido
 );
 
 /**
- * 📊 Obtener estadísticas de ventas (SOLO ADMIN)
- * GET /api/orders/stats/ventas
+ * 📊 Estadísticas de pedidos (DASHBOARD)
+ * GET /api/orders/resumen
  */
 router.get(
-  '/stats/ventas',
+  '/resumen',
   authMiddleware,
   adminOnly,
   getOrderStats
 );
 
 /**
- * 📊 Obtener resumen para el DASHBOARD (SOLO ADMIN)
- * GET /api/orders/resumen
+ * 📊 Alias para estadísticas de ventas (SOLO ADMIN)
+ * GET /api/orders/stats/ventas
  */
 router.get(
-  '/resumen',
+  '/stats/ventas',
   authMiddleware,
   adminOnly,
   getOrderStats

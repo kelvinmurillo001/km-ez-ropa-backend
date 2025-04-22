@@ -1,13 +1,16 @@
-const getAllProducts = require('./getAllProducts');
-const getProductById = require('./getProductById');
-const createProduct = require('./createProduct'); // ✅ agregar esta línea
-const updateProduct = require('./updateProduct');
-const deleteProduct = require('./deleteProduct');
+/**
+ * 📦 Controladores de productos
+ */
+const getAllProducts = require('./getAllProducts');      // GET /api/products
+const getProductById = require('./getProductById');      // GET /api/products/:id
+const createProduct = require('./createProduct');        // POST /api/products
+const updateProduct = require('./updateProduct');        // PUT /api/products/:id
+const deleteProduct = require('./deleteProduct');        // DELETE /api/products/:id
 
 module.exports = {
   getAllProducts,
   getProductById,
-  createProduct, // ✅ y esta también
+  createProduct,
   updateProduct,
   deleteProduct
 };

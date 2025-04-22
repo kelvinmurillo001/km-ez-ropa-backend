@@ -6,46 +6,63 @@ const Category = require('../models/category');
 const getAllCategories = async (req, res) => {
   try {
     const categories = await Category.find().sort({ name: 1 });
-    return res.status(200).json(categories);
+    return res.status(200).json({
+      ok: true,
+      message: '✅ Categorías obtenidas correctamente',
+      data: categories
+    });
   } catch (error) {
     console.error('❌ Error al obtener categorías:', error);
-    return res.status(500).json({ message: '❌ Error al obtener las categorías' });
+    return res.status(500).json({
+      ok: false,
+      message: '❌ Error interno al obtener las categorías',
+      error: error.message
+    });
   }
 };
 
 /**
- * ➕ Crear nueva categoría (con o sin subcategoría)
+ * ➕ Crear nueva categoría
  */
 const createCategory = async (req, res) => {
   try {
-    const name = req.body.name?.trim();
+    const name = req.body.name?.trim().toLowerCase();
     const subcategory = req.body.subcategory?.trim();
 
     if (!name || name.length < 2) {
       return res.status(400).json({
+        ok: false,
         message: '⚠️ El nombre de la categoría es obligatorio y debe tener al menos 2 caracteres'
       });
     }
 
-    const exists = await Category.findOne({
-      name: new RegExp(`^${name}$`, 'i')
-    });
-
+    const exists = await Category.findOne({ name });
     if (exists) {
-      return res.status(400).json({ message: '⚠️ La categoría ya existe' });
+      return res.status(400).json({
+        ok: false,
+        message: '⚠️ La categoría ya existe'
+      });
     }
 
     const nuevaCategoria = new Category({
-      name: name.toLowerCase(),
-      subcategories: subcategory ? [subcategory] : []
+      name,
+      subcategories: subcategory ? [subcategory.trim()] : []
     });
 
     await nuevaCategoria.save();
-    return res.status(201).json(nuevaCategoria);
+    return res.status(201).json({
+      ok: true,
+      message: '✅ Categoría creada correctamente',
+      data: nuevaCategoria
+    });
 
   } catch (error) {
     console.error('❌ Error creando categoría:', error);
-    return res.status(500).json({ message: '❌ Error al crear la categoría' });
+    return res.status(500).json({
+      ok: false,
+      message: '❌ Error interno al crear la categoría',
+      error: error.message
+    });
   }
 };
 
@@ -59,34 +76,46 @@ const addSubcategory = async (req, res) => {
 
     if (!subcategory || subcategory.length < 2) {
       return res.status(400).json({
+        ok: false,
         message: '⚠️ La subcategoría es obligatoria y debe tener al menos 2 caracteres'
       });
     }
 
     const category = await Category.findById(categoryId);
     if (!category) {
-      return res.status(404).json({ message: '❌ Categoría no encontrada' });
+      return res.status(404).json({
+        ok: false,
+        message: '❌ Categoría no encontrada'
+      });
     }
 
-    const alreadyExists = category.subcategories.some(
+    const exists = category.subcategories.some(
       sc => sc.toLowerCase() === subcategory.toLowerCase()
     );
 
-    if (alreadyExists) {
-      return res.status(400).json({ message: '⚠️ La subcategoría ya existe en esta categoría' });
+    if (exists) {
+      return res.status(400).json({
+        ok: false,
+        message: '⚠️ La subcategoría ya existe en esta categoría'
+      });
     }
 
-    category.subcategories.push(subcategory);
+    category.subcategories.push(subcategory.trim());
     await category.save();
 
     return res.status(200).json({
+      ok: true,
       message: '✅ Subcategoría agregada correctamente',
-      category
+      data: category
     });
 
   } catch (error) {
     console.error('❌ Error agregando subcategoría:', error);
-    return res.status(500).json({ message: '❌ Error al agregar la subcategoría' });
+    return res.status(500).json({
+      ok: false,
+      message: '❌ Error interno al agregar la subcategoría',
+      error: error.message
+    });
   }
 };
 
@@ -99,20 +128,30 @@ const deleteCategory = async (req, res) => {
 
     const category = await Category.findById(id);
     if (!category) {
-      return res.status(404).json({ message: '❌ Categoría no encontrada' });
+      return res.status(404).json({
+        ok: false,
+        message: '❌ Categoría no encontrada'
+      });
     }
 
     await category.deleteOne();
-    return res.status(200).json({ message: '✅ Categoría eliminada correctamente' });
+    return res.status(200).json({
+      ok: true,
+      message: '✅ Categoría eliminada correctamente'
+    });
 
   } catch (error) {
     console.error('❌ Error eliminando categoría:', error);
-    return res.status(500).json({ message: '❌ Error al eliminar la categoría' });
+    return res.status(500).json({
+      ok: false,
+      message: '❌ Error interno al eliminar la categoría',
+      error: error.message
+    });
   }
 };
 
 /**
- * 🗑️ Eliminar subcategoría específica de una categoría
+ * 🗑️ Eliminar subcategoría específica
  */
 const deleteSubcategory = async (req, res) => {
   try {
@@ -120,7 +159,10 @@ const deleteSubcategory = async (req, res) => {
 
     const category = await Category.findById(categoryId);
     if (!category) {
-      return res.status(404).json({ message: '❌ Categoría no encontrada' });
+      return res.status(404).json({
+        ok: false,
+        message: '❌ Categoría no encontrada'
+      });
     }
 
     const index = category.subcategories.findIndex(
@@ -128,20 +170,28 @@ const deleteSubcategory = async (req, res) => {
     );
 
     if (index === -1) {
-      return res.status(404).json({ message: '❌ Subcategoría no encontrada' });
+      return res.status(404).json({
+        ok: false,
+        message: '❌ Subcategoría no encontrada'
+      });
     }
 
     category.subcategories.splice(index, 1);
     await category.save();
 
     return res.status(200).json({
+      ok: true,
       message: '✅ Subcategoría eliminada correctamente',
-      category
+      data: category
     });
 
   } catch (error) {
     console.error('❌ Error eliminando subcategoría:', error);
-    return res.status(500).json({ message: '❌ Error al eliminar la subcategoría' });
+    return res.status(500).json({
+      ok: false,
+      message: '❌ Error interno al eliminar la subcategoría',
+      error: error.message
+    });
   }
 };
 

@@ -6,14 +6,14 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const compression = require('compression');
 const path = require('path');
-require('dotenv').config();
 
 // ⚙️ Configuración personalizada
+const config = require('./config/configuracionesito');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 
-// 🔐 CORS dinámico con lista blanca desde .env
+// 🔐 CORS dinámico desde lista blanca
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || config.allowedOrigins.includes(origin.replace(/\/$/, ''))) {
@@ -26,17 +26,16 @@ app.use(cors({
   credentials: true
 }));
 
-
-// 🧱 Middlewares esenciales
+// 🧱 Middlewares de seguridad y performance
 app.use(helmet({ crossOriginResourcePolicy: false }));
-app.use(morgan(process.env.NODE_ENV === 'production' ? 'tiny' : 'dev'));
+app.use(morgan(config.env === 'production' ? 'tiny' : 'dev'));
 app.use(express.json({ limit: '5mb' }));
 app.use(compression());
 
-// 🖼️ Archivos estáticos públicos
+// 🖼️ Archivos públicos
 app.use('/assets', express.static(path.join(__dirname, 'frontend', 'assets')));
 
-// 🔗 Rutas API modulares
+// 🔗 Rutas API
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
@@ -46,26 +45,29 @@ app.use('/api/visitas', require('./routes/visitRoutes'));
 app.use('/api/stats', require('./routes/statsRoutes'));
 app.use('/api/uploads', require('./routes/uploadRoutes'));
 
-// ✅ Ruta de prueba básica
+// ✅ Ruta de test
 app.get('/', (req, res) => {
   res.send('🧠 Backend KM-EZ-Ropa funcionando correctamente 🚀');
 });
 
-// 🔄 Ruta de monitoreo para uptime robots
+// 🔄 Ruta para uptime monitoring
 app.get('/health', (req, res) => res.send('✅ OK'));
 
-// ❌ Ruta 404 personalizada
+// ❌ Ruta 404
 app.use('*', (req, res) => {
   res.status(404).json({ message: '❌ Ruta no encontrada' });
 });
 
-// 🛡️ Middleware centralizado de errores
+// 🛡️ Middleware de manejo de errores global
 app.use(errorHandler);
 
-// 🚀 Conexión a MongoDB + Arranque de servidor
+// 🚀 Conexión MongoDB y arranque del servidor
 (async () => {
   try {
-    await mongoose.connect(config.mongoUri);
+    await mongoose.connect(config.mongoUri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
     console.log('✅ Conectado exitosamente a MongoDB');
 
     app.listen(config.port, () => {

@@ -3,41 +3,37 @@ const Product = require('../models/Product');
 
 /**
  * 🛒 Crear nuevo pedido (público)
- * - Valida estructura básica y stock disponible
  */
 const createOrder = async (req, res) => {
   try {
-    console.log("📩 Pedido recibido en backend:", req.body);
-
     const { items, total, nombreCliente, nota, email, telefono } = req.body;
 
-    // Validaciones básicas
     if (!Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ message: "⚠️ El pedido debe contener al menos un producto." });
+      return res.status(400).json({ ok: false, message: "⚠️ El pedido debe contener al menos un producto." });
     }
 
     if (!nombreCliente || typeof nombreCliente !== 'string' || nombreCliente.trim().length < 2) {
-      return res.status(400).json({ message: "⚠️ Nombre del cliente inválido." });
+      return res.status(400).json({ ok: false, message: "⚠️ Nombre del cliente inválido." });
     }
 
     const totalParsed = parseFloat(total);
     if (isNaN(totalParsed) || totalParsed <= 0) {
-      return res.status(400).json({ message: "⚠️ Total del pedido inválido." });
+      return res.status(400).json({ ok: false, message: "⚠️ Total del pedido inválido." });
     }
 
     if (email && !/^\S+@\S+\.\S+$/.test(email)) {
-      return res.status(400).json({ message: "⚠️ Correo electrónico inválido." });
+      return res.status(400).json({ ok: false, message: "⚠️ Correo electrónico inválido." });
     }
 
     if (telefono && typeof telefono !== 'string') {
-      return res.status(400).json({ message: "⚠️ Teléfono inválido." });
+      return res.status(400).json({ ok: false, message: "⚠️ Teléfono inválido." });
     }
 
-    // ✅ Validar stock disponible por producto y talla
+    // 🔍 Validar stock por producto y talla
     for (const item of items) {
       const producto = await Product.findById(item.id);
       if (!producto) {
-        return res.status(400).json({ message: `❌ Producto no encontrado: ${item.nombre}` });
+        return res.status(400).json({ ok: false, message: `❌ Producto no encontrado: ${item.nombre}` });
       }
 
       const variante = producto.variants.find(v =>
@@ -45,17 +41,18 @@ const createOrder = async (req, res) => {
       );
 
       if (!variante) {
-        return res.status(400).json({ message: `⚠️ Variante no disponible: ${item.nombre} - Talla ${item.talla}` });
+        return res.status(400).json({ ok: false, message: `⚠️ Variante no disponible: ${item.nombre} - Talla ${item.talla}` });
       }
 
       if (item.cantidad > variante.stock) {
         return res.status(400).json({
-          message: `❌ No hay suficiente stock de ${item.nombre} (Talla ${item.talla}). Máximo disponible: ${variante.stock}`
+          ok: false,
+          message: `❌ Stock insuficiente para ${item.nombre} (Talla ${item.talla}). Máximo disponible: ${variante.stock}`
         });
       }
     }
 
-    // Crear pedido
+    // ✅ Crear y guardar pedido
     const newOrder = new Order({
       items,
       total: totalParsed,
@@ -68,7 +65,7 @@ const createOrder = async (req, res) => {
 
     await newOrder.save();
 
-    // ✅ Descontar stock
+    // 🧮 Descontar stock
     for (const item of items) {
       await Product.findOneAndUpdate(
         { _id: item.id, "variants.talla": item.talla?.toLowerCase() },
@@ -76,16 +73,18 @@ const createOrder = async (req, res) => {
       );
     }
 
-    res.status(201).json({
+    return res.status(201).json({
+      ok: true,
       message: '✅ Pedido creado exitosamente',
-      pedido: newOrder
+      data: newOrder
     });
 
   } catch (error) {
     console.error("❌ Error creando pedido:", error);
-    res.status(500).json({
+    return res.status(500).json({
+      ok: false,
       message: "❌ Error interno al crear el pedido.",
-      error: error.message,
+      error: error.message
     });
   }
 };
@@ -96,10 +95,14 @@ const createOrder = async (req, res) => {
 const getOrders = async (req, res) => {
   try {
     const orders = await Order.find().sort({ createdAt: -1 });
-    res.json(orders);
+    return res.status(200).json({
+      ok: true,
+      message: '✅ Pedidos obtenidos correctamente',
+      data: orders
+    });
   } catch (error) {
     console.error("❌ Error al obtener pedidos:", error);
-    res.status(500).json({ message: "❌ Error al obtener pedidos." });
+    return res.status(500).json({ ok: false, message: "❌ Error al obtener pedidos." });
   }
 };
 
@@ -112,22 +115,26 @@ const actualizarEstadoPedido = async (req, res) => {
     const { estado } = req.body;
 
     if (!estado || typeof estado !== 'string') {
-      return res.status(400).json({ message: "⚠️ Estado del pedido inválido." });
+      return res.status(400).json({ ok: false, message: "⚠️ Estado del pedido inválido." });
     }
 
     const pedido = await Order.findById(id);
     if (!pedido) {
-      return res.status(404).json({ message: "❌ Pedido no encontrado." });
+      return res.status(404).json({ ok: false, message: "❌ Pedido no encontrado." });
     }
 
     pedido.estado = estado.trim().toLowerCase();
     await pedido.save();
 
-    res.json({ message: "✅ Estado del pedido actualizado", pedido });
+    return res.status(200).json({
+      ok: true,
+      message: "✅ Estado del pedido actualizado",
+      data: pedido
+    });
 
   } catch (error) {
     console.error("❌ Error actualizando estado del pedido:", error);
-    res.status(500).json({ message: "❌ Error al actualizar el estado del pedido." });
+    return res.status(500).json({ ok: false, message: "❌ Error al actualizar el estado del pedido." });
   }
 };
 
@@ -137,9 +144,7 @@ const actualizarEstadoPedido = async (req, res) => {
 const getOrderStats = async (req, res) => {
   try {
     const pedidos = await Order.find();
-
     const hoy = new Date().setHours(0, 0, 0, 0);
-    let ventasTotales = 0;
 
     const resumen = {
       total: pedidos.length,
@@ -149,26 +154,31 @@ const getOrderStats = async (req, res) => {
       cancelado: 0,
       hoy: 0,
       ventasTotales: 0,
-      totalVisitas: 0,
-      totalProductos: 0,
-      productosDestacados: 0
     };
 
-    pedidos.forEach(p => {
+    for (const p of pedidos) {
       const estado = (p.estado || "pendiente").toLowerCase();
       if (resumen.hasOwnProperty(estado)) resumen[estado]++;
-      if (estado === "enviado") ventasTotales += parseFloat(p.total || 0);
+
+      if (estado === "enviado") {
+        resumen.ventasTotales += parseFloat(p.total || 0);
+      }
 
       const fechaPedido = new Date(p.createdAt).setHours(0, 0, 0, 0);
       if (fechaPedido === hoy) resumen.hoy++;
+    }
+
+    resumen.ventasTotales = resumen.ventasTotales.toFixed(2);
+
+    return res.status(200).json({
+      ok: true,
+      message: "✅ Resumen de estadísticas generado correctamente",
+      data: resumen
     });
 
-    resumen.ventasTotales = ventasTotales.toFixed(2);
-
-    res.json(resumen);
   } catch (error) {
     console.error("❌ Error obteniendo estadísticas de pedidos:", error);
-    res.status(500).json({ message: "❌ Error al obtener estadísticas." });
+    return res.status(500).json({ ok: false, message: "❌ Error al obtener estadísticas." });
   }
 };
 

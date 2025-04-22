@@ -12,7 +12,7 @@ const promotionSchema = new mongoose.Schema(
       minlength: [3, "⚠️ El mensaje debe tener al menos 3 caracteres"]
     },
 
-    // ✅ Estado
+    // ✅ Estado activo/inactivo
     active: {
       type: Boolean,
       default: false
@@ -27,7 +27,7 @@ const promotionSchema = new mongoose.Schema(
       trim: true
     },
 
-    // 🕓 Fechas
+    // 🕓 Fechas de duración
     startDate: {
       type: Date,
       default: null
@@ -37,11 +37,17 @@ const promotionSchema = new mongoose.Schema(
       default: null
     },
 
-    // 🖼️ Multimedia
+    // 🖼️ Multimedia asociada
     mediaUrl: {
       type: String,
       default: null,
-      trim: true
+      trim: true,
+      validate: {
+        validator: function (url) {
+          return !url || /^https?:\/\/.+\.(jpg|jpeg|png|webp|mp4|gif|svg|avif)$/i.test(url);
+        },
+        message: "⚠️ URL de multimedia no válida"
+      }
     },
     mediaType: {
       type: String,
@@ -49,7 +55,7 @@ const promotionSchema = new mongoose.Schema(
       default: null
     },
 
-    // 📄 Páginas válidas
+    // 📄 Páginas donde aparece
     pages: {
       type: [String],
       default: [],
@@ -61,7 +67,7 @@ const promotionSchema = new mongoose.Schema(
       }
     },
 
-    // 🧭 Posición visual
+    // 🧭 Posición en la pantalla
     position: {
       type: String,
       enum: ['top', 'middle', 'bottom'],
@@ -70,16 +76,39 @@ const promotionSchema = new mongoose.Schema(
       trim: true
     },
 
-    // ✍️ Auditoría
+    // ✍️ Auditoría interna
     createdBy: {
       type: String,
       trim: true,
       default: "admin"
+    },
+
+    // 🌐 Slug opcional para URLs
+    slug: {
+      type: String,
+      trim: true,
+      lowercase: true
     }
   },
   {
-    timestamps: true // createdAt y updatedAt
+    timestamps: true
   }
 );
+
+// 🔍 Índices útiles para obtener campañas activas y ordenar por fecha
+promotionSchema.index({ active: 1, startDate: 1, endDate: 1 });
+
+// 🔁 Hook para crear slug automáticamente si no existe
+promotionSchema.pre("save", function (next) {
+  if (!this.slug && this.message) {
+    this.slug = this.message
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-]/g, '')
+      .substring(0, 100);
+  }
+  next();
+});
 
 module.exports = mongoose.model("Promotion", promotionSchema);

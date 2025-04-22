@@ -17,44 +17,54 @@ const generateToken = (user) => {
 };
 
 /**
- * 🔐 Login de administrador con validación robusta
+ * 🔐 Login exclusivo para administradores
+ * @route POST /api/auth/admin
  */
 const loginAdmin = async (req, res) => {
   try {
     const username = req.body.username?.trim();
     const password = req.body.password;
 
-    // 🛡️ Validación de entrada
+    // 🧪 Validaciones iniciales
     if (!username || username.length < 3) {
-      return res.status(400).json({ message: '⚠️ Nombre de usuario inválido o incompleto' });
+      return res.status(400).json({
+        ok: false,
+        message: '⚠️ Nombre de usuario inválido o incompleto'
+      });
     }
 
     if (!password || typeof password !== 'string' || password.length < 6) {
-      return res.status(400).json({ message: '⚠️ Contraseña inválida o muy corta' });
+      return res.status(400).json({
+        ok: false,
+        message: '⚠️ Contraseña inválida o muy corta'
+      });
     }
 
-    // 🔍 Buscar usuario en base de datos, incluyendo contraseña
+    // 🔍 Buscar usuario y obtener contraseña
     const user = await User.findOne({ username }).select('+password');
 
-    if (!user) {
-      return res.status(401).json({ message: '❌ Usuario no encontrado' });
+    // 🛡️ Seguridad: nunca revelar si falló usuario o contraseña
+    if (!user || user.role !== 'admin') {
+      return res.status(401).json({
+        ok: false,
+        message: '❌ Credenciales inválidas o no autorizado'
+      });
     }
 
-    if (user.role !== 'admin') {
-      return res.status(403).json({ message: '⛔ Solo los administradores pueden ingresar' });
+    // 🔑 Verificar contraseña
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) {
+      return res.status(401).json({
+        ok: false,
+        message: '❌ Credenciales inválidas o no autorizado'
+      });
     }
 
-    // 🔐 Validar contraseña
-    const isValidPassword = await user.matchPassword(password);
-    if (!isValidPassword) {
-      return res.status(401).json({ message: '❌ Contraseña incorrecta' });
-    }
-
-    // 🎫 Generar token JWT
+    // 🎫 Generar token
     const token = generateToken(user);
 
-    // ✅ Respuesta exitosa
     return res.status(200).json({
+      ok: true,
       message: '✅ Login exitoso',
       token,
       user: {
@@ -66,8 +76,9 @@ const loginAdmin = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error en loginAdmin:', error.message || error);
+    console.error('❌ Error en loginAdmin:', error);
     return res.status(500).json({
+      ok: false,
       message: '❌ Error interno del servidor',
       error: error.message
     });

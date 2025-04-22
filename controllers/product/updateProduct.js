@@ -3,7 +3,7 @@ const { cloudinary } = require('../../config/cloudinary');
 const { validationResult } = require('express-validator');
 
 /**
- * ✏️ Actualizar producto existente
+ * ✏️ Actualizar un producto existente
  */
 const updateProduct = async (req, res) => {
   const errores = validationResult(req);
@@ -31,13 +31,11 @@ const updateProduct = async (req, res) => {
       return res.status(404).json({ message: "❌ Producto no encontrado" });
     }
 
-    // =========================
-    // 📸 Imagen Principal
-    // =========================
+    // =============== 📸 Imagen principal ===============
     let processedImages = product.images;
 
     if (Array.isArray(images) && images.length === 1) {
-      const mainImage = images[0];
+      const [mainImage] = images;
       const { url, cloudinaryId, talla, color } = mainImage;
 
       if (!url || !cloudinaryId || !talla || !color) {
@@ -46,7 +44,7 @@ const updateProduct = async (req, res) => {
         });
       }
 
-      // 🧹 Eliminar imagen anterior
+      // Eliminar imágenes anteriores
       for (const img of product.images) {
         if (img.cloudinaryId) {
           await cloudinary.uploader.destroy(img.cloudinaryId);
@@ -63,9 +61,7 @@ const updateProduct = async (req, res) => {
       return res.status(400).json({ message: "⚠️ Solo se permite una imagen principal" });
     }
 
-    // =========================
-    // 👕 Variantes
-    // =========================
+    // =============== 👕 Variantes ===============
     let processedVariants = product.variants;
 
     if (Array.isArray(variants) && variants.length > 0) {
@@ -76,10 +72,10 @@ const updateProduct = async (req, res) => {
       const seen = new Set();
       processedVariants = [];
 
-      // 🧹 Eliminar imágenes de variantes anteriores
-      for (const v of product.variants) {
-        if (v.cloudinaryId) {
-          await cloudinary.uploader.destroy(v.cloudinaryId);
+      // Eliminar imágenes anteriores
+      for (const old of product.variants) {
+        if (old.cloudinaryId) {
+          await cloudinary.uploader.destroy(old.cloudinaryId);
         }
       }
 
@@ -90,7 +86,7 @@ const updateProduct = async (req, res) => {
         }
         seen.add(key);
 
-        if (!v.imageUrl || !v.talla || !v.color || !v.cloudinaryId || typeof v.stock !== "number") {
+        if (!v.imageUrl || !v.cloudinaryId || !v.talla || !v.color || typeof v.stock !== "number") {
           return res.status(400).json({
             message: "⚠️ Cada variante debe tener imagen, talla, color, cloudinaryId y stock numérico"
           });
@@ -106,22 +102,14 @@ const updateProduct = async (req, res) => {
       }
     }
 
-    // =========================
-    // 📝 Campos base
-    // =========================
+    // =============== 📝 Actualizar campos básicos ===============
     if (name) product.name = name.trim();
-    if (price !== undefined && !isNaN(price)) product.price = Number(price);
+    if (!isNaN(price)) product.price = Number(price);
     if (category) product.category = category.trim().toLowerCase();
     if (subcategory) product.subcategory = subcategory.trim().toLowerCase();
     if (tallaTipo) product.tallaTipo = tallaTipo.trim().toLowerCase();
-
-    if (Array.isArray(sizes)) {
-      product.sizes = sizes.map(s => s.trim());
-    }
-
-    if (typeof color === "string") {
-      product.color = color.trim();
-    }
+    if (typeof color === "string") product.color = color.trim();
+    if (Array.isArray(sizes)) product.sizes = sizes.map(s => s.trim());
 
     product.featured = featured === true || featured === "true";
     product.images = processedImages;

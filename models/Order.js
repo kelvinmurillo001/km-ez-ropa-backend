@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+// 🧾 Esquema del Pedido
 const orderSchema = new mongoose.Schema(
   {
     items: [
@@ -70,16 +71,17 @@ const orderSchema = new mongoose.Schema(
       default: 'pendiente'
     }
 
-    // 🚀 Futuras mejoras:
+    // 🚚 Futuras mejoras:
     // direccionEnvio: { type: String, trim: true },
     // metodoPago: { type: String, enum: ['efectivo', 'tarjeta'], default: 'efectivo' },
+    // seguimiento: { type: String, trim: true }
   },
   {
-    timestamps: true
+    timestamps: true // 🕒 createdAt, updatedAt
   }
 );
 
-// 🔎 Índices sugeridos para administración
+// 🔍 Índice por estado + fecha para panel de administración
 orderSchema.index({ estado: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Order', orderSchema);

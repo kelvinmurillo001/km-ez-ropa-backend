@@ -7,7 +7,7 @@ const {
   obtenerVisitas
 } = require('../controllers/visitController');
 
-// 🛡️ Seguridad
+// 🛡️ Middlewares
 const authMiddleware = require('../middleware/authMiddleware');
 const adminOnly = require('../middleware/adminOnly');
 
@@ -18,8 +18,16 @@ const adminOnly = require('../middleware/adminOnly');
 /**
  * 📌 Registrar una nueva visita (PÚBLICO)
  * POST /api/visitas/registrar
+ * - Ruta pública sin autenticación
  */
-router.post('/registrar', registrarVisita);
+router.post('/registrar', (req, res, next) => {
+  // 🧯 Opcional: bloquear bots comunes o abuse headers
+  const userAgent = req.headers['user-agent'] || '';
+  if (/curl|postman|bot|crawler/i.test(userAgent)) {
+    return res.status(403).json({ message: '🚫 Acceso automatizado denegado' });
+  }
+  next();
+}, registrarVisita);
 
 /**
  * 📊 Obtener total de visitas acumuladas (SOLO ADMIN)

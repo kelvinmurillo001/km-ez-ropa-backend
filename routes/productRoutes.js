@@ -33,8 +33,7 @@ router.get(
   '/:id',
   [
     param('id')
-      .isMongoId()
-      .withMessage('⚠️ ID inválido')
+      .isMongoId().withMessage('⚠️ ID de producto inválido')
   ],
   getProductById
 );
@@ -49,26 +48,30 @@ router.post(
   adminOnly,
   [
     body('name')
-      .notEmpty().withMessage('⚠️ El nombre es obligatorio')
-      .isLength({ min: 2, max: 100 }).withMessage('⚠️ Debe tener entre 2 y 100 caracteres'),
+      .trim().escape()
+      .notEmpty().withMessage('⚠️ El nombre del producto es obligatorio')
+      .isLength({ min: 2, max: 100 }).withMessage('⚠️ Entre 2 y 100 caracteres'),
 
     body('price')
       .notEmpty().withMessage('⚠️ El precio es obligatorio')
-      .isFloat({ min: 0.01 }).withMessage('⚠️ Debe ser mayor a 0'),
+      .isFloat({ min: 0.01 }).withMessage('⚠️ El precio debe ser mayor a 0'),
 
     body('category')
+      .trim().escape()
       .notEmpty().withMessage('⚠️ La categoría es obligatoria'),
 
     body('subcategory')
+      .trim().escape()
       .notEmpty().withMessage('⚠️ La subcategoría es obligatoria')
       .isLength({ min: 2 }).withMessage('⚠️ Mínimo 2 caracteres en la subcategoría'),
 
     body('tallaTipo')
+      .trim()
       .notEmpty().withMessage('⚠️ El tipo de talla es obligatorio')
       .isIn(['adulto', 'niño', 'niña', 'bebé']).withMessage('⚠️ Tipo de talla inválido'),
 
     body('images')
-      .isArray({ min: 1, max: 1 }).withMessage('⚠️ Exactamente 1 imagen principal'),
+      .isArray({ min: 1, max: 1 }).withMessage('⚠️ Se requiere exactamente 1 imagen principal'),
 
     body('variants')
       .optional()
@@ -76,7 +79,7 @@ router.post(
 
     body('sizes')
       .optional()
-      .isArray().withMessage('⚠️ El campo sizes debe ser un array de tallas')
+      .isArray().withMessage('⚠️ sizes debe ser un array')
   ],
   createProduct
 );
@@ -91,10 +94,11 @@ router.put(
   adminOnly,
   [
     param('id')
-      .isMongoId().withMessage('⚠️ ID inválido'),
+      .isMongoId().withMessage('⚠️ ID de producto inválido'),
 
     body('name')
       .optional()
+      .trim().escape()
       .isLength({ min: 2, max: 100 }).withMessage('⚠️ Nombre inválido'),
 
     body('price')
@@ -103,19 +107,22 @@ router.put(
 
     body('category')
       .optional()
+      .trim().escape()
       .isString().withMessage('⚠️ Categoría inválida'),
 
     body('subcategory')
       .optional()
+      .trim().escape()
       .isString().isLength({ min: 2 }).withMessage('⚠️ Subcategoría inválida'),
 
     body('tallaTipo')
       .optional()
+      .trim()
       .isIn(['adulto', 'niño', 'niña', 'bebé']).withMessage('⚠️ Tipo de talla inválido'),
 
     body('images')
       .optional()
-      .isArray({ max: 1 }).withMessage('⚠️ Solo 1 imagen principal permitida'),
+      .isArray({ max: 1 }).withMessage('⚠️ Solo se permite una imagen principal'),
 
     body('variants')
       .optional()
@@ -123,7 +130,7 @@ router.put(
 
     body('sizes')
       .optional()
-      .isArray().withMessage('⚠️ El campo sizes debe ser un array de tallas')
+      .isArray().withMessage('⚠️ sizes debe ser un array')
   ],
   updateProduct
 );

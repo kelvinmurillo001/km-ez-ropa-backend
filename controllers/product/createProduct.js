@@ -5,7 +5,7 @@ const { validationResult } = require("express-validator");
  * ✅ Crear nuevo producto
  */
 const createProduct = async (req, res) => {
-  // Validación de campos enviados
+  // Validación de datos con express-validator
   const errores = validationResult(req);
   if (!errores.isEmpty()) {
     return res.status(400).json({ errors: errores.array() });
@@ -27,7 +27,7 @@ const createProduct = async (req, res) => {
       createdBy
     } = req.body;
 
-    // Validación básica de campos obligatorios
+    // Validación general
     if (
       !name?.trim() ||
       !price ||
@@ -41,7 +41,17 @@ const createProduct = async (req, res) => {
       return res.status(400).json({ message: "⚠️ Faltan campos obligatorios o formato inválido." });
     }
 
-    // Validar imagen principal
+    // Verificar que el producto no exista (por nombre + subcategoría)
+    const existe = await Product.findOne({
+      name: name.trim(),
+      subcategory: subcategory.trim().toLowerCase()
+    });
+
+    if (existe) {
+      return res.status(409).json({ message: "⚠️ Ya existe un producto con ese nombre y subcategoría." });
+    }
+
+    // Validación de imagen principal
     const [mainImage] = images;
     if (
       !mainImage.url ||
@@ -52,7 +62,7 @@ const createProduct = async (req, res) => {
       return res.status(400).json({ message: "⚠️ Imagen principal incompleta o inválida." });
     }
 
-    // Validar variantes si existen
+    // Validación de variantes
     if (!Array.isArray(variants)) {
       return res.status(400).json({ message: "⚠️ Formato inválido para variantes." });
     }
@@ -80,14 +90,14 @@ const createProduct = async (req, res) => {
       combinaciones.add(clave);
     }
 
-    // Normalizar tallas si se proporcionan
+    // Limpieza de tallas (si se proporcionan)
     const tallasLimpias = Array.isArray(sizes)
       ? sizes
           .filter(s => typeof s === "string" && s.trim().length > 0)
           .map(s => s.trim().toUpperCase())
       : [];
 
-    // Crear nuevo producto
+    // 🔧 Crear producto normalizado
     const producto = new Product({
       name: name.trim(),
       description: description.trim(),
@@ -103,7 +113,7 @@ const createProduct = async (req, res) => {
       createdBy: createdBy.trim()
     });
 
-    // Guardar en la base de datos
+    // 📦 Guardar en base de datos
     const saved = await producto.save();
     return res.status(201).json(saved);
 

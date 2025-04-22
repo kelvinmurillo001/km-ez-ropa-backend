@@ -6,32 +6,32 @@ const path = require("path");
 const visitasPath = path.join(__dirname, "..", "data", "visitas.json");
 
 /**
- * 📊 Obtener estadísticas del panel de administración
+ * 📊 Obtener estadísticas generales para dashboard admin
  */
 const getResumenEstadisticas = async (req, res) => {
   try {
-    // 🧾 Obtener todos los productos y pedidos
     const productos = await Product.find();
     const pedidos = await Order.find();
 
-    // 👁️ Leer visitas desde archivo
+    // 👁️ Leer visitas desde archivo JSON
     let visitas = 0;
     try {
       const raw = await fs.readFile(visitasPath, "utf-8");
       const json = JSON.parse(raw);
       const visitasLeidas = json.count ?? json.visitas;
+
       if (typeof visitasLeidas === "number" && visitasLeidas >= 0) {
         visitas = visitasLeidas;
       }
     } catch (err) {
-      console.warn(`⚠️ No se pudo leer visitas desde ${visitasPath}, se asumirá 0 visitas.`);
+      console.warn(`⚠️ No se pudo leer visitas desde visitas.json: ${err.message}`);
     }
 
-    // 🕛 Fecha de hoy a las 00:00
+    // 📅 Fecha de hoy (00:00)
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
 
-    // 📦 Métricas
+    // 🔢 Cálculos
     const productosDestacados = productos.filter(p => p.featured).length;
 
     const pedidosHoy = pedidos.filter(p => {
@@ -47,25 +47,30 @@ const getResumenEstadisticas = async (req, res) => {
 
     const productosPorCategoria = {};
     for (const p of productos) {
-      const categoria = (p.category || "Sin categoría").trim().toLowerCase();
+      const categoria = (p.category || "sin categoría").trim().toLowerCase();
       productosPorCategoria[categoria] = (productosPorCategoria[categoria] || 0) + 1;
     }
 
-    // 📤 Respuesta
-    return res.json({
-      totalProductos: productos.length,
-      productosDestacados,
-      pedidosTotales: pedidos.length,
-      pedidosHoy,
-      totalVisitas: visitas,
-      ventasTotales: Number(ventasTotales),
-      productosPorCategoria
+    // 📤 Respuesta final
+    return res.status(200).json({
+      ok: true,
+      message: "✅ Estadísticas generales obtenidas correctamente",
+      data: {
+        totalProductos: productos.length,
+        productosDestacados,
+        pedidosTotales: pedidos.length,
+        pedidosHoy,
+        totalVisitas: visitas,
+        ventasTotales: Number(ventasTotales.toFixed(2)),
+        productosPorCategoria
+      }
     });
 
   } catch (err) {
-    console.error("❌ Error al obtener estadísticas:", err);
+    console.error("❌ Error al generar estadísticas:", err);
     return res.status(500).json({
-      message: "❌ Error al generar estadísticas",
+      ok: false,
+      message: "❌ Error interno al generar estadísticas",
       error: err.message
     });
   }

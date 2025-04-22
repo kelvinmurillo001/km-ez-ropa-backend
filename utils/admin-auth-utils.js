@@ -1,4 +1,3 @@
-// src/utils/admin-auth-utils.js
 "use strict";
 
 /**
@@ -6,8 +5,8 @@
  * @param {Object} usuario - Objeto de usuario desde el token o sesión
  * @returns {boolean}
  */
-export function esAdmin(usuario) {
-  return usuario?.role === "admin" || usuario?.isAdmin === true;
+function esAdmin(usuario) {
+  return usuario?.role?.toLowerCase?.() === "admin" || usuario?.isAdmin === true;
 }
 
 /**
@@ -16,7 +15,12 @@ export function esAdmin(usuario) {
  * @param {string} mensaje - Mensaje de error
  * @param {number} status - Código de estado HTTP (por defecto 500)
  */
-export function enviarError(res, mensaje = "❌ Error del servidor", status = 500) {
+function enviarError(res, mensaje = "❌ Error del servidor", status = 500) {
+  if (!res || typeof res.status !== "function") {
+    console.warn("⚠️ Se intentó enviar error pero el objeto res no es válido");
+    return;
+  }
+
   return res.status(status).json({
     ok: false,
     message: mensaje
@@ -29,7 +33,12 @@ export function enviarError(res, mensaje = "❌ Error del servidor", status = 50
  * @param {any} data - Datos a retornar al cliente
  * @param {string} mensaje - Mensaje opcional de éxito
  */
-export function enviarExito(res, data = {}, mensaje = "✅ Operación exitosa") {
+function enviarExito(res, data = {}, mensaje = "✅ Operación exitosa") {
+  if (!res || typeof res.status !== "function") {
+    console.warn("⚠️ Se intentó enviar éxito pero el objeto res no es válido");
+    return;
+  }
+
   return res.status(200).json({
     ok: true,
     message: mensaje,
@@ -42,12 +51,20 @@ export function enviarExito(res, data = {}, mensaje = "✅ Operación exitosa") 
  * @param {Object} req - Objeto de petición de Express
  * @returns {string|null} - Token extraído o null si no existe
  */
-export function obtenerTokenDesdeHeader(req) {
-  const authHeader = req.headers.authorization;
+function obtenerTokenDesdeHeader(req) {
+  const authHeader = req?.headers?.authorization;
   if (!authHeader || typeof authHeader !== "string") return null;
 
   const [bearer, token] = authHeader.split(" ");
-  if (bearer !== "Bearer" || !token) return null;
+  if (bearer?.toLowerCase() !== "bearer" || !token || token.length < 10) return null;
 
-  return token;
+  return token.trim();
 }
+
+// 🌍 Exportación común (CommonJS)
+module.exports = {
+  esAdmin,
+  enviarError,
+  enviarExito,
+  obtenerTokenDesdeHeader
+};

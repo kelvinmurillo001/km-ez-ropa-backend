@@ -5,7 +5,7 @@ const router = express.Router();
 const authMiddleware = require("../middleware/authMiddleware");
 const adminOnly = require("../middleware/adminOnly");
 
-// 📊 Controlador
+// 📊 Controladores
 const { getResumenEstadisticas } = require("../controllers/statsController");
 
 /* -------------------------------------------------------------------------- */
@@ -16,16 +16,22 @@ const { getResumenEstadisticas } = require("../controllers/statsController");
  * 📊 Obtener resumen de estadísticas para el panel administrativo
  * GET /api/stats/resumen
  * 
- * 🔒 Acceso: SOLO ADMIN
  * Incluye:
  * - Total de productos
  * - Productos destacados
  * - Pedidos del día
  * - Total de pedidos
  * - Ventas totales
- * - Visitas
- * - Productos agrupados por categoría
+ * - Visitas acumuladas
+ * - Agrupación de productos por categoría
+ * 
+ * 🔒 Acceso restringido a administradores
  */
-router.get("/resumen", authMiddleware, adminOnly, getResumenEstadisticas);
+router.get(
+  "/resumen",
+  authMiddleware,
+  adminOnly,
+  getResumenEstadisticas
+);
 
 module.exports = router;
