@@ -14,8 +14,7 @@ const requiredVars = [
   "ADMIN_PASS",
   "CLOUDINARY_CLOUD_NAME",
   "CLOUDINARY_API_KEY",
-  "CLOUDINARY_API_SECRET",
-  "ALLOWED_ORIGINS"
+  "CLOUDINARY_API_SECRET"
 ];
 
 // 🚨 Verificación de variables obligatorias
@@ -27,15 +26,23 @@ if (missing.length > 0) {
 
 // 🌐 CORS dinámico desde .env
 const allowedOrigins = process.env.ALLOWED_ORIGINS
-  .split(',')
-  .map(origin => origin.trim())
-  .filter(Boolean); // Elimina vacíos
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : [];
 
 if (allowedOrigins.length === 0) {
-  console.warn("⚠️ No se encontraron ALLOWED_ORIGINS válidos en .env");
+  console.warn("⚠️ No se encontraron ALLOWED_ORIGINS definidos en el archivo .env");
 }
 
-// 🌍 Configuración general del backend
+// ✅ Log opcional en desarrollo
+if (process.env.NODE_ENV === 'development') {
+  console.log("🔧 Modo de desarrollo activo");
+  console.log("🔐 Cloudinary configurado correctamente:");
+  console.log("🌩️ cloud_name:", process.env.CLOUDINARY_CLOUD_NAME);
+  console.log("🔑 api_key:", "✓");
+  console.log("🔒 api_secret:", "✓");
+}
+
+// 🌍 Configuración general
 const config = {
   env: process.env.NODE_ENV || 'development',
   port: process.env.PORT || 5000,
@@ -54,14 +61,5 @@ const config = {
   // 🌐 CORS: Dominios permitidos
   allowedOrigins
 };
-
-// 🛠️ Modo de desarrollo activo
-if (config.env === 'development') {
-  console.log("🔧 Modo de desarrollo activo");
-  console.log("🔐 Cloudinary configurado correctamente:");
-  console.log("🌩️ cloud_name:", config.cloudinary.cloud_name);
-  console.log("🔑 api_key: ✓");
-  console.log("🔒 api_secret: ✓");
-}
 
 module.exports = config;

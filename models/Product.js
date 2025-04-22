@@ -118,7 +118,7 @@ const productSchema = new mongoose.Schema({
       }
     }],
     validate: {
-      validator: (val) => Array.isArray(val) && val.length === 1,
+      validator: val => Array.isArray(val) && val.length === 1,
       message: "⚠️ Debes proporcionar exactamente 1 imagen principal"
     }
   },
@@ -152,8 +152,8 @@ const productSchema = new mongoose.Schema({
   },
   updatedBy: {
     type: String,
-    default: "",
-    trim: true
+    trim: true,
+    default: ""
   },
   slug: {
     type: String,
@@ -169,10 +169,10 @@ const productSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// ✅ Índice combinado (evita conflictos y mejora búsquedas)
+// ✅ Índice combinado (único, limpio y sin duplicación)
 productSchema.index(
   { name: "text", category: 1, subcategory: 1 },
-  { background: true } // Recomendado para producción
+  { background: true }
 );
 
 module.exports = mongoose.model("Product", productSchema);
