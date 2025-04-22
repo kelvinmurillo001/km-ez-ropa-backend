@@ -17,7 +17,7 @@ const app = express();
 // 🔐 CORS dinámico con lista blanca desde .env
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || config.allowedOrigins.includes(origin)) {
+    if (!origin || config.allowedOrigins.includes(origin.replace(/\/$/, ''))) {
       callback(null, true);
     } else {
       console.error(`❌ CORS no permitido: ${origin}`);
@@ -26,6 +26,7 @@ app.use(cors({
   },
   credentials: true
 }));
+
 
 // 🧱 Middlewares esenciales
 app.use(helmet({ crossOriginResourcePolicy: false }));
