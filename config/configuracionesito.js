@@ -58,8 +58,15 @@ const config = {
 
   // 🚀 Opcional: otros flags de entorno
   enableCors: process.env.CORS_ENABLED === 'true',
+
+  // 🔐 Protección contra DDoS
   rateLimitWindow: parseInt(process.env.RATE_LIMIT_WINDOW) || 15,
-  rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX) || 100
+  rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX) || 100,
+
+  // 🧼 Seguridad extra para sanitizar peticiones
+  enableXSSProtection: true,
+  enableMongoSanitize: true,
+  enableHPP: true
 }
 
 // 🧪 Mostrar información solo en desarrollo
@@ -68,6 +75,7 @@ if (config.env === 'development') {
   console.log('🌐 CORS Allowed Origins:', config.allowedOrigins)
   console.log('☁️ Cloudinary config ✅')
   console.log('🔑 JWT_SECRET presente:', !!config.jwtSecret)
+  console.log('🛡️ DDoS: Ventana', config.rateLimitWindow, 'minutos - Máx', config.rateLimitMax)
 }
 
 export default config

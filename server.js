@@ -1,4 +1,4 @@
-// 🌐 Dependencias principales
+// 🌐 Dependencias principales  
 import express from 'express'
 import mongoose from 'mongoose'
 import cors from 'cors'
@@ -6,6 +6,11 @@ import helmet from 'helmet'
 import morgan from 'morgan'
 import compression from 'compression'
 import path from 'path'
+import rateLimit from 'express-rate-limit'
+import slowDown from 'express-slow-down'
+import mongoSanitize from 'express-mongo-sanitize'
+import xssClean from 'xss-clean'
+import hpp from 'hpp'
 import { fileURLToPath } from 'url'
 
 // 🔗 Rutas API
@@ -22,26 +27,42 @@ import uploadRoutes from './routes/uploadRoutes.js'
 import config from './config/configuracionesito.js'
 import errorHandler from './middleware/errorHandler.js'
 
-// 🛡️ Rate Limiter (anti-DDoS)
-import rateLimit from 'express-rate-limit'
-
 // 📍 Corrección para __dirname en ESModules
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 const app = express()
 
-// 🚫 Limitador global (100 peticiones por IP cada 15 minutos)
+/* ──────────────────────────────── */
+/* 🛡️ ANTI DDOS: Limites & Slowdown */
+/* ──────────────────────────────── */
 const limiter = rateLimit({
-  windowMs: config.rateLimitWindow * 60 * 1000 || 15 * 60 * 1000, // 15 min
-  max: config.rateLimitMax || 100, // máx 100 reqs por IP
+  windowMs: config.rateLimitWindow * 60 * 1000, // minutos -> ms
+  max: config.rateLimitMax,
   message: '⚠️ Demasiadas solicitudes desde esta IP. Intenta más tarde.',
   standardHeaders: true,
   legacyHeaders: false
 })
-app.use(limiter)
 
-// 🔐 CORS dinámico desde lista blanca
+const slow = slowDown({
+  windowMs: config.rateLimitWindow * 60 * 1000,
+  delayAfter: 20,
+  delayMs: 500
+})
+
+app.use(limiter)
+app.use(slow)
+
+/* ───────────────────────────── */
+/* 🧼 Seguridad avanzada 🥷 Ninja */
+/* ───────────────────────────── */
+if (config.enableMongoSanitize) app.use(mongoSanitize())
+if (config.enableXSSProtection) app.use(xssClean())
+if (config.enableHPP) app.use(hpp())
+
+/* ─────────────────────── */
+/* 🔐 CORS desde whitelist */
+/* ─────────────────────── */
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -56,16 +77,19 @@ app.use(
   })
 )
 
-// 🧱 Middlewares de seguridad y performance
 app.use(helmet({ crossOriginResourcePolicy: false }))
 app.use(morgan(config.env === 'production' ? 'tiny' : 'dev'))
 app.use(express.json({ limit: '5mb' }))
 app.use(compression())
 
-// 🖼️ Archivos públicos
+/* ─────────────────────── */
+/* 📂 Archivos Estáticos   */
+/* ─────────────────────── */
 app.use('/assets', express.static(path.join(__dirname, 'frontend', 'assets')))
 
-// 📦 Rutas API
+/* ─────────────────────── */
+/* 🔗 Rutas API            */
+/* ─────────────────────── */
 app.use('/api/auth', authRoutes)
 app.use('/api/products', productRoutes)
 app.use('/api/categories', categoryRoutes)
@@ -75,23 +99,30 @@ app.use('/api/visitas', visitRoutes)
 app.use('/api/stats', statsRoutes)
 app.use('/api/uploads', uploadRoutes)
 
-// ✅ Ruta de test
+/* ─────────────────────── */
+/* 📊 Test & Healthchecks  */
+/* ─────────────────────── */
 app.get('/', (req, res) => {
   res.send('🧠 Backend KM-EZ-Ropa funcionando correctamente 🚀')
 })
 
-// 🔄 Ruta para uptime monitoring
 app.get('/health', (req, res) => res.send('✅ OK'))
 
-// ❌ Ruta 404
+/* ─────────────────────── */
+/* ❌ 404 Not Found        */
+/* ─────────────────────── */
 app.use('*', (req, res) => {
   res.status(404).json({ message: '❌ Ruta no encontrada' })
 })
 
-// 🛡️ Middleware de manejo de errores global
+/* ─────────────────────── */
+/* 🧯 Manejo de errores    */
+/* ─────────────────────── */
 app.use(errorHandler)
 
-// 🚀 Conexión MongoDB y arranque del servidor
+/* ─────────────────────── */
+/* 🚀 Conexión MongoDB     */
+/* ─────────────────────── */
 try {
   await mongoose.connect(config.mongoUri, {
     useNewUrlParser: true,
