@@ -30,11 +30,11 @@ const getProductById = async (req, res) => {
       })
     }
 
-    // ✅ Encontrado
+    // ✅ Encontrado (ahora con key "producto")
     return res.status(200).json({
       ok: true,
       message: '✅ Producto encontrado correctamente',
-      data: producto
+      producto
     })
   } catch (error) {
     console.error('❌ Error en getProductById:', error)
