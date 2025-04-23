@@ -8,6 +8,16 @@ import compression from 'compression'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
+// 🔗 Rutas API
+import authRoutes from './routes/authRoutes.js'
+import productRoutes from './routes/productRoutes.js'
+import categoryRoutes from './routes/categoryRoutes.js'
+import promoRoutes from './routes/promoRoutes.js'
+import orderRoutes from './routes/orderRoutes.js'
+import visitRoutes from './routes/visitRoutes.js'
+import statsRoutes from './routes/statsRoutes.js'
+import uploadRoutes from './routes/uploadRoutes.js'
+
 // ⚙️ Configuración personalizada
 import config from './config/configuracionesito.js'
 import errorHandler from './middleware/errorHandler.js'
@@ -42,16 +52,7 @@ app.use(compression())
 // 🖼️ Archivos públicos
 app.use('/assets', express.static(path.join(__dirname, 'frontend', 'assets')))
 
-// 🔗 Rutas API
-import authRoutes from './routes/authRoutes.js'
-import productRoutes from './routes/productRoutes.js'
-import categoryRoutes from './routes/categoryRoutes.js'
-import promoRoutes from './routes/promoRoutes.js'
-import orderRoutes from './routes/orderRoutes.js'
-import visitRoutes from './routes/visitRoutes.js'
-import statsRoutes from './routes/statsRoutes.js'
-import uploadRoutes from './routes/uploadRoutes.js'
-
+// 📦 Rutas API
 app.use('/api/auth', authRoutes)
 app.use('/api/products', productRoutes)
 app.use('/api/categories', categoryRoutes)

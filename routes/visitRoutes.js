@@ -1,13 +1,10 @@
 // 📁 routes/visitRoutes.js
 import express from 'express'
-const router = express.Router()
-
-// 🧾 Controladores
 import { registrarVisita, obtenerVisitas } from '../controllers/visitController.js'
-
-// 🛡️ Middlewares
 import authMiddleware from '../middleware/authMiddleware.js'
 import adminOnly from '../middleware/adminOnly.js'
+
+const router = express.Router()
 
 /* -------------------------------------------------------------------------- */
 /* 📈 RUTAS DE VISITAS                                                        */

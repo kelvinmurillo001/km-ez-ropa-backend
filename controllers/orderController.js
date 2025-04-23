@@ -161,7 +161,7 @@ export const getOrderStats = async (req, res) => {
 
     for (const p of pedidos) {
       const estado = (p.estado || 'pendiente').toLowerCase()
-      if (resumen.hasOwnProperty(estado)) resumen[estado]++
+      if (Object.prototype.hasOwnProperty.call(resumen, estado)) resumen[estado]++
       if (estado === 'enviado') resumen.ventasTotales += parseFloat(p.total || 0)
 
       const fechaPedido = new Date(p.createdAt).setHours(0, 0, 0, 0)
