@@ -187,14 +187,14 @@ productSchema.pre('save', function (next) {
       .toLowerCase()
       .trim()
       .replace(/\s+/g, '-')
-      .replace(/[^\w-]/g, '') // ← FIX: eliminado el escape innecesario
+      .replace(/[^\w-]/g, '')
       .substring(0, 100)
   }
   next()
 })
 
-// 🔍 Índices útiles para búsquedas
-productSchema.index({ name: 'text', category: 1, subcategory: 1 }, { background: true })
+// ✅ Índices de búsqueda eficientes
+productSchema.index({ name: 1, category: 1, subcategory: 1 }, { background: true })
 productSchema.index({ category: 1, subcategory: 1, tallaTipo: 1 })
 
 const Product = mongoose.model('Product', productSchema)
