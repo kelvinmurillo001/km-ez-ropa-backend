@@ -1,4 +1,4 @@
-// 🌐 Dependencias principales  
+// 🌐 Dependencias principales   
 import express from 'express'
 import mongoose from 'mongoose'
 import cors from 'cors'
@@ -47,7 +47,7 @@ const limiter = rateLimit({
 const slow = slowDown({
   windowMs: config.rateLimitWindow * 60 * 1000,
   delayAfter: 20,
-  delayMs: 500
+  delayMs: () => 500 // ✅ Corrección para evitar warning de express-slow-down v2
 })
 
 app.use(limiter)
@@ -124,10 +124,7 @@ app.use(errorHandler)
 /* 🚀 Conexión MongoDB     */
 /* ─────────────────────── */
 try {
-  await mongoose.connect(config.mongoUri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-  })
+  await mongoose.connect(config.mongoUri)
   console.log('✅ Conectado exitosamente a MongoDB')
 
   app.listen(config.port, () => {
