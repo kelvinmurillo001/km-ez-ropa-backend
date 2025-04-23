@@ -22,11 +22,24 @@ import uploadRoutes from './routes/uploadRoutes.js'
 import config from './config/configuracionesito.js'
 import errorHandler from './middleware/errorHandler.js'
 
+// 🛡️ Rate Limiter (anti-DDoS)
+import rateLimit from 'express-rate-limit'
+
 // 📍 Corrección para __dirname en ESModules
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 const app = express()
+
+// 🚫 Limitador global (100 peticiones por IP cada 15 minutos)
+const limiter = rateLimit({
+  windowMs: config.rateLimitWindow * 60 * 1000 || 15 * 60 * 1000, // 15 min
+  max: config.rateLimitMax || 100, // máx 100 reqs por IP
+  message: '⚠️ Demasiadas solicitudes desde esta IP. Intenta más tarde.',
+  standardHeaders: true,
+  legacyHeaders: false
+})
+app.use(limiter)
 
 // 🔐 CORS dinámico desde lista blanca
 app.use(
