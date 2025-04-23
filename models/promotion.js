@@ -39,7 +39,7 @@ const promotionSchema = new mongoose.Schema(
       validate: {
         validator: url =>
           !url || /^https?:\/\/.+\.(jpg|jpeg|png|webp|mp4|gif|svg|avif)$/i.test(url),
-        message: '⚠️ URL de multimedia no válida'
+        message: '⚠️ URL de multimedia no válida (debe ser imagen o video)'
       }
     },
     mediaType: {
@@ -74,14 +74,14 @@ const promotionSchema = new mongoose.Schema(
     }
   },
   {
-    timestamps: true
+    timestamps: true // 📅 createdAt y updatedAt automáticos
   }
 )
 
-// 🔍 Índice para obtener promociones activas ordenadas
+// 🔍 Índice para filtrar promociones activas más fácilmente
 promotionSchema.index({ active: 1, startDate: 1, endDate: 1 })
 
-// 🔁 Hook para crear slug desde el mensaje
+// 🔁 Hook para crear un slug automáticamente basado en el mensaje
 promotionSchema.pre('save', function (next) {
   if (!this.slug && this.message) {
     this.slug = this.message

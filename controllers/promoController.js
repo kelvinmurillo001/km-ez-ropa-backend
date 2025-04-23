@@ -2,11 +2,12 @@
 import Promotion from '../models/promotion.js'
 
 /**
- * 📥 Obtener promociones activas vigentes
+ * 📥 Obtener promociones activas y vigentes (públicas)
  */
 export const getPromotion = async (req, res) => {
   try {
     const now = new Date()
+
     const activePromos = await Promotion.find({
       active: true,
       $or: [
@@ -71,18 +72,27 @@ export const updatePromotion = async (req, res) => {
     } = req.body
 
     if (!message || typeof message !== 'string' || message.trim().length < 3) {
-      return res.status(400).json({ ok: false, message: '⚠️ El mensaje debe tener al menos 3 caracteres' })
-    }
-
-    if (mediaType && !['image', 'video'].includes(mediaType.toLowerCase())) {
-      return res.status(400).json({ ok: false, message: "⚠️ mediaType debe ser 'image' o 'video'" })
+      return res.status(400).json({
+        ok: false,
+        message: '⚠️ El mensaje debe tener al menos 3 caracteres'
+      })
     }
 
     const allowedPages = ['home', 'categorias', 'productos', 'checkout', 'detalle', 'carrito']
     const lowerPages = Array.isArray(pages) ? pages.map(p => p.toLowerCase()) : []
 
     if (!Array.isArray(pages) || lowerPages.some(p => !allowedPages.includes(p))) {
-      return res.status(400).json({ ok: false, message: '⚠️ Página inválida en el array pages[]' })
+      return res.status(400).json({
+        ok: false,
+        message: '⚠️ Página inválida en el array pages[]'
+      })
+    }
+
+    if (mediaType && !['image', 'video'].includes(mediaType.toLowerCase())) {
+      return res.status(400).json({
+        ok: false,
+        message: "⚠️ mediaType debe ser 'image' o 'video'"
+      })
     }
 
     const parsedStart = startDate ? new Date(startDate) : null

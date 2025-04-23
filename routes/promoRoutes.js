@@ -32,7 +32,7 @@ router.get('/', getPromotion)
 router.get('/admin', authMiddleware, adminOnly, getAllPromotions)
 
 /**
- * 🔐 Crear o actualizar promoción
+ * 🔐 Crear o actualizar promoción (ADMIN)
  * PUT /api/promos
  */
 router.put(
@@ -42,21 +42,28 @@ router.put(
   [
     body('message')
       .trim()
-      .notEmpty()
-      .withMessage('⚠️ El mensaje de la promoción es obligatorio')
-      .isLength({ min: 3 })
-      .withMessage('⚠️ Debe tener al menos 3 caracteres'),
+      .notEmpty().withMessage('⚠️ El mensaje de la promoción es obligatorio')
+      .isLength({ min: 3 }).withMessage('⚠️ Debe tener al menos 3 caracteres'),
 
     body('theme')
       .optional()
       .isIn(['blue', 'orange', 'green', 'red'])
       .withMessage('⚠️ Tema no válido'),
 
-    body('active').optional().isBoolean().withMessage('⚠️ El campo "active" debe ser booleano'),
+    body('active')
+      .optional()
+      .isBoolean()
+      .withMessage('⚠️ El campo "active" debe ser booleano'),
 
-    body('startDate').optional().isISO8601().withMessage('⚠️ Fecha de inicio inválida'),
+    body('startDate')
+      .optional()
+      .isISO8601()
+      .withMessage('⚠️ Fecha de inicio inválida'),
 
-    body('endDate').optional().isISO8601().withMessage('⚠️ Fecha de fin inválida'),
+    body('endDate')
+      .optional()
+      .isISO8601()
+      .withMessage('⚠️ Fecha de fin inválida'),
 
     body('mediaUrl')
       .optional()
@@ -72,7 +79,7 @@ router.put(
     body('pages')
       .optional()
       .isArray({ min: 1 })
-      .withMessage('⚠️ Debes seleccionar al menos una página'),
+      .withMessage('⚠️ Debes seleccionar al menos una página válida'),
 
     body('pages.*')
       .isIn(['home', 'categorias', 'productos', 'checkout', 'detalle', 'carrito'])
@@ -87,26 +94,34 @@ router.put(
 )
 
 /**
- * 🔁 Activar o desactivar promoción
+ * 🔁 Activar o desactivar promoción (ADMIN)
  * PATCH /api/promos/:id/estado
  */
 router.patch(
   '/:id/estado',
   authMiddleware,
   adminOnly,
-  [param('id').isMongoId().withMessage('⚠️ ID de promoción inválido')],
+  [
+    param('id')
+      .isMongoId()
+      .withMessage('⚠️ ID de promoción inválido')
+  ],
   togglePromoActive
 )
 
 /**
- * 🗑️ Eliminar una promoción
+ * 🗑️ Eliminar una promoción (ADMIN)
  * DELETE /api/promos/:id
  */
 router.delete(
   '/:id',
   authMiddleware,
   adminOnly,
-  [param('id').isMongoId().withMessage('⚠️ ID inválido para eliminar promoción')],
+  [
+    param('id')
+      .isMongoId()
+      .withMessage('⚠️ ID inválido para eliminar promoción')
+  ],
   deletePromotion
 )
 
