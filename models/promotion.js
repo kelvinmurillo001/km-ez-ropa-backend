@@ -88,7 +88,7 @@ promotionSchema.pre('save', function (next) {
       .toLowerCase()
       .trim()
       .replace(/\s+/g, '-')
-      .replace(/[^\w\-]/g, '')
+      .replace(/[^\w-]/g, '') // ← FIX aplicado aquí
       .substring(0, 100)
   }
   next()

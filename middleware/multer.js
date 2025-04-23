@@ -30,7 +30,7 @@ const storage = multer.diskStorage({
       .basename(file.originalname, ext)
       .toLowerCase()
       .replace(/\s+/g, '-')
-      .replace(/[^a-z0-9\-]/g, '')
+      .replace(/[^a-z0-9-]/g, '') // ← FIX aquí, se quitó el escape innecesario
       .substring(0, 50)
 
     const uniqueName = `${Date.now()}-${base}${ext}`

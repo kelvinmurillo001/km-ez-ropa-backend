@@ -187,7 +187,7 @@ productSchema.pre('save', function (next) {
       .toLowerCase()
       .trim()
       .replace(/\s+/g, '-')
-      .replace(/[^\w\-]/g, '')
+      .replace(/[^\w-]/g, '') // ← FIX: eliminado el escape innecesario
       .substring(0, 100)
   }
   next()
