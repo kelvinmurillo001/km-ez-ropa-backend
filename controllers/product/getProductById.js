@@ -12,6 +12,7 @@ const getProductById = async (req, res) => {
 
     // 🔐 Validar ID Mongo
     if (!mongoose.isValidObjectId(id)) {
+      console.warn(`🛑 ID de producto inválido recibido: ${id}`)
       return res.status(400).json({
         ok: false,
         message: '⚠️ El ID proporcionado no es válido',
@@ -23,12 +24,15 @@ const getProductById = async (req, res) => {
     const producto = await Product.findById(id).lean()
 
     if (!producto) {
+      console.warn(`🛑 Producto no encontrado con ID: ${id}`)
       return res.status(404).json({
         ok: false,
         message: '❌ Producto no encontrado',
         error: 'No existe un producto con ese ID'
       })
     }
+
+    console.log(`🔍 Producto encontrado - ID: ${id}, Usuario: ${req.user?.username || 'público'}`)
 
     // ✅ Encontrado (ahora con key "producto")
     return res.status(200).json({

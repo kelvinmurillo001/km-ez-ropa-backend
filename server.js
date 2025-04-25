@@ -80,7 +80,21 @@ app.use(
 app.use(helmet({ crossOriginResourcePolicy: false }))
 app.use(morgan(config.env === 'production' ? 'tiny' : 'dev'))
 app.use(express.json({ limit: '5mb' }))
-app.use(compression())
+
+/* ────────────────────────────── */
+/* 💨 Compresión avanzada HTTP    */
+/* ────────────────────────────── */
+app.use(
+  compression({
+    level: 6,
+    filter: (req, res) => {
+      if (req.headers['x-no-compression']) {
+        return false
+      }
+      return compression.filter(req, res)
+    }
+  })
+)
 
 /* ─────────────────────── */
 /* 📂 Archivos Estáticos   */

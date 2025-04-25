@@ -8,6 +8,7 @@ import { validationResult } from 'express-validator'
 const createProduct = async (req, res) => {
   const errores = validationResult(req)
   if (!errores.isEmpty()) {
+    console.warn('🛑 Error de validación al crear producto:', errores.array())
     return res.status(400).json({ errors: errores.array() })
   }
 
@@ -27,7 +28,6 @@ const createProduct = async (req, res) => {
       createdBy
     } = req.body
 
-    // Validación general
     if (
       !name?.trim() ||
       !price ||
@@ -38,6 +38,7 @@ const createProduct = async (req, res) => {
       !Array.isArray(images) ||
       images.length !== 1
     ) {
+      console.warn('🛑 Faltan campos obligatorios para crear producto')
       return res.status(400).json({ message: '⚠️ Faltan campos obligatorios o formato inválido.' })
     }
 
@@ -47,6 +48,7 @@ const createProduct = async (req, res) => {
     })
 
     if (existe) {
+      console.warn(`🛑 Producto duplicado detectado: ${name} - ${subcategory}`)
       return res
         .status(409)
         .json({ message: '⚠️ Ya existe un producto con ese nombre y subcategoría.' })
@@ -54,6 +56,7 @@ const createProduct = async (req, res) => {
 
     const [mainImage] = images
     if (!mainImage.url || !mainImage.cloudinaryId || !mainImage.talla || !mainImage.color) {
+      console.warn('🛑 Imagen principal incompleta o inválida')
       return res.status(400).json({ message: '⚠️ Imagen principal incompleta o inválida.' })
     }
 
@@ -72,6 +75,7 @@ const createProduct = async (req, res) => {
       const stock = v.stock
 
       if (!talla || !color || !v.imageUrl || !v.cloudinaryId || typeof stock !== 'number') {
+        console.warn('🛑 Variante inválida detectada:', v)
         return res.status(400).json({
           message: '⚠️ Cada variante debe tener talla, color, imagen, cloudinaryId y stock numérico.'
         })
@@ -79,6 +83,7 @@ const createProduct = async (req, res) => {
 
       const clave = `${talla}-${color}`
       if (combinaciones.has(clave)) {
+        console.warn(`🛑 Variante duplicada: ${clave}`)
         return res
           .status(400)
           .json({ message: '⚠️ Variantes duplicadas detectadas (talla + color).' })
@@ -88,8 +93,8 @@ const createProduct = async (req, res) => {
 
     const tallasLimpias = Array.isArray(sizes)
       ? sizes
-        .filter(s => typeof s === 'string' && s.trim().length > 0)
-        .map(s => s.trim().toUpperCase())
+          .filter(s => typeof s === 'string' && s.trim().length > 0)
+          .map(s => s.trim().toUpperCase())
       : []
 
     const producto = new Product({
@@ -108,6 +113,9 @@ const createProduct = async (req, res) => {
     })
 
     const saved = await producto.save()
+
+    console.log(`📦 Producto creado: ${name} - ${category}/${subcategory} por ${createdBy}`)
+
     return res.status(201).json(saved)
   } catch (error) {
     console.error('❌ Error al crear producto:', error)

@@ -9,6 +9,7 @@ import { validationResult } from 'express-validator'
 const updateProduct = async (req, res) => {
   const errores = validationResult(req)
   if (!errores.isEmpty()) {
+    console.warn('🛑 Errores de validación en updateProduct:', errores.array())
     return res.status(400).json({ errors: errores.array() })
   }
 
@@ -29,6 +30,7 @@ const updateProduct = async (req, res) => {
 
     const product = await Product.findById(id)
     if (!product) {
+      console.warn(`🛑 Producto no encontrado - ID: ${id}`)
       return res.status(404).json({ message: '❌ Producto no encontrado' })
     }
 
@@ -40,6 +42,7 @@ const updateProduct = async (req, res) => {
       const { url, cloudinaryId, talla, color } = mainImage
 
       if (!url || !cloudinaryId || !talla || !color) {
+        console.warn('🛑 Imagen principal incompleta al actualizar producto')
         return res.status(400).json({
           message: '⚠️ La imagen principal requiere url, cloudinaryId, talla y color'
         })
@@ -58,6 +61,7 @@ const updateProduct = async (req, res) => {
         }
       ]
     } else if (images.length > 1) {
+      console.warn(`🛑 Se intentaron subir múltiples imágenes principales para el producto ${id}`)
       return res.status(400).json({ message: '⚠️ Solo se permite una imagen principal' })
     }
 
@@ -66,6 +70,7 @@ const updateProduct = async (req, res) => {
 
     if (Array.isArray(variants) && variants.length > 0) {
       if (variants.length > 4) {
+        console.warn('🛑 Demasiadas variantes enviadas')
         return res.status(400).json({ message: '⚠️ Máximo 4 variantes permitidas' })
       }
 
@@ -79,11 +84,13 @@ const updateProduct = async (req, res) => {
       for (const v of variants) {
         const key = `${v.talla?.trim().toLowerCase()}-${v.color?.trim().toLowerCase()}`
         if (seen.has(key)) {
+          console.warn(`🛑 Variante duplicada detectada: ${key}`)
           return res.status(400).json({ message: '⚠️ Variantes duplicadas (talla + color)' })
         }
         seen.add(key)
 
         if (!v.imageUrl || !v.cloudinaryId || !v.talla || !v.color || typeof v.stock !== 'number') {
+          console.warn('🛑 Variante con datos incompletos:', v)
           return res.status(400).json({
             message: '⚠️ Cada variante debe tener imagen, talla, color, cloudinaryId y stock numérico'
           })
@@ -114,6 +121,8 @@ const updateProduct = async (req, res) => {
     product.updatedBy = req.user?.username || 'admin'
 
     const updated = await product.save()
+
+    console.log(`✏️ Producto actualizado correctamente - ID: ${product._id} por ${product.updatedBy}`)
 
     return res.status(200).json({
       message: '✅ Producto actualizado correctamente',

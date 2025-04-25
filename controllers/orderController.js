@@ -10,23 +10,28 @@ export const createOrder = async (req, res) => {
     const { items, total, nombreCliente, nota, email, telefono } = req.body
 
     if (!Array.isArray(items) || items.length === 0) {
+      console.warn('🛑 Pedido rechazado: sin productos')
       return res.status(400).json({ ok: false, message: '⚠️ El pedido debe contener al menos un producto.' })
     }
 
     if (!nombreCliente || typeof nombreCliente !== 'string' || nombreCliente.trim().length < 2) {
+      console.warn('🛑 Pedido rechazado: nombre de cliente inválido')
       return res.status(400).json({ ok: false, message: '⚠️ Nombre del cliente inválido.' })
     }
 
     const totalParsed = parseFloat(total)
     if (isNaN(totalParsed) || totalParsed <= 0) {
+      console.warn('🛑 Pedido rechazado: total inválido')
       return res.status(400).json({ ok: false, message: '⚠️ Total del pedido inválido.' })
     }
 
     if (email && !/^\S+@\S+\.\S+$/.test(email)) {
+      console.warn(`🛑 Email inválido proporcionado: ${email}`)
       return res.status(400).json({ ok: false, message: '⚠️ Correo electrónico inválido.' })
     }
 
     if (telefono && typeof telefono !== 'string') {
+      console.warn(`🛑 Teléfono inválido proporcionado: ${telefono}`)
       return res.status(400).json({ ok: false, message: '⚠️ Teléfono inválido.' })
     }
 
@@ -34,11 +39,13 @@ export const createOrder = async (req, res) => {
     for (const item of items) {
       const producto = await Product.findById(item.id)
       if (!producto) {
+        console.warn(`🛑 Producto no encontrado al crear pedido: ${item.nombre}`)
         return res.status(404).json({ ok: false, message: `❌ Producto no encontrado: ${item.nombre}` })
       }
 
       const variante = producto.variants.find(v => v.talla === item.talla?.toLowerCase())
       if (!variante) {
+        console.warn(`🛑 Variante no encontrada: ${item.nombre} - Talla ${item.talla}`)
         return res.status(400).json({
           ok: false,
           message: `⚠️ Variante no disponible: ${item.nombre} - Talla ${item.talla}`
@@ -46,6 +53,7 @@ export const createOrder = async (req, res) => {
       }
 
       if (item.cantidad > variante.stock) {
+        console.warn(`🛑 Stock insuficiente para ${item.nombre} (Talla ${item.talla})`)
         return res.status(400).json({
           ok: false,
           message: `❌ Stock insuficiente para ${item.nombre} (Talla ${item.talla}). Máximo disponible: ${variante.stock}`
@@ -74,6 +82,8 @@ export const createOrder = async (req, res) => {
       )
     }
 
+    console.log(`🛒 Pedido creado: ${nombreCliente} - Total: $${totalParsed.toFixed(2)} - Productos: ${items.length}`)
+
     return res.status(201).json({
       ok: true,
       message: '✅ Pedido creado exitosamente',
@@ -95,6 +105,7 @@ export const createOrder = async (req, res) => {
 export const getOrders = async (req, res) => {
   try {
     const orders = await Order.find().sort({ createdAt: -1 })
+    console.log(`📦 Pedidos cargados por: ${req.user?.username || 'admin'} - Total: ${orders.length}`)
     return res.status(200).json({
       ok: true,
       message: '✅ Pedidos obtenidos correctamente',
@@ -125,6 +136,8 @@ export const actualizarEstadoPedido = async (req, res) => {
 
     pedido.estado = estado.trim().toLowerCase()
     await pedido.save()
+
+    console.log(`🔁 Pedido actualizado por ${req.user?.username || 'admin'} - ID: ${id} - Nuevo estado: ${estado}`)
 
     return res.status(200).json({
       ok: true,
@@ -169,6 +182,8 @@ export const getOrderStats = async (req, res) => {
     }
 
     resumen.ventasTotales = resumen.ventasTotales.toFixed(2)
+
+    console.log(`📊 Estadísticas generadas por ${req.user?.username || 'admin'} - Total pedidos: ${resumen.total}`)
 
     return res.status(200).json({
       ok: true,

@@ -45,9 +45,11 @@ const getAllProducts = async (req, res) => {
     // 📦 Consulta con orden
     const productos = await Product.find(filtro).sort({ createdAt: -1 }).lean()
 
-    if (process.env.NODE_ENV !== 'production') {
-      console.log(`📊 Productos encontrados: ${productos.length}`)
-      console.log('🧪 Filtro aplicado:', filtro)
+    console.log(`📊 Productos encontrados: ${productos.length}`)
+    console.log('🔎 Filtro aplicado:', filtro)
+
+    if (productos.length === 0) {
+      console.warn('⚠️ No se encontraron productos con los filtros aplicados.')
     }
 
     return res.status(200).json(productos)

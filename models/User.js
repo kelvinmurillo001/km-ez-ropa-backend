@@ -4,7 +4,6 @@ import bcrypt from 'bcryptjs'
 
 const userSchema = new mongoose.Schema(
   {
-    // 🆔 Nombre de usuario único
     username: {
       type: String,
       required: [true, '⚠️ El nombre de usuario es obligatorio'],
@@ -12,8 +11,6 @@ const userSchema = new mongoose.Schema(
       trim: true,
       minlength: [3, '⚠️ El usuario debe tener al menos 3 caracteres']
     },
-
-    // 🙋‍♂️ Nombre completo
     name: {
       type: String,
       required: [true, '⚠️ El nombre es obligatorio'],
@@ -21,8 +18,6 @@ const userSchema = new mongoose.Schema(
       minlength: [2, '⚠️ Mínimo 2 caracteres'],
       maxlength: [100, '⚠️ Máximo 100 caracteres']
     },
-
-    // 📧 Email válido y único
     email: {
       type: String,
       required: [true, '⚠️ El email es obligatorio'],
@@ -31,24 +26,25 @@ const userSchema = new mongoose.Schema(
       trim: true,
       match: [/^\S+@\S+\.\S+$/, '⚠️ Email inválido']
     },
-
-    // 🔐 Contraseña (hash solo visible en DB)
     password: {
       type: String,
       required: [true, '⚠️ La contraseña es obligatoria'],
       minlength: [6, '⚠️ Debe tener al menos 6 caracteres'],
       select: false
     },
-
-    // 🧾 Rol del usuario
     role: {
       type: String,
       enum: ['admin', 'user'],
       default: 'user'
+    },
+    refreshToken: {
+      type: String,
+      default: null,
+      select: false
     }
   },
   {
-    timestamps: true // createdAt / updatedAt automáticos
+    timestamps: true
   }
 )
 
