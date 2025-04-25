@@ -1,4 +1,4 @@
-// 🌐 Dependencias principales   
+// 🌐 Dependencias principales    
 import express from 'express'
 import mongoose from 'mongoose'
 import cors from 'cors'
@@ -37,7 +37,7 @@ const app = express()
 /* 🛡️ ANTI DDOS: Limites & Slowdown */
 /* ──────────────────────────────── */
 const limiter = rateLimit({
-  windowMs: config.rateLimitWindow * 60 * 1000, // minutos -> ms
+  windowMs: config.rateLimitWindow * 60 * 1000,
   max: config.rateLimitMax,
   message: '⚠️ Demasiadas solicitudes desde esta IP. Intenta más tarde.',
   standardHeaders: true,
@@ -47,7 +47,7 @@ const limiter = rateLimit({
 const slow = slowDown({
   windowMs: config.rateLimitWindow * 60 * 1000,
   delayAfter: 20,
-  delayMs: () => 500 // ✅ Corrección para evitar warning de express-slow-down v2
+  delayMs: () => 500
 })
 
 app.use(limiter)
@@ -77,6 +77,9 @@ app.use(
   })
 )
 
+/* ─────────────────────── */
+/* 🛡️ Seguridad general     */
+/* ─────────────────────── */
 app.use(helmet({ crossOriginResourcePolicy: false }))
 app.use(morgan(config.env === 'production' ? 'tiny' : 'dev'))
 app.use(express.json({ limit: '5mb' }))
