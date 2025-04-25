@@ -72,7 +72,7 @@ const productSchema = new mongoose.Schema(
     tallaTipo: {
       type: String,
       required: [true, '⚠️ El tipo de talla es obligatorio'],
-      enum: ['adulto', 'niño', 'niña', 'bebé'],
+      enum: ['adulto', 'joven', 'niño', 'niña', 'bebé'], // 👈 AÑADÍDO joven
       trim: true,
       lowercase: true,
     },
