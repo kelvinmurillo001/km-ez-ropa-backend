@@ -1,13 +1,13 @@
 // 📁 backend/tests/paypalService.test.js
 
 // ⚠️ Solo para testing local: Ignorar errores SSL auto-firmados (PayPal sandbox)
-// ❗ IMPORTANTE: Eliminar para producción real
+// ❗ IMPORTANTE: Eliminar esta línea en producción real
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-import { crearOrden, capturarOrden } from '../services/paypalService.js';
 import dotenv from 'dotenv';
+import { crearOrden, capturarOrden } from '../services/paypalService.js';
 
-dotenv.config(); // Cargamos variables del .env
+dotenv.config(); // 🔄 Cargar variables del entorno
 
 describe('🧪 Pruebas de integración PayPalService', () => {
   let createdOrderId = '';
@@ -17,23 +17,23 @@ describe('🧪 Pruebas de integración PayPalService', () => {
 
     const response = await crearOrden(total);
 
-    // Verificaciones
+    // ✅ Verificaciones
     expect(response).toHaveProperty('id');
     expect(response.status).toBe('CREATED');
     expect(response.purchase_units[0].amount.value).toBe(total.toFixed(2));
 
-    createdOrderId = response.id; // Guardamos el ID para capturarla luego
+    createdOrderId = response.id; // Guardamos el ID para la siguiente prueba
     console.log('🧪 Orden creada ID:', createdOrderId);
   });
 
   test('Capturar una orden de PayPal exitosamente', async () => {
     if (!createdOrderId) {
-      throw new Error('No se creó ninguna orden previamente.');
+      throw new Error('❌ No se creó ninguna orden previamente.');
     }
 
     const response = await capturarOrden(createdOrderId);
 
-    // Verificaciones
+    // ✅ Verificaciones
     expect(response).toHaveProperty('id');
     expect(response.status).toBe('COMPLETED');
     expect(response.id).toBe(createdOrderId);

@@ -142,18 +142,22 @@ app.use('*', (req, res) => {
 app.use(errorHandler)
 
 /* -------------------------------------------------------------------------- */
-/* 🚀 Conexión a MongoDB                                                      */
+/* 🚀 Conexión a MongoDB y Levantar Servidor                                  */
 /* -------------------------------------------------------------------------- */
-try {
-  await mongoose.connect(config.mongoUri)
-  console.log('✅ Conectado exitosamente a MongoDB Atlas')
+const startServer = async () => {
+  try {
+    await mongoose.connect(config.mongoUri)
+    console.log('✅ Conectado exitosamente a MongoDB Atlas')
 
-  app.listen(config.port, () => {
-    console.log(`🚀 Servidor corriendo en: http://localhost:${config.port}`)
-    console.log(`🌍 Entorno: ${config.env}`)
-  })
-} catch (err) {
-  console.error('❌ Error al conectar con MongoDB:', err.message)
-  console.error('🔍 Verifica IP autorizada en MongoDB Atlas y las credenciales .env.')
-  process.exit(1)
+    app.listen(config.port, () => {
+      console.log(`🚀 Servidor corriendo en: http://localhost:${config.port}`)
+      console.log(`🌍 Entorno: ${config.env}`)
+    })
+  } catch (err) {
+    console.error('❌ Error al conectar con MongoDB:', err.message)
+    console.error('🔍 Verifica IP autorizada en MongoDB Atlas y las credenciales .env.')
+    process.exit(1)
+  }
 }
+
+startServer()

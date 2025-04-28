@@ -1,7 +1,7 @@
 // 📁 backend/models/Product.js
-import mongoose from 'mongoose'
+import mongoose from 'mongoose';
 
-// ✅ Subesquema para variantes (talla + color + imagen + stock + ACTIVO)
+// ✅ Subesquema para variantes de productos
 const variantSchema = new mongoose.Schema(
   {
     talla: {
@@ -34,13 +34,13 @@ const variantSchema = new mongoose.Schema(
     },
     activo: {
       type: Boolean,
-      default: true // 🛡️ Agregado: Si se agota, se pone false automáticamente
+      default: true // 🛡️ Agregado: Variante activa por defecto
     }
   },
   { _id: false }
-)
+);
 
-// ✅ Esquema principal del producto
+// ✅ Esquema principal de productos
 const productSchema = new mongoose.Schema(
   {
     name: {
@@ -84,7 +84,7 @@ const productSchema = new mongoose.Schema(
       type: [String],
       default: [],
       validate: {
-        validator: val => val.every(t => typeof t === 'string' && t.trim().length > 0),
+        validator: (val) => val.every((t) => typeof t === 'string' && t.trim().length > 0),
         message: '⚠️ Cada talla debe ser texto válido'
       }
     },
@@ -131,7 +131,7 @@ const productSchema = new mongoose.Schema(
         }
       ],
       validate: {
-        validator: val => Array.isArray(val) && val.length === 1,
+        validator: (val) => Array.isArray(val) && val.length === 1,
         message: '⚠️ Debes proporcionar exactamente 1 imagen principal'
       }
     },
@@ -139,18 +139,18 @@ const productSchema = new mongoose.Schema(
       type: [variantSchema],
       validate: [
         {
-          validator: val => val.length <= 4,
+          validator: (val) => val.length <= 4,
           message: '⚠️ Máximo 4 variantes por producto'
         },
         {
           validator: function (val) {
-            const seen = new Set()
+            const seen = new Set();
             for (const v of val) {
-              const key = `${v.talla}-${v.color}`
-              if (seen.has(key)) return false
-              seen.add(key)
+              const key = `${v.talla}-${v.color}`;
+              if (seen.has(key)) return false;
+              seen.add(key);
             }
-            return true
+            return true;
           },
           message: '⚠️ No puede haber variantes duplicadas (talla + color)'
         }
@@ -180,9 +180,9 @@ const productSchema = new mongoose.Schema(
     }
   },
   { timestamps: true }
-)
+);
 
-// 🧠 Hook automático mejorado
+// 🧠 Hook automático para generar slug y metadescripción
 productSchema.pre('save', function (next) {
   if (!this.slug && this.name) {
     const normalized = this.name
@@ -190,24 +190,25 @@ productSchema.pre('save', function (next) {
       .trim()
       .normalize('NFD') // Separar acentos
       .replace(/[\u0300-\u036f]/g, '') // Eliminar tildes
-      .replace(/ñ/g, 'n') // Reemplazar ñ manualmente
+      .replace(/ñ/g, 'n') // Reemplazar ñ
       .replace(/\s+/g, '-') // Espacios a guiones
-      .replace(/[^\w-]/g, '') // Eliminar todo lo que no sea palabra o guión
-      .substring(0, 100)
+      .replace(/[^\w-]/g, '') // Eliminar caracteres especiales
+      .substring(0, 100);
 
-    this.slug = normalized
+    this.slug = normalized;
   }
 
   if (!this.metaDescription && this.name && this.category) {
-    this.metaDescription = `Compra ${this.name} en nuestra sección de ${this.category}. ¡Calidad garantizada en KM & EZ ROPA!`
+    this.metaDescription = `Compra ${this.name} en nuestra sección de ${this.category}. ¡Calidad garantizada en KM & EZ ROPA!`;
   }
 
-  next()
-})
+  next();
+});
 
-// ✅ Índices
-productSchema.index({ name: 1, category: 1, subcategory: 1 }, { background: true })
-productSchema.index({ category: 1, subcategory: 1, tallaTipo: 1 })
+// 🔍 Índices para mejorar rendimiento de búsqueda
+productSchema.index({ name: 1, category: 1, subcategory: 1 }, { background: true });
+productSchema.index({ category: 1, subcategory: 1, tallaTipo: 1 });
 
-const Product = mongoose.model('Product', productSchema)
-export default Product
+// 🚀 Exportar modelo
+const Product = mongoose.model('Product', productSchema);
+export default Product;

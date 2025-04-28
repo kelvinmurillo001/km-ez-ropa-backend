@@ -1,10 +1,14 @@
 // 📁 routes/visitRoutes.js
-import express from 'express'
-import { registrarVisita, obtenerVisitas } from '../controllers/visitController.js'
-import authMiddleware from '../middleware/authMiddleware.js'
-import adminOnly from '../middleware/adminOnly.js'
+import express from 'express';
 
-const router = express.Router()
+// 📚 Controladores
+import { registrarVisita, obtenerVisitas } from '../controllers/visitController.js';
+
+// 🛡️ Middlewares
+import authMiddleware from '../middleware/authMiddleware.js';
+import adminOnly from '../middleware/adminOnly.js';
+
+const router = express.Router();
 
 /* -------------------------------------------------------------------------- */
 /* 📈 RUTAS DE VISITAS                                                        */
@@ -17,19 +21,20 @@ const router = express.Router()
 router.post(
   '/registrar',
   (req, res, next) => {
-    const userAgent = req.headers['user-agent'] || ''
+    const userAgent = req.headers['user-agent'] || '';
     if (/curl|postman|bot|crawler/i.test(userAgent)) {
-      return res.status(403).json({ message: '🚫 Acceso automatizado denegado' })
+      return res.status(403).json({ message: '🚫 Acceso automatizado denegado' });
     }
-    next()
+    next();
   },
   registrarVisita
-)
+);
 
 /**
  * 📊 Obtener total de visitas acumuladas (SOLO ADMIN)
  * GET /api/visitas
  */
-router.get('/', authMiddleware, adminOnly, obtenerVisitas)
+router.get('/', authMiddleware, adminOnly, obtenerVisitas);
 
-export default router
+// 🚀 Exportar router
+export default router;

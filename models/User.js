@@ -1,7 +1,8 @@
 // 📁 backend/models/User.js
-import mongoose from 'mongoose'
-import bcrypt from 'bcryptjs'
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
+// 📋 Esquema de usuario
 const userSchema = new mongoose.Schema(
   {
     username: {
@@ -46,25 +47,30 @@ const userSchema = new mongoose.Schema(
   {
     timestamps: true
   }
-)
+);
 
-// 🔒 Hashear contraseña antes de guardar
+/* -------------------------------------------------------------------------- */
+/* 🔒 Middleware: Hashear contraseña antes de guardar                         */
+/* -------------------------------------------------------------------------- */
 userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next()
+  if (!this.isModified('password')) return next();
   try {
-    const salt = await bcrypt.genSalt(10)
-    this.password = await bcrypt.hash(this.password, salt)
-    next()
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
   } catch (err) {
-    console.error('❌ Error al hashear contraseña:', err)
-    next(err)
+    console.error('❌ Error al hashear contraseña:', err);
+    next(err);
   }
-})
+});
 
-// 🔑 Comparar contraseñas para login
+/* -------------------------------------------------------------------------- */
+/* 🔑 Método de instancia: Comparar contraseñas                               */
+/* -------------------------------------------------------------------------- */
 userSchema.methods.matchPassword = async function (inputPassword) {
-  return this.password ? await bcrypt.compare(inputPassword, this.password) : false
-}
+  return this.password ? await bcrypt.compare(inputPassword, this.password) : false;
+};
 
-const User = mongoose.model('User', userSchema)
-export default User
+// 🚀 Exportar modelo
+const User = mongoose.model('User', userSchema);
+export default User;

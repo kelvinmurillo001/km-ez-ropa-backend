@@ -1,5 +1,5 @@
 // 📁 backend/models/Order.js
-import mongoose from 'mongoose'
+import mongoose from 'mongoose';
 
 // 📦 Subesquema de ítems del pedido
 const orderItemSchema = new mongoose.Schema(
@@ -32,7 +32,7 @@ const orderItemSchema = new mongoose.Schema(
     }
   },
   { _id: false }
-)
+);
 
 // 🧾 Esquema principal del Pedido
 const orderSchema = new mongoose.Schema(
@@ -40,25 +40,25 @@ const orderSchema = new mongoose.Schema(
     items: {
       type: [orderItemSchema],
       validate: {
-        validator: arr => Array.isArray(arr) && arr.length > 0,
+        validator: (arr) => Array.isArray(arr) && arr.length > 0,
         message: '⚠️ El pedido debe contener al menos un producto'
       }
     },
     total: {
       type: Number,
       required: true,
-      min: [0, '⚠️ Total no puede ser negativo']
+      min: [0, '⚠️ El total no puede ser negativo']
     },
     nombreCliente: {
       type: String,
       required: [true, '⚠️ Nombre del cliente requerido'],
       trim: true,
       minlength: [2, '⚠️ Mínimo 2 caracteres'],
-      maxlength: 100
+      maxlength: [100, '⚠️ Máximo 100 caracteres']
     },
     email: {
       type: String,
-      required: [true, '⚠️ Correo requerido'],
+      required: [true, '⚠️ Correo electrónico requerido'],
       trim: true,
       lowercase: true,
       match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, '⚠️ Email inválido']
@@ -82,18 +82,19 @@ const orderSchema = new mongoose.Schema(
       default: 'pendiente'
     }
 
-    // 🚀 Futuro: integrar envío y pago
+    // 🚀 Futuro:
     // direccionEnvio: { type: String, trim: true },
     // metodoPago: { type: String, enum: ['efectivo', 'tarjeta'], default: 'efectivo' },
     // seguimiento: { type: String, trim: true }
   },
   {
-    timestamps: true // 🕒 createdAt, updatedAt
+    timestamps: true // 🕒 createdAt y updatedAt automáticos
   }
-)
+);
 
-// 🔍 Índices útiles para búsquedas por estado y fecha
-orderSchema.index({ estado: 1, createdAt: -1 })
+// 🔍 Índices útiles para optimizar búsquedas por estado y fecha
+orderSchema.index({ estado: 1, createdAt: -1 });
 
-const Order = mongoose.model('Order', orderSchema)
-export default Order
+// 🚀 Exportar el modelo
+const Order = mongoose.model('Order', orderSchema);
+export default Order;

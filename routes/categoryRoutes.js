@@ -1,6 +1,6 @@
 // 📁 routes/categoryRoutes.js
-import express from 'express'
-import { body, param } from 'express-validator'
+import express from 'express';
+import { body, param } from 'express-validator';
 
 // 📦 Controladores
 import {
@@ -9,13 +9,13 @@ import {
   addSubcategory,
   deleteCategory,
   deleteSubcategory
-} from '../controllers/categoryController.js'
+} from '../controllers/categoryController.js';
 
 // 🛡️ Middlewares
-import authMiddleware from '../middleware/authMiddleware.js'
-import adminOnly from '../middleware/adminOnly.js'
+import authMiddleware from '../middleware/authMiddleware.js';
+import adminOnly from '../middleware/adminOnly.js';
 
-const router = express.Router()
+const router = express.Router();
 
 /* -------------------------------------------------------------------------- */
 /* 🗂️ RUTAS DE CATEGORÍAS                                                    */
@@ -24,7 +24,7 @@ const router = express.Router()
 /**
  * 📥 Obtener todas las categorías (PÚBLICO)
  */
-router.get('/', getAllCategories)
+router.get('/', getAllCategories);
 
 /**
  * ➕ Crear nueva categoría (SOLO ADMIN)
@@ -52,7 +52,7 @@ router.post(
       .withMessage('⚠️ La subcategoría debe tener al menos 2 caracteres')
   ],
   createCategory
-)
+);
 
 /**
  * ➕ Agregar subcategoría (SOLO ADMIN)
@@ -62,7 +62,9 @@ router.post(
   authMiddleware,
   adminOnly,
   [
-    param('categoryId').isMongoId().withMessage('⚠️ ID de categoría inválido'),
+    param('categoryId')
+      .isMongoId()
+      .withMessage('⚠️ ID de categoría inválido'),
 
     body('subcategory')
       .trim()
@@ -73,7 +75,7 @@ router.post(
       .withMessage('⚠️ La subcategoría debe tener al menos 2 caracteres')
   ],
   addSubcategory
-)
+);
 
 /**
  * 🗑️ Eliminar categoría completa (SOLO ADMIN)
@@ -82,9 +84,13 @@ router.delete(
   '/:id',
   authMiddleware,
   adminOnly,
-  [param('id').isMongoId().withMessage('⚠️ ID inválido')],
+  [
+    param('id')
+      .isMongoId()
+      .withMessage('⚠️ ID inválido')
+  ],
   deleteCategory
-)
+);
 
 /**
  * 🗑️ Eliminar subcategoría de una categoría (SOLO ADMIN)
@@ -94,7 +100,10 @@ router.delete(
   authMiddleware,
   adminOnly,
   [
-    param('categoryId').isMongoId().withMessage('⚠️ ID de categoría inválido'),
+    param('categoryId')
+      .isMongoId()
+      .withMessage('⚠️ ID de categoría inválido'),
+
     param('subcategory')
       .trim()
       .escape()
@@ -102,6 +111,7 @@ router.delete(
       .withMessage('⚠️ Subcategoría requerida')
   ],
   deleteSubcategory
-)
+);
 
-export default router
+// 🚀 Exportar router
+export default router;

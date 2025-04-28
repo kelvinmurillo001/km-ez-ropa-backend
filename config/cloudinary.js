@@ -1,34 +1,35 @@
 // 📁 backend/config/cloudinary.js
-import { v2 as cloudinary } from 'cloudinary'
-import config from './configuracionesito.js'
+// 🎯 Configuración de Cloudinary para gestión de imágenes
+
+import { v2 as cloudinary } from 'cloudinary';
+import config from './configuracionesito.js';
 
 // ✅ Extraer credenciales y aplicar camelCase
 const {
   cloud_name: cloudName,
   api_key: apiKey,
   api_secret: apiSecret
-} = config.cloudinary || {}
+} = config.cloudinary || {};
 
-// 🔐 Validación estricta
+// 🔐 Validar existencia de credenciales
 if (!cloudName || !apiKey || !apiSecret) {
-  console.error(
-    '❌ Error: Faltan las credenciales de Cloudinary. Revisa tu archivo de configuración.'
-  )
-  process.exit(1)
+  console.error('❌ Error: Faltan credenciales de Cloudinary. Verifica el archivo .env o la configuración.');
+  process.exit(1);
 }
 
-// ⚙️ Configuración de Cloudinary
+// ⚙️ Configurar Cloudinary
 cloudinary.config({
   cloud_name: cloudName,
   api_key: apiKey,
   api_secret: apiSecret
-})
+});
 
-// 🐞 Solo en desarrollo: mostrar configuración mínima
+// 🐞 Mostrar configuración mínima en desarrollo
 if (config.env !== 'production') {
-  console.log('✅ Cloudinary configurado correctamente en modo desarrollo.')
-  console.log(`🌩️ cloud_name: ${cloudName}`)
-  console.log('🔑 api_key: visible')
+  console.log('✅ Cloudinary configurado correctamente en modo desarrollo.');
+  console.log(`🌩️ Cloud Name: ${cloudName}`);
+  console.log('🔑 API Key: visible');
 }
 
-export { cloudinary }
+// ✅ Exportar instancia configurada
+export { cloudinary };

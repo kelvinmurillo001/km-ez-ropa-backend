@@ -1,5 +1,10 @@
-import { body, param } from 'express-validator'
+// 📁 backend/validators/orderValidator.js
 
+import { body, param } from 'express-validator';
+
+/**
+ * 🧾 Validaciones para crear un pedido
+ */
 export const createOrderValidation = [
   body('items')
     .isArray({ min: 1 })
@@ -54,21 +59,26 @@ export const createOrderValidation = [
     .escape()
     .isString()
     .withMessage('⚠️ Método de pago inválido.')
-    .isLength({ min: 3, max: 50 }),
+    .isLength({ min: 3, max: 50 })
+    .withMessage('⚠️ Método de pago inválido.'),
 
   body('estado')
     .optional()
     .trim()
     .escape()
     .isString()
-    .isLength({ min: 3, max: 20 }),
+    .isLength({ min: 3, max: 20 })
+    .withMessage('⚠️ Estado inválido.'),
 
   body('factura')
     .optional()
     .isObject()
     .withMessage('⚠️ Datos de factura inválidos.')
-]
+];
 
+/**
+ * 🔄 Validaciones para actualizar estado del pedido
+ */
 export const updateOrderStatusValidation = [
   param('id')
     .isMongoId()
@@ -81,4 +91,4 @@ export const updateOrderStatusValidation = [
     .withMessage('⚠️ El estado es obligatorio.')
     .isIn(['pendiente', 'en_proceso', 'enviado', 'cancelado'])
     .withMessage('⚠️ Estado no válido.')
-]
+];

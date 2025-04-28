@@ -1,8 +1,8 @@
-// 📁 backend/models/promotion.js
-import mongoose from 'mongoose'
+// 📁 backend/models/Promotion.js
+import mongoose from 'mongoose';
 
-// 🌐 Páginas válidas donde se puede mostrar una promoción
-const allowedPages = ['home', 'categorias', 'productos', 'detalle', 'carrito', 'checkout']
+// 🌐 Páginas válidas para mostrar una promoción
+const allowedPages = ['home', 'categorias', 'productos', 'detalle', 'carrito', 'checkout'];
 
 // 🏷️ Esquema de promoción publicitaria
 const promotionSchema = new mongoose.Schema(
@@ -37,7 +37,7 @@ const promotionSchema = new mongoose.Schema(
       default: null,
       trim: true,
       validate: {
-        validator: url =>
+        validator: (url) =>
           !url || /^https?:\/\/.+\.(jpg|jpeg|png|webp|mp4|gif|svg|avif)$/i.test(url),
         message: '⚠️ URL de multimedia no válida (debe ser imagen o video)'
       }
@@ -51,7 +51,7 @@ const promotionSchema = new mongoose.Schema(
       type: [String],
       default: [],
       validate: {
-        validator: arr => arr.every(p => allowedPages.includes(p)),
+        validator: (arr) => arr.every((p) => allowedPages.includes(p)),
         message: '⚠️ Una o más páginas no son válidas para promociones'
       }
     },
@@ -76,24 +76,26 @@ const promotionSchema = new mongoose.Schema(
   {
     timestamps: true // 📅 createdAt y updatedAt automáticos
   }
-)
+);
 
-// 🔍 Índice para filtrar promociones activas más fácilmente
-promotionSchema.index({ active: 1, startDate: 1, endDate: 1 })
+// 🔍 Índice para facilitar búsqueda de promociones activas
+promotionSchema.index({ active: 1, startDate: 1, endDate: 1 });
 
-// 🔁 Hook para crear un slug automáticamente basado en el mensaje
+// 🔁 Hook para crear slug automáticamente
 promotionSchema.pre('save', function (next) {
   if (!this.slug && this.message) {
     this.slug = this.message
       .toLowerCase()
       .trim()
-      .replace(/\s+/g, '-')
-      .replace(/[^\w-]/g, '') // ← FIX aplicado aquí
-      .substring(0, 100)
+      .normalize('NFD') // Mejor aún: normalizar acentos
+      .replace(/[\u0300-\u036f]/g, '') // Eliminar tildes
+      .replace(/\s+/g, '-') // Espacios a guiones
+      .replace(/[^\w-]/g, '') // Eliminar símbolos especiales
+      .substring(0, 100);
   }
-  next()
-})
+  next();
+});
 
 // 🚀 Exportar el modelo
-const Promotion = mongoose.model('Promotion', promotionSchema)
-export default Promotion
+const Promotion = mongoose.model('Promotion', promotionSchema);
+export default Promotion;

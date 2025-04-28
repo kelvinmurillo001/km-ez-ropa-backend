@@ -1,25 +1,22 @@
 // 📁 backend/services/paypalService.js
 
 import axios from 'axios';
-import https from 'https'; // ⬅️ Importamos 'https' para ignorar SSL en desarrollo
+import https from 'https'; // ⬅️ Ignorar SSL en entorno de testing
 import config from '../config/configuracionesito.js';
 
-// 🔐 Variables de PayPal (deberían estar en .env)
+// 🔐 Variables de entorno de PayPal
 const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
 const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET;
-const PAYPAL_API = process.env.PAYPAL_API || 'https://api-m.sandbox.paypal.com'; // Sandbox por defecto
+const PAYPAL_API = process.env.PAYPAL_API || 'https://api-m.sandbox.paypal.com';
 
-// ⚠️ Instancia de Axios para ignorar SSL en local/testing
-// ❗ IMPORTANTE: Eliminar o condicionar solo para entornos de desarrollo
-const axiosInstance = axios.create({
-  httpsAgent: new https.Agent({
-    rejectUnauthorized: false
-  })
-});
+// ⚡ Configuración especial de Axios para desarrollo
+const isTesting = process.env.NODE_ENV !== 'production';
 
-// ✅ Según entorno usamos axios seguro o relajado
-const isTesting = process.env.NODE_ENV !== 'production'; 
-const axiosClient = isTesting ? axiosInstance : axios;
+const axiosClient = isTesting
+  ? axios.create({
+      httpsAgent: new https.Agent({ rejectUnauthorized: false })
+    })
+  : axios;
 
 // 🔑 Obtener token de acceso a PayPal
 async function obtenerTokenPayPal() {
@@ -35,7 +32,7 @@ async function obtenerTokenPayPal() {
   return res.data.access_token;
 }
 
-// 🛒 Crear una nueva orden
+// 🛒 Crear una nueva orden en PayPal
 export async function crearOrden(total) {
   const token = await obtenerTokenPayPal();
 
@@ -59,7 +56,7 @@ export async function crearOrden(total) {
   return res.data;
 }
 
-// 💵 Capturar una orden existente
+// 💵 Capturar una orden existente en PayPal
 export async function capturarOrden(orderId) {
   const token = await obtenerTokenPayPal();
 
