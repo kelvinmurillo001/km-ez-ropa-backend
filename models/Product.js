@@ -1,7 +1,7 @@
 // 📁 backend/models/Product.js
 import mongoose from 'mongoose';
 
-// ✅ Subesquema para variantes (talla + color + imagen + stock)
+// ✅ Subesquema para variantes (talla + color + imagen + stock + ACTIVO)
 const variantSchema = new mongoose.Schema(
   {
     talla: {
@@ -31,6 +31,10 @@ const variantSchema = new mongoose.Schema(
       type: Number,
       default: 0,
       min: [0, '⚠️ El stock no puede ser negativo'],
+    },
+    activo: {
+      type: Boolean,
+      default: true, // 🛡️ Agregado: Si se agota, se pone false automáticamente
     },
   },
   { _id: false }
@@ -72,7 +76,7 @@ const productSchema = new mongoose.Schema(
     tallaTipo: {
       type: String,
       required: [true, '⚠️ El tipo de talla es obligatorio'],
-      enum: ['adulto', 'joven', 'niño', 'niña', 'bebé'], // 👈 AÑADÍDO joven
+      enum: ['adulto', 'joven', 'niño', 'niña', 'bebé'],
       trim: true,
       lowercase: true,
     },
@@ -175,12 +179,10 @@ const productSchema = new mongoose.Schema(
       maxlength: 160,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-// 🧠 Hook para generar slug y metaDescription automáticamente
+// 🧠 Hook automático
 productSchema.pre('save', function (next) {
   if (!this.slug && this.name) {
     this.slug = this.name
@@ -198,7 +200,7 @@ productSchema.pre('save', function (next) {
   next();
 });
 
-// ✅ Índices de búsqueda eficientes
+// ✅ Índices
 productSchema.index({ name: 1, category: 1, subcategory: 1 }, { background: true });
 productSchema.index({ category: 1, subcategory: 1, tallaTipo: 1 });
 

@@ -1,7 +1,7 @@
 // 📁 backend/controllers/ordersController.js
 import Order from '../models/Order.js';
 import Product from '../models/Product.js';
-import { sendNotification } from '../utils/notifications.js'; // 🛎 Notificación automática
+import { sendNotification } from '../utils/notifications.js';
 
 /**
  * 🛒 Crear nuevo pedido (público)
@@ -31,19 +31,25 @@ export const createOrder = async (req, res) => {
       return res.status(400).json({ ok: false, message: '⚠️ Teléfono inválido.' });
     }
 
-    // Validar stock
+    // ✅ Validar stock y variante activa
     for (const item of items) {
       const producto = await Product.findById(item.productId);
       if (!producto) {
         return res.status(404).json({ ok: false, message: `❌ Producto no encontrado: ${item.name}` });
       }
+
       const variante = producto.variants.find(v => v.talla === item.talla?.toLowerCase());
-      if (!variante || item.cantidad > variante.stock) {
+
+      if (!variante || !variante.activo) {
+        return res.status(400).json({ ok: false, message: `❌ Variante no disponible para ${item.name}` });
+      }
+
+      if (item.cantidad > variante.stock) {
         return res.status(400).json({ ok: false, message: `❌ Stock insuficiente para ${item.name}` });
       }
     }
 
-    // Crear pedido
+    // 🛒 Crear pedido
     const newOrder = new Order({
       items,
       total: totalParsed,
@@ -59,13 +65,26 @@ export const createOrder = async (req, res) => {
 
     await newOrder.save();
 
-    // Descontar stock
+    // 📉 Descontar stock y desactivar variantes si stock 0
     for (const item of items) {
-      await Product.findOneAndUpdate(
+      const producto = await Product.findOneAndUpdate(
         { _id: item.productId, 'variants.talla': item.talla?.toLowerCase() },
-        { $inc: { 'variants.$.stock': -item.cantidad } }
+        {
+          $inc: { 'variants.$.stock': -item.cantidad }
+        },
+        { new: true }
       );
+
+      if (producto) {
+        const variante = producto.variants.find(v => v.talla === item.talla?.toLowerCase());
+        if (variante && variante.stock <= 0) {
+          variante.activo = false;
+          await producto.save();
+        }
+      }
     }
+
+    console.log(`🛒 Pedido creado: ${nombreCliente} | Total: $${totalParsed.toFixed(2)}`);
 
     return res.status(201).json({
       ok: true,
