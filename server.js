@@ -22,6 +22,7 @@ import orderRoutes from './routes/orderRoutes.js'
 import visitRoutes from './routes/visitRoutes.js'
 import statsRoutes from './routes/statsRoutes.js'
 import uploadRoutes from './routes/uploadRoutes.js'
+import paypalRoutes from './routes/paypalRoutes.js';
 
 // ⚙️ Configuración personalizada
 import config from './config/configuracionesito.js'
@@ -115,6 +116,7 @@ app.use('/api/orders', orderRoutes)
 app.use('/api/visitas', visitRoutes)
 app.use('/api/stats', statsRoutes)
 app.use('/api/uploads', uploadRoutes)
+app.use('/api/paypal', paypalRoutes);
 
 /* ─────────────────────── */
 /* 📊 Test & Healthchecks  */
