@@ -1,6 +1,6 @@
 // 📁 routes/promoRoutes.js
-import express from 'express';
-import { body, param } from 'express-validator';
+import express from 'express'
+import { body, param } from 'express-validator'
 
 // 🧠 Controladores
 import {
@@ -9,13 +9,13 @@ import {
   updatePromotion,
   togglePromoActive,
   deletePromotion
-} from '../controllers/promoController.js';
+} from '../controllers/promoController.js'
 
 // 🛡️ Middlewares
-import authMiddleware from '../middleware/authMiddleware.js';
-import adminOnly from '../middleware/adminOnly.js';
+import authMiddleware from '../middleware/authMiddleware.js'
+import adminOnly from '../middleware/adminOnly.js'
 
-const router = express.Router();
+const router = express.Router()
 
 /* -------------------------------------------------------------------------- */
 /* 📄 RUTAS DE PROMOCIONES                                                    */
@@ -25,13 +25,13 @@ const router = express.Router();
  * 🔓 Obtener promociones activas y vigentes (PÚBLICO)
  * GET /api/promos
  */
-router.get('/', getPromotion);
+router.get('/', getPromotion)
 
 /**
  * 🔐 Obtener todas las promociones (SOLO ADMIN)
  * GET /api/promos/admin
  */
-router.get('/admin', authMiddleware, adminOnly, getAllPromotions);
+router.get('/admin', authMiddleware, adminOnly, getAllPromotions)
 
 /**
  * 🔐 Crear o actualizar una promoción (SOLO ADMIN)
@@ -93,7 +93,7 @@ router.put(
       .withMessage('⚠️ Posición inválida')
   ],
   updatePromotion
-);
+)
 
 /**
  * 🔁 Activar o desactivar promoción (SOLO ADMIN)
@@ -109,7 +109,7 @@ router.patch(
       .withMessage('⚠️ ID de promoción inválido')
   ],
   togglePromoActive
-);
+)
 
 /**
  * 🗑️ Eliminar una promoción (SOLO ADMIN)
@@ -125,7 +125,7 @@ router.delete(
       .withMessage('⚠️ ID inválido para eliminar promoción')
   ],
   deletePromotion
-);
+)
 
 // 🚀 Exportar router
-export default router;
+export default router

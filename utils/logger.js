@@ -1,28 +1,28 @@
 // 📁 backend/utils/logger.js
 
-const logPrefix = '[KM-EZ ROPA]';
+const logPrefix = '[KM-EZ ROPA]'
 
 /**
  * ✅ Utilidad para logs personalizados
  */
 const logger = {
   info: (...args) => {
-    console.log(`${logPrefix} ✅`, ...args);
+    console.log(`${logPrefix} ✅`, ...args)
   },
 
   warn: (...args) => {
-    console.warn(`${logPrefix} ⚠️`, ...args);
+    console.warn(`${logPrefix} ⚠️`, ...args)
   },
 
   error: (...args) => {
-    console.error(`${logPrefix} ❌`, ...args);
+    console.error(`${logPrefix} ❌`, ...args)
   },
 
   debug: (...args) => {
     if (process.env.NODE_ENV === 'development') {
-      console.debug(`${logPrefix} 🐞`, ...args);
+      console.debug(`${logPrefix} 🐞`, ...args)
     }
   }
-};
+}
 
-export default logger;
+export default logger

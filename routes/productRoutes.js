@@ -1,6 +1,6 @@
 // 📁 routes/productRoutes.js
-import express from 'express';
-import { param } from 'express-validator';
+import express from 'express'
+import { param } from 'express-validator'
 
 // 🧠 Controladores
 import {
@@ -9,19 +9,19 @@ import {
   createProduct,
   updateProduct,
   deleteProduct
-} from '../controllers/product/index.js';
+} from '../controllers/product/index.js'
 
 // 🛡️ Middlewares
-import authMiddleware from '../middleware/authMiddleware.js';
-import adminOnly from '../middleware/adminOnly.js';
+import authMiddleware from '../middleware/authMiddleware.js'
+import adminOnly from '../middleware/adminOnly.js'
 
 // ✅ Validaciones
 import {
   createProductValidation,
   updateProductValidation
-} from '../validators/productValidator.js';
+} from '../validators/productValidator.js'
 
-const router = express.Router();
+const router = express.Router()
 
 /* -------------------------------------------------------------------------- */
 /* 📦 RUTAS DE PRODUCTOS                                                      */
@@ -32,7 +32,7 @@ const router = express.Router();
 /**
  * 📥 Obtener todos los productos (PÚBLICO)
  */
-router.get('/', getAllProducts);
+router.get('/', getAllProducts)
 
 /**
  * 🔍 Obtener un producto por ID (PÚBLICO)
@@ -45,7 +45,7 @@ router.get(
       .withMessage('⚠️ ID de producto inválido')
   ],
   getProductById
-);
+)
 
 /* ------------------------ 🔐 Rutas Protegidas ------------------------------ */
 
@@ -58,7 +58,7 @@ router.post(
   adminOnly,
   createProductValidation,
   createProduct
-);
+)
 
 /**
  * ✏️ Actualizar producto (SOLO ADMIN)
@@ -74,7 +74,7 @@ router.put(
   ],
   updateProductValidation,
   updateProduct
-);
+)
 
 /**
  * 🗑️ Eliminar producto (SOLO ADMIN)
@@ -89,7 +89,7 @@ router.delete(
       .withMessage('⚠️ ID inválido')
   ],
   deleteProduct
-);
+)
 
 // 🚀 Exportar router
-export default router;
+export default router

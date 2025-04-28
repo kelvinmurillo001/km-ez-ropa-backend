@@ -1,6 +1,6 @@
 // 📁 backend/validators/authValidator.js
 
-import { body } from 'express-validator';
+import { body } from 'express-validator'
 
 /**
  * 🛡️ Validaciones para login de administrador
@@ -21,4 +21,4 @@ export const loginValidation = [
     .isLength({ min: 6 })
     .withMessage('⚠️ Mínimo 6 caracteres en la contraseña.')
     .escape()
-];
+]

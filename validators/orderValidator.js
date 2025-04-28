@@ -1,6 +1,6 @@
 // 📁 backend/validators/orderValidator.js
 
-import { body, param } from 'express-validator';
+import { body, param } from 'express-validator'
 
 /**
  * 🧾 Validaciones para crear un pedido
@@ -74,7 +74,7 @@ export const createOrderValidation = [
     .optional()
     .isObject()
     .withMessage('⚠️ Datos de factura inválidos.')
-];
+]
 
 /**
  * 🔄 Validaciones para actualizar estado del pedido
@@ -91,4 +91,4 @@ export const updateOrderStatusValidation = [
     .withMessage('⚠️ El estado es obligatorio.')
     .isIn(['pendiente', 'en_proceso', 'enviado', 'cancelado'])
     .withMessage('⚠️ Estado no válido.')
-];
+]

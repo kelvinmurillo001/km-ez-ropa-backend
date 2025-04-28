@@ -1,6 +1,6 @@
 // 📁 backend/validators/productValidator.js
 
-import { body } from 'express-validator';
+import { body } from 'express-validator'
 
 /**
  * ➕ Validaciones para crear un nuevo producto
@@ -37,7 +37,7 @@ export const createProductValidation = [
   body('createdBy')
     .notEmpty()
     .withMessage('⚠️ El campo createdBy es obligatorio.')
-];
+]
 
 /**
  * ✏️ Validaciones para actualizar un producto existente
@@ -87,4 +87,4 @@ export const updateProductValidation = [
     .optional()
     .isArray()
     .withMessage('⚠️ Images debe ser un arreglo.')
-];
+]

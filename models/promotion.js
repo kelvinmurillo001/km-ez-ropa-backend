@@ -1,8 +1,8 @@
 // 📁 backend/models/Promotion.js
-import mongoose from 'mongoose';
+import mongoose from 'mongoose'
 
 // 🌐 Páginas válidas para mostrar una promoción
-const allowedPages = ['home', 'categorias', 'productos', 'detalle', 'carrito', 'checkout'];
+const allowedPages = ['home', 'categorias', 'productos', 'detalle', 'carrito', 'checkout']
 
 // 🏷️ Esquema de promoción publicitaria
 const promotionSchema = new mongoose.Schema(
@@ -76,10 +76,10 @@ const promotionSchema = new mongoose.Schema(
   {
     timestamps: true // 📅 createdAt y updatedAt automáticos
   }
-);
+)
 
 // 🔍 Índice para facilitar búsqueda de promociones activas
-promotionSchema.index({ active: 1, startDate: 1, endDate: 1 });
+promotionSchema.index({ active: 1, startDate: 1, endDate: 1 })
 
 // 🔁 Hook para crear slug automáticamente
 promotionSchema.pre('save', function (next) {
@@ -91,11 +91,11 @@ promotionSchema.pre('save', function (next) {
       .replace(/[\u0300-\u036f]/g, '') // Eliminar tildes
       .replace(/\s+/g, '-') // Espacios a guiones
       .replace(/[^\w-]/g, '') // Eliminar símbolos especiales
-      .substring(0, 100);
+      .substring(0, 100)
   }
-  next();
-});
+  next()
+})
 
 // 🚀 Exportar el modelo
-const Promotion = mongoose.model('Promotion', promotionSchema);
-export default Promotion;
+const Promotion = mongoose.model('Promotion', promotionSchema)
+export default Promotion

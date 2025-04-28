@@ -1,5 +1,5 @@
 // 📁 backend/models/Order.js
-import mongoose from 'mongoose';
+import mongoose from 'mongoose'
 
 // 📦 Subesquema de ítems del pedido
 const orderItemSchema = new mongoose.Schema(
@@ -32,7 +32,7 @@ const orderItemSchema = new mongoose.Schema(
     }
   },
   { _id: false }
-);
+)
 
 // 🧾 Esquema principal del Pedido
 const orderSchema = new mongoose.Schema(
@@ -90,11 +90,11 @@ const orderSchema = new mongoose.Schema(
   {
     timestamps: true // 🕒 createdAt y updatedAt automáticos
   }
-);
+)
 
 // 🔍 Índices útiles para optimizar búsquedas por estado y fecha
-orderSchema.index({ estado: 1, createdAt: -1 });
+orderSchema.index({ estado: 1, createdAt: -1 })
 
 // 🚀 Exportar el modelo
-const Order = mongoose.model('Order', orderSchema);
-export default Order;
+const Order = mongoose.model('Order', orderSchema)
+export default Order

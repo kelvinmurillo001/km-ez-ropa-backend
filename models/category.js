@@ -1,5 +1,5 @@
 // 📁 backend/models/Category.js
-import mongoose from 'mongoose';
+import mongoose from 'mongoose'
 
 // 📦 Esquema de Categoría con subcategorías embebidas
 const categorySchema = new mongoose.Schema(
@@ -29,7 +29,7 @@ const categorySchema = new mongoose.Schema(
   {
     timestamps: true // 🕒 createdAt y updatedAt automáticos
   }
-);
+)
 
 // 🔍 Índice único insensible a mayúsculas/minúsculas (strength:2)
 categorySchema.index(
@@ -38,8 +38,8 @@ categorySchema.index(
     unique: true,
     collation: { locale: 'es', strength: 2 }
   }
-);
+)
 
 // 🚀 Exportar el modelo
-const Category = mongoose.model('Category', categorySchema);
-export default Category;
+const Category = mongoose.model('Category', categorySchema)
+export default Category

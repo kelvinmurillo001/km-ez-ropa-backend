@@ -1,16 +1,16 @@
 // 📁 backend/config/configuracionesito.js
 // 🎯 Cargar y validar la configuración global del proyecto
 
-import path from 'path';
-import dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
+import path from 'path'
+import dotenv from 'dotenv'
+import { fileURLToPath } from 'url'
 
 // 📍 Corrección para obtener __dirname en ESModules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 // ✅ Cargar variables de entorno desde .env
-dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
+dotenv.config({ path: path.resolve(__dirname, '..', '.env') })
 
 // 🧩 Lista de variables de entorno obligatorias
 const requiredVars = [
@@ -27,19 +27,19 @@ const requiredVars = [
   'PAYPAL_CLIENT_ID',
   'PAYPAL_CLIENT_SECRET',
   'PAYPAL_API_BASE'
-];
+]
 
 // 🚨 Validar existencia de todas las variables
-const missing = requiredVars.filter(key => !process.env[key]);
+const missing = requiredVars.filter(key => !process.env[key])
 if (missing.length > 0) {
-  console.error(`❌ Error: Faltan variables en .env: ${missing.join(', ')}`);
-  process.exit(1);
+  console.error(`❌ Error: Faltan variables en .env: ${missing.join(', ')}`)
+  process.exit(1)
 }
 
 // 🌐 Limpiar y normalizar dominios para CORS
 const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',')
   .map(origin => origin.trim().replace(/\/$/, ''))
-  .filter(origin => /^https?:\/\/.+/.test(origin));
+  .filter(origin => /^https?:\/\/.+/.test(origin))
 
 // 🛡️ Construir objeto de configuración global
 const config = {
@@ -77,21 +77,21 @@ const config = {
 
   // 🛡️ Seguridad Adicional
   rateLimitWindow: parseInt(process.env.RATE_LIMIT_WINDOW) || 5, // minutos
-  rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX) || 100,     // máximo solicitudes por ventana
+  rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX) || 100, // máximo solicitudes por ventana
   enableXSSProtection: true,
   enableMongoSanitize: true,
   enableHPP: true
-};
+}
 
 // 🧪 Mostrar resumen de configuración en modo desarrollo
 if (config.env !== 'production') {
-  console.log('🧪 Modo DEV activo');
-  console.log('✅ Variables cargadas correctamente:');
-  console.log('🌐 ALLOWED_ORIGINS:', config.allowedOrigins);
-  console.log('🔑 JWT Secret:', config.jwtSecret ? 'Presente' : 'Falta');
-  console.log('🔄 JWT Refresh Secret:', config.jwtRefreshSecret ? 'Presente' : 'Falta');
-  console.log('☁️ Cloudinary:', config.cloudinary.cloud_name ? 'Configurado' : 'Falta');
-  console.log('💳 PayPal ClientID:', config.paypal.clientId ? 'Cargado' : 'No cargado');
+  console.log('🧪 Modo DEV activo')
+  console.log('✅ Variables cargadas correctamente:')
+  console.log('🌐 ALLOWED_ORIGINS:', config.allowedOrigins)
+  console.log('🔑 JWT Secret:', config.jwtSecret ? 'Presente' : 'Falta')
+  console.log('🔄 JWT Refresh Secret:', config.jwtRefreshSecret ? 'Presente' : 'Falta')
+  console.log('☁️ Cloudinary:', config.cloudinary.cloud_name ? 'Configurado' : 'Falta')
+  console.log('💳 PayPal ClientID:', config.paypal.clientId ? 'Cargado' : 'No cargado')
 }
 
-export default config;
+export default config

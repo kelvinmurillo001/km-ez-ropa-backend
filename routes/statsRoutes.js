@@ -1,14 +1,14 @@
 // 📁 routes/statsRoutes.js
-import express from 'express';
+import express from 'express'
 
 // 🛡️ Middlewares
-import authMiddleware from '../middleware/authMiddleware.js';
-import adminOnly from '../middleware/adminOnly.js';
+import authMiddleware from '../middleware/authMiddleware.js'
+import adminOnly from '../middleware/adminOnly.js'
 
 // 📈 Controladores
-import { getResumenEstadisticas } from '../controllers/statsController.js';
+import { getResumenEstadisticas } from '../controllers/statsController.js'
 
-const router = express.Router();
+const router = express.Router()
 
 /* -------------------------------------------------------------------------- */
 /* 📈 RUTAS DE ESTADÍSTICAS (SOLO ADMIN)                                      */
@@ -18,7 +18,7 @@ const router = express.Router();
  * 📊 Obtener resumen de estadísticas para el panel administrativo
  * GET /api/stats/resumen
  */
-router.get('/resumen', authMiddleware, adminOnly, getResumenEstadisticas);
+router.get('/resumen', authMiddleware, adminOnly, getResumenEstadisticas)
 
 // 🚀 Exportar router
-export default router;
+export default router

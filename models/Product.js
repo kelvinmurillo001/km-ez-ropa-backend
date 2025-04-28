@@ -1,5 +1,5 @@
 // 📁 backend/models/Product.js
-import mongoose from 'mongoose';
+import mongoose from 'mongoose'
 
 // ✅ Subesquema para variantes de productos
 const variantSchema = new mongoose.Schema(
@@ -38,7 +38,7 @@ const variantSchema = new mongoose.Schema(
     }
   },
   { _id: false }
-);
+)
 
 // ✅ Esquema principal de productos
 const productSchema = new mongoose.Schema(
@@ -144,13 +144,13 @@ const productSchema = new mongoose.Schema(
         },
         {
           validator: function (val) {
-            const seen = new Set();
+            const seen = new Set()
             for (const v of val) {
-              const key = `${v.talla}-${v.color}`;
-              if (seen.has(key)) return false;
-              seen.add(key);
+              const key = `${v.talla}-${v.color}`
+              if (seen.has(key)) return false
+              seen.add(key)
             }
-            return true;
+            return true
           },
           message: '⚠️ No puede haber variantes duplicadas (talla + color)'
         }
@@ -180,7 +180,7 @@ const productSchema = new mongoose.Schema(
     }
   },
   { timestamps: true }
-);
+)
 
 // 🧠 Hook automático para generar slug y metadescripción
 productSchema.pre('save', function (next) {
@@ -193,22 +193,22 @@ productSchema.pre('save', function (next) {
       .replace(/ñ/g, 'n') // Reemplazar ñ
       .replace(/\s+/g, '-') // Espacios a guiones
       .replace(/[^\w-]/g, '') // Eliminar caracteres especiales
-      .substring(0, 100);
+      .substring(0, 100)
 
-    this.slug = normalized;
+    this.slug = normalized
   }
 
   if (!this.metaDescription && this.name && this.category) {
-    this.metaDescription = `Compra ${this.name} en nuestra sección de ${this.category}. ¡Calidad garantizada en KM & EZ ROPA!`;
+    this.metaDescription = `Compra ${this.name} en nuestra sección de ${this.category}. ¡Calidad garantizada en KM & EZ ROPA!`
   }
 
-  next();
-});
+  next()
+})
 
 // 🔍 Índices para mejorar rendimiento de búsqueda
-productSchema.index({ name: 1, category: 1, subcategory: 1 }, { background: true });
-productSchema.index({ category: 1, subcategory: 1, tallaTipo: 1 });
+productSchema.index({ name: 1, category: 1, subcategory: 1 }, { background: true })
+productSchema.index({ category: 1, subcategory: 1, tallaTipo: 1 })
 
 // 🚀 Exportar modelo
-const Product = mongoose.model('Product', productSchema);
-export default Product;
+const Product = mongoose.model('Product', productSchema)
+export default Product

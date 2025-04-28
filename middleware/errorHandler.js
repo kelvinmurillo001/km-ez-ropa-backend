@@ -6,11 +6,11 @@
  * - Oculta detalles sensibles en producción
  */
 const errorHandler = (err, req, res, next) => {
-  const { NODE_ENV } = process.env;
-  const isDev = NODE_ENV === 'development';
+  const { NODE_ENV } = process.env
+  const isDev = NODE_ENV === 'development'
 
-  const statusCode = err.statusCode && Number(err.statusCode) < 600 ? err.statusCode : 500;
-  const message = err.message || '❌ Error interno del servidor';
+  const statusCode = err.statusCode && Number(err.statusCode) < 600 ? err.statusCode : 500
+  const message = err.message || '❌ Error interno del servidor'
 
   // 🪵 Log de error detallado solo en modo desarrollo
   if (isDev) {
@@ -18,7 +18,7 @@ const errorHandler = (err, req, res, next) => {
       ruta: `${req?.method || 'N/A'} ${req?.originalUrl || 'N/A'}`,
       mensaje: message,
       stack: err.stack
-    });
+    })
   }
 
   // 📤 Respuesta unificada
@@ -26,7 +26,7 @@ const errorHandler = (err, req, res, next) => {
     ok: false,
     message,
     ...(isDev && { error: err.stack }) // En dev, incluir el stack
-  });
-};
+  })
+}
 
-export default errorHandler;
+export default errorHandler
