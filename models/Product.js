@@ -1,4 +1,4 @@
-// 📁 backend/models/Product.js
+// 📁 backend/models/Product.js 
 import mongoose from 'mongoose';
 
 // ✅ Subesquema para variantes (talla + color + imagen + stock + ACTIVO)
@@ -182,15 +182,20 @@ const productSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// 🧠 Hook automático
+// 🧠 Hook automático mejorado
 productSchema.pre('save', function (next) {
   if (!this.slug && this.name) {
-    this.slug = this.name
+    const normalized = this.name
       .toLowerCase()
       .trim()
-      .replace(/\s+/g, '-')
-      .replace(/[^\w-]/g, '')
+      .normalize('NFD') // Separar acentos
+      .replace(/[\u0300-\u036f]/g, '') // Eliminar tildes
+      .replace(/ñ/g, 'n') // Reemplazar ñ manualmente
+      .replace(/\s+/g, '-') // Espacios a guiones
+      .replace(/[^\w-]/g, '') // Eliminar todo lo que no sea palabra o guión
       .substring(0, 100);
+
+    this.slug = normalized;
   }
 
   if (!this.metaDescription && this.name && this.category) {
