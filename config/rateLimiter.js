@@ -6,7 +6,7 @@ const limiter = rateLimit({
   max: 100, // 🔢 Límite de 100 solicitudes por IP
   message: '⚠️ Demasiadas solicitudes. Intenta más tarde.',
   standardHeaders: true, // Devuelve info en headers modernos
-  legacyHeaders: false, // Desactiva headers antiguos
+  legacyHeaders: false // Desactiva headers antiguos
 })
 
 export default limiter

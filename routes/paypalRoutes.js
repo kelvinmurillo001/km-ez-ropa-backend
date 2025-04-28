@@ -1,52 +1,60 @@
-import express from 'express';
-import { crearOrden, capturarOrden } from '../services/paypalService.js';
+// 📁 services/paypalService.js
+import axios from 'axios';
+import config from '../config/configuracionesito.js';
 
-const router = express.Router();
+// 📦 Extraemos datos de PayPal desde configuración centralizada
+const { PAYPAL_API_BASE, PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET } = config;
 
-/* -------------------------------------------------------------------------- */
-/* 🎯 INTEGRACIÓN PAYPAL - RUTAS API                                           */
-/* -------------------------------------------------------------------------- */
+// 🔐 Autenticación básica para PayPal API
+const auth = {
+  username: PAYPAL_CLIENT_ID,
+  password: PAYPAL_CLIENT_SECRET,
+};
 
 /**
- * 🛒 Crear una orden PayPal
- * POST /api/paypal/create-order
- * Body esperado: { total: número }
+ * 🛍️ Crear una nueva orden en PayPal
+ * @param {number} total - Monto total de la orden
+ * @returns {Promise<object>} - Datos de la orden creada
  */
-router.post('/create-order', async (req, res) => {
+export async function crearOrden(total) {
   try {
-    const { total } = req.body;
-
-    if (!total || isNaN(total) || total <= 0) {
-      return res.status(400).json({ message: '⚠️ Total inválido o faltante.' });
-    }
-
-    const orden = await crearOrden(total);
-    return res.status(200).json(orden);
+    const response = await axios.post(
+      `${PAYPAL_API_BASE}/v2/checkout/orders`,
+      {
+        intent: 'CAPTURE',
+        purchase_units: [
+          {
+            amount: {
+              currency_code: 'USD',
+              value: total.toFixed(2),
+            },
+          },
+        ],
+      },
+      { auth }
+    );
+    return response.data;
   } catch (error) {
     console.error('❌ Error al crear orden PayPal:', error.message);
-    return res.status(500).json({ message: 'Error al crear la orden PayPal.' });
+    throw new Error('Error al crear orden PayPal');
   }
-});
+}
 
 /**
- * 💵 Capturar una orden PayPal
- * POST /api/paypal/capture-order
- * Body esperado: { orderId: string }
+ * 💵 Capturar una orden existente en PayPal
+ * @param {string} orderId - ID de la orden a capturar
+ * @returns {Promise<object>} - Datos de la captura de la orden
  */
-router.post('/capture-order', async (req, res) => {
+export async function capturarOrden(orderId) {
   try {
-    const { orderId } = req.body;
-
-    if (!orderId) {
-      return res.status(400).json({ message: '⚠️ orderId es requerido.' });
-    }
-
-    const captura = await capturarOrden(orderId);
-    return res.status(200).json(captura);
+    const response = await axios.post(
+      `${PAYPAL_API_BASE}/v2/checkout/orders/${orderId}/capture`,
+      {},
+      { auth }
+    );
+    return response.data;
   } catch (error) {
     console.error('❌ Error al capturar orden PayPal:', error.message);
-    return res.status(500).json({ message: 'Error al capturar la orden PayPal.' });
+    throw new Error('Error al capturar orden PayPal');
   }
-});
-
-export default router;
+}

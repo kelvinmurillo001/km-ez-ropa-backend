@@ -93,8 +93,8 @@ const createProduct = async (req, res) => {
 
     const tallasLimpias = Array.isArray(sizes)
       ? sizes
-          .filter(s => typeof s === 'string' && s.trim().length > 0)
-          .map(s => s.trim().toUpperCase())
+        .filter(s => typeof s === 'string' && s.trim().length > 0)
+        .map(s => s.trim().toUpperCase())
       : []
 
     const producto = new Product({

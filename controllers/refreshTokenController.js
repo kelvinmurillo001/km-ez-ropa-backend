@@ -16,7 +16,7 @@ export const refreshToken = async (req, res) => {
     const user = await User.findById(decoded.id).select('+refreshToken')
 
     if (!user) {
-      logger.warn(`🛑 Usuario no encontrado al usar refresh token`)
+      logger.warn('🛑 Usuario no encontrado al usar refresh token')
       return res.status(403).json({ ok: false, message: '❌ Token inválido o ha sido revocado' })
     }
 

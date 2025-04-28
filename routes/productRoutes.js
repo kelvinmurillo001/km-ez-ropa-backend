@@ -1,6 +1,6 @@
 // 📁 routes/productRoutes.js
-import express from 'express';
-import { param } from 'express-validator';
+import express from 'express'
+import { param } from 'express-validator'
 
 import {
   getAllProducts,
@@ -8,18 +8,18 @@ import {
   createProduct,
   updateProduct,
   deleteProduct
-} from '../controllers/product/index.js';
+} from '../controllers/product/index.js'
 
-import authMiddleware from '../middleware/authMiddleware.js';
-import adminOnly from '../middleware/adminOnly.js';
+import authMiddleware from '../middleware/authMiddleware.js'
+import adminOnly from '../middleware/adminOnly.js'
 
 // ✅ Validaciones centralizadas
 import {
   createProductValidation,
   updateProductValidation
-} from '../validators/productValidator.js';
+} from '../validators/productValidator.js'
 
-const router = express.Router();
+const router = express.Router()
 
 /* -------------------------------------------------------------------------- */
 /* 📦 RUTAS DE PRODUCTOS                                                      */
@@ -30,7 +30,7 @@ const router = express.Router();
 /**
  * 📥 Obtener todos los productos (PÚBLICO)
  */
-router.get('/', getAllProducts);
+router.get('/', getAllProducts)
 
 /**
  * 🔍 Obtener un producto por ID (PÚBLICO)
@@ -39,7 +39,7 @@ router.get(
   '/:id',
   [param('id').isMongoId().withMessage('⚠️ ID de producto inválido')],
   getProductById
-);
+)
 
 /* ------------------------ 🔐 Rutas Protegidas ------------------------------ */
 
@@ -52,7 +52,7 @@ router.post(
   adminOnly,
   createProductValidation,
   createProduct
-);
+)
 
 /**
  * ✏️ Actualizar producto (SOLO ADMIN)
@@ -64,7 +64,7 @@ router.put(
   [param('id').isMongoId().withMessage('⚠️ ID de producto inválido')],
   updateProductValidation,
   updateProduct
-);
+)
 
 /**
  * 🗑️ Eliminar producto (SOLO ADMIN)
@@ -75,6 +75,6 @@ router.delete(
   adminOnly,
   [param('id').isMongoId().withMessage('⚠️ ID inválido')],
   deleteProduct
-);
+)
 
-export default router;
+export default router

@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 // ✅ Cargar variables de entorno desde .env
 dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
 
-// 🧩 Lista de variables obligatorias
+// 🧩 Variables de entorno obligatorias
 const requiredVars = [
   'PORT',
   'MONGO_URI',
@@ -27,51 +27,61 @@ const requiredVars = [
   'PAYPAL_API_BASE'
 ];
 
-// 🚨 Validar que todas las variables estén presentes
+// 🚨 Validar variables obligatorias
 const missing = requiredVars.filter(key => !process.env[key]);
 if (missing.length > 0) {
   console.error(`❌ Faltan variables en .env: ${missing.join(', ')}`);
   process.exit(1);
 }
 
-// 🌐 Limpiar y normalizar dominios CORS
+// 🌐 Limpiar y normalizar dominios de ALLOWED_ORIGINS (CORS)
 const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',')
   .map(origin => origin.trim().replace(/\/$/, ''))
   .filter(origin => /^https?:\/\/.+/.test(origin));
 
 // 🛡️ Exportar configuración global
 const config = {
+  // 🔧 Entorno
   env: process.env.NODE_ENV || 'development',
   port: Number(process.env.PORT) || 5000,
+
+  // 🗄️ Base de Datos MongoDB
   mongoUri: process.env.MONGO_URI,
+
+  // 🔒 Autenticación JWT
   jwtSecret: process.env.JWT_SECRET,
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET,
+
+  // 🧑‍💼 Admin Credentials
   adminUser: process.env.ADMIN_USER,
   adminPass: process.env.ADMIN_PASS,
 
+  // ☁️ Configuración Cloudinary
   cloudinary: {
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET
   },
 
+  // 💳 Configuración PayPal
   paypal: {
     clientId: process.env.PAYPAL_CLIENT_ID,
     clientSecret: process.env.PAYPAL_CLIENT_SECRET,
     apiBase: process.env.PAYPAL_API_BASE
   },
 
+  // 🌐 CORS
   allowedOrigins,
 
+  // 🛡️ Seguridad adicional
   rateLimitWindow: parseInt(process.env.RATE_LIMIT_WINDOW) || 5, // minutos
-  rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX) || 100,    // máximo solicitudes
-
+  rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX) || 100, // máximo solicitudes por ventana
   enableXSSProtection: true,
   enableMongoSanitize: true,
   enableHPP: true
 };
 
-// 🧪 Mostrar resumen en desarrollo
+// 🧪 Mostrar resumen en modo desarrollo
 if (config.env !== 'production') {
   console.log('🧪 Modo DEV activo');
   console.log('✅ Variables cargadas correctamente');

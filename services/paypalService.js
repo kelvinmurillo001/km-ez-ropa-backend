@@ -8,7 +8,7 @@ const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET
 const PAYPAL_API = process.env.PAYPAL_API || 'https://api-m.sandbox.paypal.com' // Sandbox por defecto
 
 // 🔑 Obtener token de acceso a PayPal
-async function obtenerTokenPayPal() {
+async function obtenerTokenPayPal () {
   const credentials = Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`).toString('base64')
 
   const res = await axios.post(`${PAYPAL_API}/v1/oauth2/token`, 'grant_type=client_credentials', {
@@ -22,7 +22,7 @@ async function obtenerTokenPayPal() {
 }
 
 // 🛒 Crear una nueva orden
-export async function crearOrden(total) {
+export async function crearOrden (total) {
   const token = await obtenerTokenPayPal()
 
   const res = await axios.post(`${PAYPAL_API}/v2/checkout/orders`, {
@@ -46,7 +46,7 @@ export async function crearOrden(total) {
 }
 
 // 💵 Capturar una orden existente
-export async function capturarOrden(orderId) {
+export async function capturarOrden (orderId) {
   const token = await obtenerTokenPayPal()
 
   const res = await axios.post(`${PAYPAL_API}/v2/checkout/orders/${orderId}/capture`, {}, {

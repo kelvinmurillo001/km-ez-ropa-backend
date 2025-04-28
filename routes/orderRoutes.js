@@ -1,6 +1,6 @@
 // 📁 routes/orderRoutes.js
-import express from 'express';
-import { param } from 'express-validator';
+import express from 'express'
+import { param } from 'express-validator'
 
 // 🧠 Controladores
 import {
@@ -9,19 +9,19 @@ import {
   actualizarEstadoPedido,
   getOrderStats,
   trackOrder
-} from '../controllers/orderController.js'; // <- (Ojo, es orderController.js)
+} from '../controllers/orderController.js'
 
 // 🛡️ Middlewares
-import authMiddleware from '../middleware/authMiddleware.js';
-import adminOnly from '../middleware/adminOnly.js';
+import authMiddleware from '../middleware/authMiddleware.js'
+import adminOnly from '../middleware/adminOnly.js'
 
 // ✅ Validaciones centralizadas
 import {
   createOrderValidation,
   updateOrderStatusValidation
-} from '../validators/orderValidator.js';
+} from '../validators/orderValidator.js'
 
-const router = express.Router();
+const router = express.Router()
 
 /* -------------------------------------------------------------------------- */
 /* 🛒 RUTAS DE PEDIDOS                                                        */
@@ -30,12 +30,12 @@ const router = express.Router();
 /**
  * 🛍️ Crear nuevo pedido (PÚBLICO)
  */
-router.post('/', createOrderValidation, createOrder);
+router.post('/', createOrderValidation, createOrder)
 
 /**
  * 📋 Obtener todos los pedidos (SOLO ADMIN)
  */
-router.get('/', authMiddleware, adminOnly, getOrders);
+router.get('/', authMiddleware, adminOnly, getOrders)
 
 /**
  * 🔄 Actualizar estado de un pedido (SOLO ADMIN)
@@ -46,21 +46,27 @@ router.put(
   adminOnly,
   updateOrderStatusValidation,
   actualizarEstadoPedido
-);
+)
 
 /**
  * 📊 Obtener estadísticas de pedidos (SOLO ADMIN)
  */
-router.get('/resumen', authMiddleware, adminOnly, getOrderStats);
+router.get('/resumen', authMiddleware, adminOnly, getOrderStats)
 
 /**
  * 📊 Alias de estadísticas de ventas (SOLO ADMIN)
  */
-router.get('/stats/ventas', authMiddleware, adminOnly, getOrderStats);
+router.get('/stats/ventas', authMiddleware, adminOnly, getOrderStats)
 
 /**
- * 🔎 Seguimiento de pedido (PÚBLICO)
+ * 🔎 Seguimiento de pedido (PÚBLICO) con validación de código
  */
-router.get('/track/:codigo', trackOrder); // <- ESTA ES LA NUEVA RUTA para seguimiento
+router.get(
+  '/track/:codigo',
+  [
+    param('codigo').notEmpty().withMessage('El código de seguimiento es obligatorio')
+  ],
+  trackOrder
+)
 
-export default router;
+export default router
