@@ -9,7 +9,7 @@ import {
   actualizarEstadoPedido,
   getOrderStats,
   trackOrder
-} from '../controllers/ordersController.js'; // <- (Ojo, es ordersController.js)
+} from '../controllers/orderController.js'; // <- (Ojo, es orderController.js)
 
 // 🛡️ Middlewares
 import authMiddleware from '../middleware/authMiddleware.js';
