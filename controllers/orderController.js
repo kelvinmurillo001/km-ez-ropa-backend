@@ -1,86 +1,71 @@
-// 📁 backend/controllers/orderController.js
+// 📁 backend/controllers/ordersController.js
 import Order from '../models/Order.js';
 import Product from '../models/Product.js';
-import { sendNotification } from '../utils/notifications.js'; // 🛎 Importar notificación
+import { sendNotification } from '../utils/notifications.js'; // 🛎 Notificación automática
 
 /**
  * 🛒 Crear nuevo pedido (público)
  */
 export const createOrder = async (req, res) => {
   try {
-    const { items, total, nombreCliente, nota, email, telefono } = req.body;
+    const { items, total, nombreCliente, nota, email, telefono, direccion, metodoPago, factura } = req.body;
 
     if (!Array.isArray(items) || items.length === 0) {
-      console.warn('🛑 Pedido rechazado: sin productos');
       return res.status(400).json({ ok: false, message: '⚠️ El pedido debe contener al menos un producto.' });
     }
 
-    if (!nombreCliente || typeof nombreCliente !== 'string' || nombreCliente.trim().length < 2) {
-      console.warn('🛑 Pedido rechazado: nombre de cliente inválido');
-      return res.status(400).json({ ok: false, message: '⚠️ Nombre del cliente inválido.' });
+    if (!nombreCliente || nombreCliente.trim().length < 2) {
+      return res.status(400).json({ ok: false, message: '⚠️ Nombre de cliente inválido.' });
     }
 
     const totalParsed = parseFloat(total);
     if (isNaN(totalParsed) || totalParsed <= 0) {
-      console.warn('🛑 Pedido rechazado: total inválido');
-      return res.status(400).json({ ok: false, message: '⚠️ Total del pedido inválido.' });
+      return res.status(400).json({ ok: false, message: '⚠️ Total inválido.' });
     }
 
     if (email && !/^\S+@\S+\.\S+$/.test(email)) {
-      console.warn(`🛑 Email inválido proporcionado: ${email}`);
-      return res.status(400).json({ ok: false, message: '⚠️ Correo electrónico inválido.' });
+      return res.status(400).json({ ok: false, message: '⚠️ Email inválido.' });
     }
 
     if (telefono && typeof telefono !== 'string') {
-      console.warn(`🛑 Teléfono inválido proporcionado: ${telefono}`);
       return res.status(400).json({ ok: false, message: '⚠️ Teléfono inválido.' });
     }
 
-    // 🔍 Validar stock por producto y talla
+    // Validar stock
     for (const item of items) {
-      const producto = await Product.findById(item.id);
+      const producto = await Product.findById(item.productId);
       if (!producto) {
-        console.warn(`🛑 Producto no encontrado al crear pedido: ${item.nombre}`);
-        return res.status(404).json({ ok: false, message: `❌ Producto no encontrado: ${item.nombre}` });
+        return res.status(404).json({ ok: false, message: `❌ Producto no encontrado: ${item.name}` });
       }
-
       const variante = producto.variants.find(v => v.talla === item.talla?.toLowerCase());
-      if (!variante) {
-        console.warn(`🛑 Variante no encontrada: ${item.nombre} - Talla ${item.talla}`);
-        return res.status(400).json({ ok: false, message: `⚠️ Variante no disponible: ${item.nombre} - Talla ${item.talla}` });
-      }
-
-      if (item.cantidad > variante.stock) {
-        console.warn(`🛑 Stock insuficiente para ${item.nombre} (Talla ${item.talla})`);
-        return res.status(400).json({
-          ok: false,
-          message: `❌ Stock insuficiente para ${item.nombre} (Talla ${item.talla}). Máximo disponible: ${variante.stock}`
-        });
+      if (!variante || item.cantidad > variante.stock) {
+        return res.status(400).json({ ok: false, message: `❌ Stock insuficiente para ${item.name}` });
       }
     }
 
-    // ✅ Crear pedido
+    // Crear pedido
     const newOrder = new Order({
       items,
       total: totalParsed,
       nombreCliente: nombreCliente.trim(),
       email: email?.trim() || '',
       telefono: telefono?.trim() || '',
+      direccion: direccion?.trim() || '',
+      metodoPago: metodoPago?.trim() || 'desconocido',
       nota: nota?.trim() || '',
-      estado: 'pendiente'
+      factura: factura || {},
+      estado: metodoPago === "transferencia" ? "pendiente" : "pagado",
     });
 
     await newOrder.save();
 
-    // 📉 Descontar stock
+    // Descontar stock
     for (const item of items) {
       await Product.findOneAndUpdate(
-        { _id: item.id, 'variants.talla': item.talla?.toLowerCase() },
+        { _id: item.productId, 'variants.talla': item.talla?.toLowerCase() },
         { $inc: { 'variants.$.stock': -item.cantidad } }
       );
     }
-
-    console.log(`🛒 Pedido creado: ${nombreCliente} - Total: $${totalParsed.toFixed(2)} - Productos: ${items.length}`);
 
     return res.status(201).json({
       ok: true,
@@ -90,11 +75,7 @@ export const createOrder = async (req, res) => {
 
   } catch (error) {
     console.error('❌ Error creando pedido:', error);
-    return res.status(500).json({
-      ok: false,
-      message: '❌ Error interno al crear el pedido.',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    return res.status(500).json({ ok: false, message: '❌ Error interno creando el pedido.' });
   }
 };
 
@@ -104,15 +85,14 @@ export const createOrder = async (req, res) => {
 export const getOrders = async (req, res) => {
   try {
     const orders = await Order.find().sort({ createdAt: -1 });
-    console.log(`📦 Pedidos cargados por: ${req.user?.username || 'admin'} - Total: ${orders.length}`);
     return res.status(200).json({
       ok: true,
-      message: '✅ Pedidos obtenidos correctamente',
+      message: '✅ Pedidos cargados correctamente',
       data: orders
     });
   } catch (error) {
-    console.error('❌ Error al obtener pedidos:', error);
-    return res.status(500).json({ ok: false, message: '❌ Error al obtener pedidos.' });
+    console.error('❌ Error obteniendo pedidos:', error);
+    return res.status(500).json({ ok: false, message: '❌ Error interno al obtener pedidos.' });
   }
 };
 
@@ -124,21 +104,12 @@ export const actualizarEstadoPedido = async (req, res) => {
     const { id } = req.params;
     const { estado } = req.body;
 
-    if (!estado || typeof estado !== 'string') {
-      return res.status(400).json({ ok: false, message: '⚠️ Estado del pedido inválido.' });
-    }
-
     const pedido = await Order.findById(id);
-    if (!pedido) {
-      return res.status(404).json({ ok: false, message: '❌ Pedido no encontrado.' });
-    }
+    if (!pedido) return res.status(404).json({ ok: false, message: '❌ Pedido no encontrado.' });
 
     pedido.estado = estado.trim().toLowerCase();
     await pedido.save();
 
-    console.log(`🔁 Pedido actualizado por ${req.user?.username || 'admin'} - ID: ${id} - Nuevo estado: ${estado}`);
-
-    // 🚀 ENVIAR NOTIFICACIÓN AUTOMÁTICA
     await sendNotification({
       nombreCliente: pedido.nombreCliente,
       telefono: pedido.telefono,
@@ -148,22 +119,18 @@ export const actualizarEstadoPedido = async (req, res) => {
 
     return res.status(200).json({
       ok: true,
-      message: '✅ Estado del pedido actualizado y notificación enviada',
+      message: '✅ Estado actualizado y notificación enviada',
       data: pedido
     });
 
   } catch (error) {
-    console.error('❌ Error actualizando estado del pedido:', error);
-    return res.status(500).json({
-      ok: false,
-      message: '❌ Error al actualizar el estado del pedido.',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    console.error('❌ Error actualizando estado:', error);
+    return res.status(500).json({ ok: false, message: '❌ Error interno actualizando el pedido.' });
   }
 };
 
 /**
- * 📊 Obtener estadísticas de pedidos (admin)
+ * 📈 Obtener estadísticas de pedidos
  */
 export const getOrderStats = async (req, res) => {
   try {
@@ -192,20 +159,44 @@ export const getOrderStats = async (req, res) => {
 
     resumen.ventasTotales = resumen.ventasTotales.toFixed(2);
 
-    console.log(`📊 Estadísticas generadas por ${req.user?.username || 'admin'} - Total pedidos: ${resumen.total}`);
-
     return res.status(200).json({
       ok: true,
-      message: '✅ Resumen de estadísticas generado correctamente',
+      message: '✅ Estadísticas generadas correctamente',
       data: resumen
     });
 
   } catch (error) {
-    console.error('❌ Error obteniendo estadísticas de pedidos:', error);
-    return res.status(500).json({
-      ok: false,
-      message: '❌ Error al obtener estadísticas.',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    console.error('❌ Error obteniendo estadísticas:', error);
+    return res.status(500).json({ ok: false, message: '❌ Error interno generando estadísticas.' });
+  }
+};
+
+/**
+ * 🔎 Seguimiento de pedido (público)
+ */
+export const trackOrder = async (req, res) => {
+  try {
+    const { codigo } = req.params;
+    const pedido = await Order.findOne({ _id: codigo });
+
+    if (!pedido) {
+      return res.status(404).json({ ok: false, message: '❌ Pedido no encontrado.' });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      message: '✅ Pedido encontrado',
+      estadoActual: pedido.estado,
+      resumen: {
+        nombre: pedido.nombreCliente,
+        direccion: pedido.direccion,
+        metodoPago: pedido.metodoPago,
+        total: pedido.total
+      }
     });
+
+  } catch (error) {
+    console.error('❌ Error siguiendo pedido:', error);
+    return res.status(500).json({ ok: false, message: '❌ Error interno al buscar pedido.' });
   }
 };

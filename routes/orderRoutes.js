@@ -1,26 +1,27 @@
 // 📁 routes/orderRoutes.js
-import express from 'express'
-import { param } from 'express-validator'
+import express from 'express';
+import { param } from 'express-validator';
 
 // 🧠 Controladores
 import {
   createOrder,
   getOrders,
   actualizarEstadoPedido,
-  getOrderStats
-} from '../controllers/orderController.js'
+  getOrderStats,
+  trackOrder
+} from '../controllers/ordersController.js'; // <- (Ojo, es ordersController.js)
 
 // 🛡️ Middlewares
-import authMiddleware from '../middleware/authMiddleware.js'
-import adminOnly from '../middleware/adminOnly.js'
+import authMiddleware from '../middleware/authMiddleware.js';
+import adminOnly from '../middleware/adminOnly.js';
 
 // ✅ Validaciones centralizadas
 import {
   createOrderValidation,
   updateOrderStatusValidation
-} from '../validators/orderValidator.js'
+} from '../validators/orderValidator.js';
 
-const router = express.Router()
+const router = express.Router();
 
 /* -------------------------------------------------------------------------- */
 /* 🛒 RUTAS DE PEDIDOS                                                        */
@@ -29,12 +30,12 @@ const router = express.Router()
 /**
  * 🛍️ Crear nuevo pedido (PÚBLICO)
  */
-router.post('/', createOrderValidation, createOrder)
+router.post('/', createOrderValidation, createOrder);
 
 /**
  * 📋 Obtener todos los pedidos (SOLO ADMIN)
  */
-router.get('/', authMiddleware, adminOnly, getOrders)
+router.get('/', authMiddleware, adminOnly, getOrders);
 
 /**
  * 🔄 Actualizar estado de un pedido (SOLO ADMIN)
@@ -45,16 +46,21 @@ router.put(
   adminOnly,
   updateOrderStatusValidation,
   actualizarEstadoPedido
-)
+);
 
 /**
- * 📊 Estadísticas de pedidos (DASHBOARD)
+ * 📊 Obtener estadísticas de pedidos (SOLO ADMIN)
  */
-router.get('/resumen', authMiddleware, adminOnly, getOrderStats)
+router.get('/resumen', authMiddleware, adminOnly, getOrderStats);
 
 /**
- * 📊 Alias para estadísticas de ventas (SOLO ADMIN)
+ * 📊 Alias de estadísticas de ventas (SOLO ADMIN)
  */
-router.get('/stats/ventas', authMiddleware, adminOnly, getOrderStats)
+router.get('/stats/ventas', authMiddleware, adminOnly, getOrderStats);
 
-export default router
+/**
+ * 🔎 Seguimiento de pedido (PÚBLICO)
+ */
+router.get('/track/:codigo', trackOrder); // <- ESTA ES LA NUEVA RUTA para seguimiento
+
+export default router;
