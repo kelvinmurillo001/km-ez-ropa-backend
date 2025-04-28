@@ -1,11 +1,15 @@
 // 📁 backend/tests/paypalService.test.js
+
+// ⚠️ Solo para testing local: Ignorar errores SSL auto-firmados (PayPal sandbox)
+// ❗ IMPORTANTE: Eliminar para producción real
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
 import { crearOrden, capturarOrden } from '../services/paypalService.js';
 import dotenv from 'dotenv';
 
 dotenv.config(); // Cargamos variables del .env
 
 describe('🧪 Pruebas de integración PayPalService', () => {
-
   let createdOrderId = '';
 
   test('Crear una orden de PayPal exitosamente', async () => {
@@ -36,5 +40,4 @@ describe('🧪 Pruebas de integración PayPalService', () => {
 
     console.log('🧪 Orden capturada ID:', response.id);
   });
-
 });
