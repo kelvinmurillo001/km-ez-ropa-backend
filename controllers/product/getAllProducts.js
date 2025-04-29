@@ -19,7 +19,7 @@ const getAllProducts = async (req, res) => {
       subcategoria = '',
       precioMin,
       precioMax,
-      featured, // ⬅️ Añadido aquí
+      featured,
       pagina = 1,
       limite = 12
     } = req.query
@@ -27,7 +27,10 @@ const getAllProducts = async (req, res) => {
     const filtro = {
       isActive: true, // ✅ Solo productos activos
       price: { $exists: true, $gt: 0 },
-      variants: { $elemMatch: { stock: { $gt: 0 } } } // ✅ Al menos una variante con stock
+      $or: [
+        { variants: { $elemMatch: { stock: { $gt: 0 } } } },
+        { stock: { $gt: 0 } }
+      ]
     }
 
     // 🔍 Nombre parcial (insensible a mayúsculas)
@@ -45,12 +48,12 @@ const getAllProducts = async (req, res) => {
       filtro.subcategory = subcategoria.trim().toLowerCase()
     }
 
-    // 💥 Agregar filtro de productos destacados
+    // ⭐ Filtrar destacados
     if (featured === 'true') {
       filtro.featured = true
     }
 
-    // 💰 Precio: mínimo y/o máximo
+    // 💰 Filtro de precio
     const min = parseFloat(precioMin)
     const max = parseFloat(precioMax)
     if (!isNaN(min) || !isNaN(max)) {
