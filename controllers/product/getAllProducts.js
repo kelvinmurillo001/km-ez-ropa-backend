@@ -8,6 +8,7 @@ import Product from '../../models/Product.js'
  * - categoria: exacta
  * - subcategoria: exacta
  * - precioMin / precioMax: rango
+ * - featured: booleano
  * - paginación: página + límite
  */
 const getAllProducts = async (req, res) => {
@@ -18,6 +19,7 @@ const getAllProducts = async (req, res) => {
       subcategoria = '',
       precioMin,
       precioMax,
+      featured, // ⬅️ Añadido aquí
       pagina = 1,
       limite = 12
     } = req.query
@@ -41,6 +43,11 @@ const getAllProducts = async (req, res) => {
     // 🧩 Subcategoría exacta
     if (subcategoria.trim()) {
       filtro.subcategory = subcategoria.trim().toLowerCase()
+    }
+
+    // 💥 Agregar filtro de productos destacados
+    if (featured === 'true') {
+      filtro.featured = true
     }
 
     // 💰 Precio: mínimo y/o máximo
