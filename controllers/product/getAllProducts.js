@@ -1,15 +1,7 @@
-// 📁 backend/controllers/product/getAllProducts.js
 import Product from '../../models/Product.js'
 
 /**
  * 📥 Obtener todos los productos (para catálogo o panel) con filtros + paginación
- * ✅ Filtros disponibles:
- * - nombre: búsqueda parcial (insensible a mayúsculas)
- * - categoria: exacta
- * - subcategoria: exacta
- * - precioMin / precioMax: rango
- * - featured: booleano
- * - paginación: página + límite
  */
 const getAllProducts = async (req, res) => {
   try {
@@ -25,7 +17,7 @@ const getAllProducts = async (req, res) => {
     } = req.query
 
     const filtro = {
-      isActive: true, // ✅ Solo productos activos
+      isActive: true,
       price: { $exists: true, $gt: 0 },
       $or: [
         { variants: { $elemMatch: { stock: { $gt: 0 } } } },
@@ -33,27 +25,22 @@ const getAllProducts = async (req, res) => {
       ]
     }
 
-    // 🔍 Nombre parcial (insensible a mayúsculas)
     if (nombre.trim()) {
       filtro.name = { $regex: new RegExp(nombre.trim(), 'i') }
     }
 
-    // 🎯 Categoría exacta
     if (categoria.trim()) {
       filtro.category = categoria.trim().toLowerCase()
     }
 
-    // 🧩 Subcategoría exacta
     if (subcategoria.trim()) {
       filtro.subcategory = subcategoria.trim().toLowerCase()
     }
 
-    // ⭐ Filtrar destacados
     if (featured === 'true') {
       filtro.featured = true
     }
 
-    // 💰 Filtro de precio
     const min = parseFloat(precioMin)
     const max = parseFloat(precioMax)
     if (!isNaN(min) || !isNaN(max)) {
@@ -63,10 +50,9 @@ const getAllProducts = async (req, res) => {
     }
 
     const page = Math.max(parseInt(pagina), 1)
-    const limit = Math.min(Math.max(parseInt(limite), 1), 50) // máximo 50 productos por página
+    const limit = Math.min(Math.max(parseInt(limite), 1), 50)
     const skip = (page - 1) * limit
 
-    // 📦 Consulta paginada
     const [productos, total] = await Promise.all([
       Product.find(filtro)
         .sort({ createdAt: -1 })
@@ -76,12 +62,22 @@ const getAllProducts = async (req, res) => {
       Product.countDocuments(filtro)
     ])
 
+    const productosConStock = productos.map(p => {
+      let stockTotal = 0
+      if (Array.isArray(p.variants) && p.variants.length > 0) {
+        stockTotal = p.variants.reduce((a, v) => a + (v.stock || 0), 0)
+      } else if (typeof p.stock === 'number') {
+        stockTotal = p.stock
+      }
+      return { ...p, stockTotal }
+    })
+
     const totalPaginas = Math.ceil(total / limit)
 
     console.log(`📦 Productos encontrados: ${productos.length} | Total: ${total}`)
 
     return res.status(200).json({
-      productos,
+      productos: productosConStock,
       total,
       pagina: page,
       totalPaginas
