@@ -1,39 +1,39 @@
 // 📁 backend/middleware/adminOnly.js
 
 /**
- * 🔒 Middleware para restringir el acceso solo a administradores
+ * 🔒 Middleware: Solo permite acceso a usuarios con rol "admin"
  */
 const adminOnly = (req, res, next) => {
   try {
-    const user = req.user
+    const user = req.user;
 
-    // 🔐 Verificar si el usuario está autenticado
+    // 🚫 No autenticado
     if (!user) {
       return res.status(401).json({
         ok: false,
-        message: '🚫 No autenticado. Se requiere login de administrador.'
-      })
+        message: '🚫 Acceso no autorizado. Inicia sesión como administrador.'
+      });
     }
 
-    // ✅ Verificar si el usuario tiene rol de administrador
-    if (user.role === 'admin') {
-      return next()
+    // ✅ Validación de rol exacto
+    if (typeof user.role === 'string' && user.role.trim().toLowerCase() === 'admin') {
+      return next();
     }
 
-    // ⛔ Usuario autenticado pero sin privilegios de admin
+    // ⛔ Usuario autenticado pero sin privilegios de administrador
     return res.status(403).json({
       ok: false,
-      message: '⛔ Acceso denegado. Esta operación requiere privilegios de administrador.'
-    })
+      message: '⛔ Acceso denegado. Esta acción solo está permitida para administradores.'
+    });
   } catch (err) {
-    // ❌ Error inesperado en el middleware
-    console.error('❌ Error en adminOnly middleware:', err)
+    // ❌ Fallo inesperado en el middleware
+    console.error('❌ Error en adminOnly middleware:', err);
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al verificar permisos de administrador',
       error: err.message
-    })
+    });
   }
-}
+};
 
-export default adminOnly
+export default adminOnly;

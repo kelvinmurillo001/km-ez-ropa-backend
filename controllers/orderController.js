@@ -1,4 +1,4 @@
-// 📁 backend/controllers/ordersController.js
+// 📁 backend/controllers/orderController.js
 
 import Order from '../models/Order.js'
 import Product from '../models/Product.js'

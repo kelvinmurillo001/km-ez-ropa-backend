@@ -80,17 +80,58 @@ const orderSchema = new mongoose.Schema(
       type: String,
       enum: ['pendiente', 'en_proceso', 'enviado', 'cancelado'],
       default: 'pendiente'
+    },
+    direccion: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    metodoPago: {
+      type: String,
+      enum: ['efectivo', 'tarjeta', 'paypal'],
+      default: 'efectivo'
+    },
+    seguimiento: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    codigoSeguimiento: {
+      type: String,
+      trim: true,
+      unique: true,
+      sparse: true
     }
-
-    // 🚀 Futuro:
-    // direccionEnvio: { type: String, trim: true },
-    // metodoPago: { type: String, enum: ['efectivo', 'tarjeta'], default: 'efectivo' },
-    // seguimiento: { type: String, trim: true }
   },
   {
     timestamps: true // 🕒 createdAt y updatedAt automáticos
   }
 )
+
+// 🔁 Generar código de seguimiento automáticamente si no existe
+orderSchema.pre('save', async function (next) {
+  if (this.codigoSeguimiento) return next()
+
+  const generarCodigo = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+    let code = 'KMZ-'
+    for (let i = 0; i < 8; i++) {
+      code += chars[Math.floor(Math.random() * chars.length)]
+    }
+    return code
+  }
+
+  let codigo = generarCodigo()
+  let existe = await mongoose.models.Order.exists({ codigoSeguimiento: codigo })
+
+  while (existe) {
+    codigo = generarCodigo()
+    existe = await mongoose.models.Order.exists({ codigoSeguimiento: codigo })
+  }
+
+  this.codigoSeguimiento = codigo
+  next()
+})
 
 // 🔍 Índices útiles para optimizar búsquedas por estado y fecha
 orderSchema.index({ estado: 1, createdAt: -1 })

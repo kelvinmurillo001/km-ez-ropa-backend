@@ -2,7 +2,6 @@
 import mongoose from 'mongoose'
 import bcrypt from 'bcryptjs'
 
-// 📋 Esquema de usuario
 const userSchema = new mongoose.Schema(
   {
     username: {
@@ -10,7 +9,7 @@ const userSchema = new mongoose.Schema(
       required: [true, '⚠️ El nombre de usuario es obligatorio'],
       unique: true,
       trim: true,
-      minlength: [3, '⚠️ El usuario debe tener al menos 3 caracteres']
+      minlength: [3, '⚠️ Mínimo 3 caracteres']
     },
     name: {
       type: String,
@@ -23,9 +22,9 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, '⚠️ El email es obligatorio'],
       unique: true,
-      lowercase: true,
       trim: true,
-      match: [/^\S+@\S+\.\S+$/, '⚠️ Email inválido']
+      lowercase: true,
+      match: [/^\S+@\S+\.\S+$/, '⚠️ Formato de email inválido']
     },
     password: {
       type: String,
@@ -45,17 +44,22 @@ const userSchema = new mongoose.Schema(
     }
   },
   {
-    timestamps: true
+    timestamps: true,
+    toJSON: {
+      transform: (_, ret) => {
+        delete ret.password
+        delete ret.refreshToken
+        return ret
+      }
+    }
   }
 )
 
-/* -------------------------------------------------------------------------- */
-/* 🔒 Middleware: Hashear contraseña antes de guardar                         */
-/* -------------------------------------------------------------------------- */
+/* 🔒 Hashear contraseña si fue modificada */
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next()
   try {
-    const salt = await bcrypt.genSalt(10)
+    const salt = await bcrypt.genSalt(12)
     this.password = await bcrypt.hash(this.password, salt)
     next()
   } catch (err) {
@@ -64,13 +68,11 @@ userSchema.pre('save', async function (next) {
   }
 })
 
-/* -------------------------------------------------------------------------- */
-/* 🔑 Método de instancia: Comparar contraseñas                               */
-/* -------------------------------------------------------------------------- */
+/* 🔑 Comparar contraseña ingresada con la guardada */
 userSchema.methods.matchPassword = async function (inputPassword) {
-  return this.password ? await bcrypt.compare(inputPassword, this.password) : false
+  if (!this.password) return false
+  return await bcrypt.compare(inputPassword, this.password)
 }
 
-// 🚀 Exportar modelo
 const User = mongoose.model('User', userSchema)
 export default User
