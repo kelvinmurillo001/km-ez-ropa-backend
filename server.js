@@ -27,6 +27,7 @@ import paypalRoutes from './routes/paypalRoutes.js'
 // ⚙️ Configuración personalizada
 import config from './config/configuracionesito.js'
 import errorHandler from './middleware/errorHandler.js'
+import devCreateAdminRoute from './routes/devCreateAdminRoute.js'//borrar
 
 // 📍 Corrección para __dirname en ESModules
 const __filename = fileURLToPath(import.meta.url)
@@ -117,6 +118,7 @@ app.use('/api/visitas', visitRoutes)
 app.use('/api/stats', statsRoutes)
 app.use('/api/uploads', uploadRoutes)
 app.use('/api/paypal', paypalRoutes)
+app.use('/dev', devCreateAdminRoute)//borrar
 
 /* -------------------------------------------------------------------------- */
 /* 🔥 Healthchecks & Root                                                     */
