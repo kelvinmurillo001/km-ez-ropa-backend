@@ -23,7 +23,7 @@ import visitRoutes from './routes/visitRoutes.js'
 import statsRoutes from './routes/statsRoutes.js'
 import uploadRoutes from './routes/uploadRoutes.js'
 import paypalRoutes from './routes/paypalRoutes.js'
-import devRoutes from './routes/devRoutes.js'; //borrar
+
 
 
 // ⚙️ Configuración personalizada
@@ -119,7 +119,6 @@ app.use('/api/visitas', visitRoutes)
 app.use('/api/stats', statsRoutes)
 app.use('/api/uploads', uploadRoutes)
 app.use('/api/paypal', paypalRoutes)
-app.use('/api/dev', devRoutes); // 🚨 Temporal: para crear admin
 
 
 /* -------------------------------------------------------------------------- */
