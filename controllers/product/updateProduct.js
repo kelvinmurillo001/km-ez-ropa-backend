@@ -25,7 +25,8 @@ const updateProduct = async (req, res) => {
       variants = [],
       images = [],
       sizes = [],
-      color = ''
+      color = '',
+      stock // ✅ Se espera que venga si no hay variantes
     } = req.body
 
     const product = await Product.findById(id)
@@ -48,18 +49,17 @@ const updateProduct = async (req, res) => {
         })
       }
 
+      // Eliminar anteriores de Cloudinary
       for (const img of product.images) {
         if (img.cloudinaryId) await cloudinary.uploader.destroy(img.cloudinaryId)
       }
 
-      processedImages = [
-        {
-          url: url.trim(),
-          cloudinaryId: cloudinaryId.trim(),
-          talla: talla.trim().toLowerCase(),
-          color: color.trim().toLowerCase()
-        }
-      ]
+      processedImages = [{
+        url: url.trim(),
+        cloudinaryId: cloudinaryId.trim(),
+        talla: talla.trim().toLowerCase(),
+        color: color.trim().toLowerCase()
+      }]
     } else if (images.length > 1) {
       console.warn(`🛑 Se intentaron subir múltiples imágenes principales para el producto ${id}`)
       return res.status(400).json({ message: '⚠️ Solo se permite una imagen principal' })
@@ -77,6 +77,7 @@ const updateProduct = async (req, res) => {
       const seen = new Set()
       processedVariants = []
 
+      // Eliminar imágenes antiguas
       for (const old of product.variants) {
         if (old.cloudinaryId) await cloudinary.uploader.destroy(old.cloudinaryId)
       }
@@ -119,6 +120,17 @@ const updateProduct = async (req, res) => {
     product.images = processedImages
     product.variants = processedVariants
     product.updatedBy = req.user?.username || 'admin'
+
+    // ✅ Si no hay variantes, usar el stock simple
+    if (!processedVariants.length) {
+      if (typeof stock === 'number' && stock >= 0) {
+        product.stock = stock
+      } else {
+        product.stock = 0
+      }
+    } else {
+      product.stock = undefined // Evita conflictos si hay variantes
+    }
 
     const updated = await product.save()
 
