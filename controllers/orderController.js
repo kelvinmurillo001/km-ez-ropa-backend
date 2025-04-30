@@ -1,15 +1,24 @@
-// 📁 backend/controllers/orderController.js
-
 import Order from '../models/Order.js'
 import Product from '../models/Product.js'
 import { sendNotification } from '../utils/notifications.js'
+import crypto from 'crypto'
 
 /**
  * 🛒 Crear nuevo pedido (público)
  */
 export const createOrder = async (req, res) => {
   try {
-    const { items, total, nombreCliente, nota, email, telefono, direccion, metodoPago, factura } = req.body
+    const {
+      items,
+      total,
+      nombreCliente,
+      nota,
+      email,
+      telefono,
+      direccion,
+      metodoPago,
+      factura
+    } = req.body
 
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ ok: false, message: '⚠️ El pedido debe contener al menos un producto.' })
@@ -28,21 +37,23 @@ export const createOrder = async (req, res) => {
       return res.status(400).json({ ok: false, message: '⚠️ Email inválido.' })
     }
 
-    if (telefono && typeof telefono !== 'string') {
+    if (!telefono || typeof telefono !== 'string' || telefono.trim().length < 6) {
       return res.status(400).json({ ok: false, message: '⚠️ Teléfono inválido.' })
     }
 
-    // ✅ Validar stock y variante activa
     for (const item of items) {
+      if (!item.talla) {
+        return res.status(400).json({ ok: false, message: `⚠️ Talla requerida en producto: ${item.name}` })
+      }
+
       const producto = await Product.findById(item.productId)
       if (!producto) {
         return res.status(404).json({ ok: false, message: `❌ Producto no encontrado: ${item.name}` })
       }
 
-      const variante = producto.variants.find(v => v.talla === item.talla?.toLowerCase())
-
+      const variante = producto.variants.find(v => v.talla === item.talla.toLowerCase())
       if (!variante || !variante.activo) {
-        return res.status(400).json({ ok: false, message: `❌ Variante no disponible para ${item.name}` })
+        return res.status(400).json({ ok: false, message: `❌ Variante no disponible: ${item.name} - ${item.talla}` })
       }
 
       if (item.cantidad > variante.stock) {
@@ -50,7 +61,8 @@ export const createOrder = async (req, res) => {
       }
     }
 
-    // 🛒 Crear pedido
+    const codigoSeguimiento = crypto.randomBytes(6).toString('hex').toUpperCase()
+
     const newOrder = new Order({
       items,
       total: totalParsed,
@@ -58,32 +70,33 @@ export const createOrder = async (req, res) => {
       email: email?.trim() || '',
       telefono: telefono?.trim() || '',
       direccion: direccion?.trim() || '',
-      metodoPago: metodoPago?.trim() || 'desconocido',
+      metodoPago: metodoPago?.trim().toLowerCase() || 'efectivo',
       nota: nota?.trim() || '',
-      factura: factura || {},
-      estado: metodoPago?.toLowerCase() === 'transferencia' ? 'pendiente' : 'pagado'
+      factura: typeof factura === 'object' ? factura : {},
+      estado: metodoPago?.toLowerCase() === 'transferencia' ? 'pendiente' : 'pagado',
+      codigoSeguimiento
     })
 
     await newOrder.save()
 
-    // 📉 Actualizar stock
     for (const item of items) {
       const producto = await Product.findOneAndUpdate(
-        { _id: item.productId, 'variants.talla': item.talla?.toLowerCase() },
+        { _id: item.productId, 'variants.talla': item.talla.toLowerCase() },
         { $inc: { 'variants.$.stock': -item.cantidad } },
         { new: true }
       )
 
       if (producto) {
-        const variante = producto.variants.find(v => v.talla === item.talla?.toLowerCase())
+        const variante = producto.variants.find(v => v.talla === item.talla.toLowerCase())
         if (variante && variante.stock <= 0) {
           variante.activo = false
+          producto.markModified('variants')
           await producto.save()
         }
       }
     }
 
-    console.log(`🛒 Pedido creado: ${nombreCliente} | Total: $${totalParsed.toFixed(2)}`)
+    console.log(`🛒 Pedido creado: ${nombreCliente} | Total: $${totalParsed.toFixed(2)} | Código: ${codigoSeguimiento}`)
 
     return res.status(201).json({
       ok: true,
@@ -102,14 +115,9 @@ export const createOrder = async (req, res) => {
 export const getOrders = async (req, res) => {
   try {
     const orders = await Order.find().sort({ createdAt: -1 })
-    return res.status(200).json({
-      ok: true,
-      message: '✅ Pedidos cargados correctamente',
-      data: orders
-    })
+    return res.status(200).json({ ok: true, message: '✅ Pedidos cargados correctamente', data: orders })
   } catch (error) {
-    console.error('❌ Error obteniendo pedidos:', error)
-    return res.status(500).json({ ok: false, message: '❌ Error interno al obtener pedidos.', error: error.message })
+    return res.status(500).json({ ok: false, message: '❌ Error obteniendo pedidos.', error: error.message })
   }
 }
 
@@ -120,13 +128,18 @@ export const actualizarEstadoPedido = async (req, res) => {
   try {
     const { id } = req.params
     const { estado } = req.body
+    const estadosValidos = ['pendiente', 'en_proceso', 'enviado', 'cancelado']
+
+    if (!estadosValidos.includes(estado)) {
+      return res.status(400).json({ ok: false, message: '⚠️ Estado no válido.' })
+    }
 
     const pedido = await Order.findById(id)
     if (!pedido) {
       return res.status(404).json({ ok: false, message: '❌ Pedido no encontrado.' })
     }
 
-    pedido.estado = estado.trim().toLowerCase()
+    pedido.estado = estado
     await pedido.save()
 
     await sendNotification({
@@ -136,14 +149,9 @@ export const actualizarEstadoPedido = async (req, res) => {
       estadoActual: pedido.estado
     })
 
-    return res.status(200).json({
-      ok: true,
-      message: '✅ Estado actualizado y notificación enviada',
-      data: pedido
-    })
+    return res.status(200).json({ ok: true, message: '✅ Estado actualizado', data: pedido })
   } catch (error) {
-    console.error('❌ Error actualizando estado:', error)
-    return res.status(500).json({ ok: false, message: '❌ Error interno actualizando el pedido.', error: error.message })
+    return res.status(500).json({ ok: false, message: '❌ Error actualizando estado.', error: error.message })
   }
 }
 
@@ -158,33 +166,27 @@ export const getOrderStats = async (req, res) => {
     const resumen = {
       total: pedidos.length,
       pendiente: 0,
-      preparando: 0,
-      'en camino': 0,
-      entregado: 0,
+      en_proceso: 0,
+      enviado: 0,
       cancelado: 0,
       hoy: 0,
       ventasTotales: 0
     }
 
     for (const p of pedidos) {
-      const estado = (p.estado || 'pendiente').toLowerCase()
-      if (Object.prototype.hasOwnProperty.call(resumen, estado)) resumen[estado]++
-      if (estado === 'entregado') resumen.ventasTotales += parseFloat(p.total || 0)
+      const estado = p.estado || 'pendiente'
+      if (resumen[estado] !== undefined) resumen[estado]++
+      if (estado === 'enviado') resumen.ventasTotales += parseFloat(p.total || 0)
 
-      const fechaPedido = new Date(p.createdAt).setHours(0, 0, 0, 0)
-      if (fechaPedido === hoy) resumen.hoy++
+      const fecha = new Date(p.createdAt).setHours(0, 0, 0, 0)
+      if (fecha === hoy) resumen.hoy++
     }
 
     resumen.ventasTotales = Number(resumen.ventasTotales.toFixed(2))
 
-    return res.status(200).json({
-      ok: true,
-      message: '✅ Estadísticas generadas correctamente',
-      data: resumen
-    })
+    return res.status(200).json({ ok: true, message: '✅ Estadísticas generadas', data: resumen })
   } catch (error) {
-    console.error('❌ Error obteniendo estadísticas:', error)
-    return res.status(500).json({ ok: false, message: '❌ Error interno generando estadísticas.', error: error.message })
+    return res.status(500).json({ ok: false, message: '❌ Error generando estadísticas.', error: error.message })
   }
 }
 
@@ -194,7 +196,7 @@ export const getOrderStats = async (req, res) => {
 export const trackOrder = async (req, res) => {
   try {
     const { codigo } = req.params
-    const pedido = await Order.findById(codigo)
+    const pedido = await Order.findOne({ codigoSeguimiento: codigo })
 
     if (!pedido) {
       return res.status(404).json({ ok: false, message: '❌ Pedido no encontrado.' })
@@ -212,7 +214,31 @@ export const trackOrder = async (req, res) => {
       }
     })
   } catch (error) {
-    console.error('❌ Error siguiendo pedido:', error)
-    return res.status(500).json({ ok: false, message: '❌ Error interno al buscar pedido.', error: error.message })
+    return res.status(500).json({ ok: false, message: '❌ Error buscando pedido.', error: error.message })
+  }
+}
+
+/**
+ * 🗑️ Eliminar pedido (admin)
+ */
+export const deleteOrder = async (req, res) => {
+  try {
+    const { id } = req.params
+
+    const pedido = await Order.findById(id)
+    if (!pedido) {
+      return res.status(404).json({ ok: false, message: '❌ Pedido no encontrado.' })
+    }
+
+    await Order.findByIdAndDelete(id)
+
+    return res.status(200).json({
+      ok: true,
+      message: '✅ Pedido eliminado correctamente.',
+      idEliminado: id
+    })
+  } catch (error) {
+    console.error('❌ Error eliminando pedido:', error)
+    return res.status(500).json({ ok: false, message: '❌ Error eliminando pedido.', error: error.message })
   }
 }

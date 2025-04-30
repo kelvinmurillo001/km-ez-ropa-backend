@@ -1,4 +1,3 @@
-// 📁 routes/orderRoutes.js
 import express from 'express'
 import { param } from 'express-validator'
 
@@ -8,7 +7,8 @@ import {
   getOrders,
   actualizarEstadoPedido,
   getOrderStats,
-  trackOrder
+  trackOrder,
+  deleteOrder // ✅ Importado
 } from '../controllers/orderController.js'
 
 // 🛡️ Middlewares
@@ -55,6 +55,21 @@ router.put(
   adminOnly,
   updateOrderStatusValidation,
   actualizarEstadoPedido
+)
+
+/**
+ * 🗑️ Eliminar pedido (SOLO ADMIN)
+ */
+router.delete(
+  '/:id',
+  authMiddleware,
+  adminOnly,
+  [
+    param('id')
+      .isMongoId()
+      .withMessage('⚠️ ID de pedido inválido')
+  ],
+  deleteOrder
 )
 
 /**
