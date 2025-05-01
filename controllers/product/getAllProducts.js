@@ -1,3 +1,4 @@
+// backend/controllers/product/getAllProducts.js
 import Product from '../../models/Product.js'
 
 /**
@@ -16,13 +17,10 @@ const getAllProducts = async (req, res) => {
       limite = 12
     } = req.query
 
+    // Filtro base sin validar stock todavía
     const filtro = {
       isActive: true,
-      price: { $exists: true, $gt: 0 },
-      $or: [
-        { variants: { $elemMatch: { stock: { $gt: 0 } } } },
-        { stock: { $gt: 0 } }
-      ]
+      price: { $exists: true, $gt: 0 }
     }
 
     if (nombre.trim()) {
@@ -53,31 +51,38 @@ const getAllProducts = async (req, res) => {
     const limit = Math.min(Math.max(parseInt(limite), 1), 50)
     const skip = (page - 1) * limit
 
-    const [productos, total] = await Promise.all([
+    // Obtener productos base sin filtrar por stock
+    const [productosSinFiltrar, totalBruto] = await Promise.all([
       Product.find(filtro)
         .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
         .lean(),
       Product.countDocuments(filtro)
     ])
 
-    const productosConStock = productos.map(p => {
-      let stockTotal = 0
-      if (Array.isArray(p.variants) && p.variants.length > 0) {
-        stockTotal = p.variants.reduce((a, v) => a + (v.stock || 0), 0)
-      } else if (typeof p.stock === 'number') {
-        stockTotal = p.stock
-      }
-      return { ...p, stockTotal }
-    })
+    // Filtrar por stock total real (principal + variantes activas)
+    const productosConStock = productosSinFiltrar
+      .map(p => {
+        const stockPrincipal = typeof p.stock === 'number' ? p.stock : 0
+        const stockVariantes = Array.isArray(p.variants)
+          ? p.variants
+              .filter(v => v.activo !== false)
+              .reduce((total, v) => total + (v.stock || 0), 0)
+          : 0
 
+        const stockTotal = stockPrincipal + stockVariantes
+        return { ...p, stockTotal }
+      })
+      .filter(p => p.stockTotal > 0)
+
+    // Paginación manual después del filtrado
+    const total = productosConStock.length
     const totalPaginas = Math.ceil(total / limit)
+    const productosPaginados = productosConStock.slice(skip, skip + limit)
 
-    console.log(`📦 Productos encontrados: ${productos.length} | Total: ${total}`)
+    console.log(`📦 Productos válidos con stock: ${productosPaginados.length} | Total: ${total}`)
 
     return res.status(200).json({
-      productos: productosConStock,
+      productos: productosPaginados,
       total,
       pagina: page,
       totalPaginas
