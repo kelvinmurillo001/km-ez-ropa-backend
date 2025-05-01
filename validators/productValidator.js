@@ -1,27 +1,9 @@
-// 📁 backend/validators/productValidator.js
 import { body } from 'express-validator'
 
 /**
- * ➕ Validaciones para crear un nuevo producto
+ * 🔐 Validaciones compartidas
  */
-export const createProductValidation = [
-  body('name')
-    .notEmpty().withMessage('⚠️ El nombre del producto es obligatorio.')
-    .isLength({ min: 2 }).withMessage('⚠️ El nombre debe tener al menos 2 caracteres.'),
-
-  body('price')
-    .notEmpty().withMessage('⚠️ El precio es obligatorio.')
-    .isFloat({ gt: 0 }).withMessage('⚠️ El precio debe ser un número mayor a 0.'),
-
-  body('category')
-    .notEmpty().withMessage('⚠️ La categoría es obligatoria.'),
-
-  body('subcategory')
-    .notEmpty().withMessage('⚠️ La subcategoría es obligatoria.'),
-
-  body('tallaTipo')
-    .notEmpty().withMessage('⚠️ El tipo de talla es obligatorio.'),
-
+const imagenPrincipalRules = [
   body('images')
     .isArray({ min: 1, max: 1 }).withMessage('⚠️ Debes enviar una imagen principal (array con 1 objeto).'),
 
@@ -35,22 +17,21 @@ export const createProductValidation = [
     .notEmpty().withMessage('⚠️ La talla de la imagen es obligatoria.'),
 
   body('images.*.color')
-    .notEmpty().withMessage('⚠️ El color de la imagen es obligatorio.'),
+    .notEmpty().withMessage('⚠️ El color de la imagen es obligatorio.')
+]
 
-  body('createdBy')
-    .notEmpty().withMessage('⚠️ El campo createdBy es obligatorio.'),
-
+const variantesRules = [
   body('variants')
     .optional()
     .isArray({ max: 4 }).withMessage('⚠️ Máximo 4 variantes permitidas.'),
 
   body('variants.*.talla')
     .optional()
-    .notEmpty().withMessage('⚠️ Cada variante requiere una talla.'),
+    .notEmpty().withMessage('⚠️ Cada variante requiere una talla válida.'),
 
   body('variants.*.color')
     .optional()
-    .notEmpty().withMessage('⚠️ Cada variante requiere un color.'),
+    .notEmpty().withMessage('⚠️ Cada variante requiere un color válido.'),
 
   body('variants.*.imageUrl')
     .optional()
@@ -66,7 +47,51 @@ export const createProductValidation = [
 ]
 
 /**
- * ✏️ Validaciones para actualizar un producto existente
+ * ➕ Validaciones para crear producto
+ */
+export const createProductValidation = [
+  body('name')
+    .notEmpty().withMessage('⚠️ El nombre del producto es obligatorio.')
+    .isLength({ min: 2 }).withMessage('⚠️ Mínimo 2 caracteres.'),
+
+  body('price')
+    .notEmpty().withMessage('⚠️ El precio es obligatorio.')
+    .isFloat({ gt: 0 }).withMessage('⚠️ Debe ser un número mayor a 0.'),
+
+  body('category')
+    .notEmpty().withMessage('⚠️ La categoría es obligatoria.'),
+
+  body('subcategory')
+    .notEmpty().withMessage('⚠️ La subcategoría es obligatoria.'),
+
+  body('tallaTipo')
+    .notEmpty().withMessage('⚠️ El tipo de talla es obligatorio.'),
+
+  body('createdBy')
+    .notEmpty().withMessage('⚠️ Campo createdBy obligatorio.'),
+
+  body('sizes')
+    .optional()
+    .isArray().withMessage('⚠️ El campo sizes debe ser un arreglo de tallas.'),
+
+  body('stock')
+    .optional()
+    .isInt({ min: 0 }).withMessage('⚠️ El stock debe ser un número entero ≥ 0.'),
+
+  body('featured')
+    .optional()
+    .isBoolean().withMessage('⚠️ El campo "featured" debe ser booleano.'),
+
+  body('color')
+    .optional()
+    .isString().withMessage('⚠️ El color debe ser texto.'),
+
+  ...imagenPrincipalRules,
+  ...variantesRules
+]
+
+/**
+ * ✏️ Validaciones para actualizar producto
  */
 export const updateProductValidation = [
   body('name')
@@ -97,31 +122,18 @@ export const updateProductValidation = [
     .optional()
     .isArray().withMessage('⚠️ Sizes debe ser un arreglo.'),
 
-  body('variants')
+  body('stock')
     .optional()
-    .isArray({ max: 4 }).withMessage('⚠️ Máximo 4 variantes permitidas.'),
+    .isInt({ min: 0 }).withMessage('⚠️ El stock debe ser un número entero ≥ 0.'),
 
-  body('variants.*.talla')
+  body('featured')
     .optional()
-    .notEmpty().withMessage('⚠️ Cada variante requiere una talla.'),
-
-  body('variants.*.color')
-    .optional()
-    .notEmpty().withMessage('⚠️ Cada variante requiere un color.'),
-
-  body('variants.*.imageUrl')
-    .optional()
-    .notEmpty().withMessage('⚠️ Cada variante requiere una imagen.'),
-
-  body('variants.*.cloudinaryId')
-    .optional()
-    .notEmpty().withMessage('⚠️ cloudinaryId requerido en la variante.'),
-
-  body('variants.*.stock')
-    .optional()
-    .isInt({ min: 0 }).withMessage('⚠️ El stock de la variante debe ser un número ≥ 0.'),
+    .isBoolean().withMessage('⚠️ El campo featured debe ser booleano.'),
 
   body('images')
     .optional()
-    .isArray().withMessage('⚠️ Images debe ser un arreglo.')
+    .isArray().withMessage('⚠️ Images debe ser un arreglo.'),
+
+  ...imagenPrincipalRules.map(rule => rule.optional()),
+  ...variantesRules
 ]

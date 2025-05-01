@@ -13,7 +13,15 @@ import xssClean from 'xss-clean'
 import hpp from 'hpp'
 import { fileURLToPath } from 'url'
 
-// 🔗 Rutas API
+// 📍 Corrección para __dirname en ESModules
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+// ⚙️ Configuración
+import config from './config/configuracionesito.js'
+import errorHandler from './middleware/errorHandler.js'
+
+// 🔗 Rutas
 import authRoutes from './routes/authRoutes.js'
 import productRoutes from './routes/productRoutes.js'
 import categoryRoutes from './routes/categoryRoutes.js'
@@ -24,64 +32,49 @@ import statsRoutes from './routes/statsRoutes.js'
 import uploadRoutes from './routes/uploadRoutes.js'
 import paypalRoutes from './routes/paypalRoutes.js'
 
-
-
-// ⚙️ Configuración personalizada
-import config from './config/configuracionesito.js'
-import errorHandler from './middleware/errorHandler.js'
-
-// 📍 Corrección para __dirname en ESModules
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-
 const app = express()
 
 /* -------------------------------------------------------------------------- */
-/* 🛡️ Seguridad: Anti-DDOS (RateLimit + SlowDown)                             */
+/* 🔒 Protección contra abusos (RateLimit + SlowDown)                         */
 /* -------------------------------------------------------------------------- */
-const limiter = rateLimit({
+app.use(rateLimit({
   windowMs: config.rateLimitWindow * 60 * 1000,
   max: config.rateLimitMax,
-  message: '⚠️ Demasiadas solicitudes. Intenta más tarde.',
   standardHeaders: true,
-  legacyHeaders: false
-})
+  legacyHeaders: false,
+  message: '⚠️ Demasiadas solicitudes. Intenta más tarde.'
+}))
 
-const slow = slowDown({
+app.use(slowDown({
   windowMs: config.rateLimitWindow * 60 * 1000,
   delayAfter: 20,
   delayMs: () => 500
-})
-
-app.use(limiter)
-app.use(slow)
+}))
 
 /* -------------------------------------------------------------------------- */
-/* 🧼 Middlewares de Sanitización y Protección                                */
+/* 🛡️ Sanitización y protección contra ataques                                */
 /* -------------------------------------------------------------------------- */
 if (config.enableMongoSanitize) app.use(mongoSanitize())
 if (config.enableXSSProtection) app.use(xssClean())
 if (config.enableHPP) app.use(hpp())
 
 /* -------------------------------------------------------------------------- */
-/* 🔐 CORS Dinámico                                                           */
+/* 🌐 Configuración dinámica de CORS                                          */
 /* -------------------------------------------------------------------------- */
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin || config.allowedOrigins.includes(origin.replace(/\/$/, ''))) {
-        callback(null, true)
-      } else {
-        console.error(`❌ CORS no permitido: ${origin}`)
-        callback(new Error('❌ CORS no permitido'))
-      }
-    },
-    credentials: true
-  })
-)
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || config.allowedOrigins.includes(origin.replace(/\/$/, ''))) {
+      callback(null, true)
+    } else {
+      console.error(`❌ CORS no permitido: ${origin}`)
+      callback(new Error('❌ CORS no permitido'))
+    }
+  },
+  credentials: true
+}))
 
 /* -------------------------------------------------------------------------- */
-/* 🛡️ Seguridad General y Otros Middlewares                                  */
+/* 🧱 Middlewares comunes                                                      */
 /* -------------------------------------------------------------------------- */
 app.use(helmet({ crossOriginResourcePolicy: false }))
 app.use(morgan(config.env === 'production' ? 'tiny' : 'dev'))
@@ -90,25 +83,19 @@ app.use(express.json({ limit: '5mb' }))
 /* -------------------------------------------------------------------------- */
 /* 💨 Compresión HTTP                                                         */
 /* -------------------------------------------------------------------------- */
-app.use(
-  compression({
-    level: 6,
-    filter: (req, res) => {
-      if (req.headers['x-no-compression']) {
-        return false
-      }
-      return compression.filter(req, res)
-    }
-  })
-)
+app.use(compression({
+  level: 6,
+  filter: (req, res) =>
+    req.headers['x-no-compression'] ? false : compression.filter(req, res)
+}))
 
 /* -------------------------------------------------------------------------- */
-/* 📂 Archivos Estáticos                                                      */
+/* 📂 Archivos estáticos                                                       */
 /* -------------------------------------------------------------------------- */
 app.use('/assets', express.static(path.join(__dirname, 'frontend', 'assets')))
 
 /* -------------------------------------------------------------------------- */
-/* 📚 API Routes                                                              */
+/* 📚 Rutas API                                                                */
 /* -------------------------------------------------------------------------- */
 app.use('/api/auth', authRoutes)
 app.use('/api/products', productRoutes)
@@ -120,9 +107,8 @@ app.use('/api/stats', statsRoutes)
 app.use('/api/uploads', uploadRoutes)
 app.use('/api/paypal', paypalRoutes)
 
-
 /* -------------------------------------------------------------------------- */
-/* 🔥 Healthchecks & Root                                                     */
+/* ✅ Healthcheck y raíz                                                      */
 /* -------------------------------------------------------------------------- */
 app.get('/', (req, res) => {
   res.send('🧠 Backend KM-EZ-ROPA funcionando correctamente 🚀')
@@ -133,19 +119,19 @@ app.get('/health', (req, res) => {
 })
 
 /* -------------------------------------------------------------------------- */
-/* ❌ 404 Not Found Handler                                                   */
+/* ❌ Ruta no encontrada (404)                                                */
 /* -------------------------------------------------------------------------- */
 app.use('*', (req, res) => {
   res.status(404).json({ message: '❌ Ruta no encontrada' })
 })
 
 /* -------------------------------------------------------------------------- */
-/* 🧯 Manejo Centralizado de Errores                                           */
+/* 🧯 Manejador global de errores                                              */
 /* -------------------------------------------------------------------------- */
 app.use(errorHandler)
 
 /* -------------------------------------------------------------------------- */
-/* 🚀 Conexión a MongoDB y Levantar Servidor                                  */
+/* 🚀 Conectar a MongoDB y arrancar servidor                                  */
 /* -------------------------------------------------------------------------- */
 const startServer = async () => {
   try {
@@ -153,12 +139,12 @@ const startServer = async () => {
     console.log('✅ Conectado exitosamente a MongoDB Atlas')
 
     app.listen(config.port, () => {
-      console.log(`🚀 Servidor corriendo en: http://localhost:${config.port}`)
-      console.log(`🌍 Entorno: ${config.env}`)
+      console.log(`🚀 Servidor escuchando en: http://localhost:${config.port}`)
+      console.log(`🌍 Modo: ${config.env}`)
     })
   } catch (err) {
-    console.error('❌ Error al conectar con MongoDB:', err.message)
-    console.error('🔍 Verifica IP autorizada en MongoDB Atlas y las credenciales .env.')
+    console.error('❌ Error conectando con MongoDB:', err.message)
+    console.error('🔍 Revisa IP autorizada y credenciales de conexión .env')
     process.exit(1)
   }
 }

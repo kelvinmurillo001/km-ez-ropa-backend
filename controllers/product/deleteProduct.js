@@ -1,80 +1,81 @@
-// 📁 backend/controllers/products/deleteProduct.js
 import Product from '../../models/Product.js'
 import { cloudinary } from '../../config/cloudinary.js'
 import mongoose from 'mongoose'
 
 /**
- * 🗑️ Eliminar un producto completo (incluye imágenes en Cloudinary)
+ * 🗑️ Eliminar un producto (y sus imágenes en Cloudinary)
  */
 const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params
 
-    // 🔒 Validación de ID
+    // 🔒 Validar formato de ID
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      console.warn(`🛑 Eliminación fallida: ID inválido ${id}`)
       return res.status(400).json({ message: '⚠️ ID de producto inválido' })
     }
 
     // 🔍 Buscar producto
     const product = await Product.findById(id)
     if (!product) {
-      console.warn(`🛑 Eliminación fallida: producto no encontrado ID ${id}`)
       return res.status(404).json({ message: '❌ Producto no encontrado' })
     }
 
     const deletedCloudinaryIds = []
     const failedDeletions = []
 
+    // 📥 Función interna para eliminar imágenes
     const eliminarImagen = async (cloudinaryId, contexto = '') => {
       try {
-        const result = await cloudinary.uploader.destroy(cloudinaryId)
-        if (result.result === 'ok') {
+        const res = await cloudinary.uploader.destroy(cloudinaryId)
+        if (res.result === 'ok') {
           deletedCloudinaryIds.push(cloudinaryId)
-          console.log(`🧹 Imagen eliminada: ${cloudinaryId} [${contexto}]`)
+          console.log(`🧹 Imagen eliminada: ${cloudinaryId} (${contexto})`)
         } else {
-          failedDeletions.push({ cloudinaryId, context: contexto, result })
-          console.warn(`⚠️ Fallo al eliminar imagen: ${cloudinaryId} [${contexto}]`)
+          failedDeletions.push({ cloudinaryId, contexto, result: res.result })
+          console.warn(`⚠️ No se pudo eliminar: ${cloudinaryId} (${contexto})`)
         }
       } catch (err) {
-        failedDeletions.push({ cloudinaryId, context: contexto, error: err.message })
-        console.error(`❌ Error crítico eliminando imagen: ${cloudinaryId} [${contexto}]`, err.message)
+        failedDeletions.push({ cloudinaryId, contexto, error: err.message })
+        console.error(`❌ Error al eliminar: ${cloudinaryId} (${contexto})`, err.message)
       }
     }
 
-    // 🖼️ Eliminar imagen principal
+    // 🖼️ Imágenes principales
     if (Array.isArray(product.images)) {
       for (const img of product.images) {
-        if (img.cloudinaryId) {
-          await eliminarImagen(img.cloudinaryId, 'imagen principal')
-        }
+        if (img.cloudinaryId) await eliminarImagen(img.cloudinaryId, 'imagen principal')
       }
     }
 
-    // 🎨 Eliminar imágenes de variantes
+    // 🎨 Imágenes de variantes
     if (Array.isArray(product.variants)) {
-      for (const variant of product.variants) {
-        if (variant.cloudinaryId) {
-          await eliminarImagen(variant.cloudinaryId, 'imagen variante')
-        }
+      for (const v of product.variants) {
+        if (v.cloudinaryId) await eliminarImagen(v.cloudinaryId, 'variante')
       }
     }
 
-    // 🧽 Eliminar el producto de la base de datos
+    // 🧽 Eliminar producto de MongoDB
     await product.deleteOne()
 
-    console.log(`🗑️ Producto eliminado correctamente - ID: ${product._id}, Cloudinary eliminados: ${deletedCloudinaryIds.length}`)
-
-    return res.status(200).json({
+    const response = {
       message: '✅ Producto eliminado correctamente',
-      deletedCloudinaryIds,
-      ...(failedDeletions.length > 0 && { failedDeletions })
-    })
-  } catch (error) {
-    console.error('❌ Error al eliminar producto:', error)
+      productId: product._id,
+      deletedCloudinaryIds
+    }
+
+    if (failedDeletions.length > 0) {
+      response.failedDeletions = failedDeletions
+      response.warning = '⚠️ Algunas imágenes no se pudieron eliminar'
+    }
+
+    console.log(`🗑️ Producto eliminado: ${product.name} - ID: ${product._id}`)
+    return res.status(200).json(response)
+
+  } catch (err) {
+    console.error('❌ Error interno al eliminar producto:', err)
     return res.status(500).json({
       message: '❌ Error interno al eliminar producto',
-      error: error.message
+      error: err.message
     })
   }
 }

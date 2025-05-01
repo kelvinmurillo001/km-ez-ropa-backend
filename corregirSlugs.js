@@ -1,47 +1,50 @@
 // 📁 corregirSlugs.js
-
 import mongoose from 'mongoose'
 import dotenv from 'dotenv'
-import Product from './models/Product.js' // Ajusta el path si lo necesitas
+import Product from './models/Product.js'
 
-dotenv.config() // Carga variables de entorno
+dotenv.config()
+
+// 🧠 Generador de slug normalizado
+const generarSlug = (nombre = '') =>
+  nombre
+    .toLowerCase()
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // elimina tildes
+    .replace(/ñ/g, 'n') // reemplaza ñ
+    .replace(/\s+/g, '-') // espacios por guiones
+    .replace(/[^\w-]/g, '') // elimina símbolos
+    .substring(0, 100)
 
 async function corregirSlugs () {
   try {
     await mongoose.connect(process.env.MONGO_URI)
-    console.log('✅ Conectado a MongoDB')
+    console.log('✅ Conectado a MongoDB correctamente.')
 
-    const productos = await Product.find({})
-    console.log(`🔎 Se encontraron ${productos.length} productos.`)
+    const productos = await Product.find()
+    console.log(`🔍 Total productos encontrados: ${productos.length}`)
 
     let corregidos = 0
 
     for (const producto of productos) {
-      if (producto.name) {
-        // Generamos el nuevo slug con normalización correcta
-        const nuevoSlug = producto.name
-          .toLowerCase()
-          .trim()
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '')
-          .replace(/ñ/g, 'n')
-          .replace(/\s+/g, '-')
-          .replace(/[^\w-]/g, '')
-          .substring(0, 100)
+      if (!producto.name) continue
 
-        if (producto.slug !== nuevoSlug) {
-          console.log(`🔄 Corrigiendo slug: ${producto.slug} ➔ ${nuevoSlug}`)
-          producto.slug = nuevoSlug
-          await producto.save()
-          corregidos++
-        }
+      const slugEsperado = generarSlug(producto.name)
+
+      if (producto.slug !== slugEsperado) {
+        console.log(`🔄 Corrigiendo slug para: "${producto.name}"`)
+        console.log(`   📝 Anterior: ${producto.slug || '(vacío)'} ➡️ Nuevo: ${slugEsperado}`)
+        producto.slug = slugEsperado
+        await producto.save()
+        corregidos++
       }
     }
 
-    console.log(`🎯 Slugs corregidos: ${corregidos}`)
+    console.log(`✅ Proceso finalizado. Slugs corregidos: ${corregidos}/${productos.length}`)
     process.exit(0)
   } catch (error) {
-    console.error('❌ Error:', error)
+    console.error('❌ Error al corregir slugs:', error)
     process.exit(1)
   }
 }

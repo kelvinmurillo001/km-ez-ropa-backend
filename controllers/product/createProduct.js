@@ -1,4 +1,3 @@
-// 📁 backend/controllers/products/createProduct.js
 import Product from '../../models/Product.js'
 import { validationResult } from 'express-validator'
 
@@ -25,14 +24,14 @@ const createProduct = async (req, res) => {
       images = [],
       color = '',
       sizes = [],
-      stock, // ✅ stock general solo si no hay variantes
+      stock,
       createdBy
     } = req.body
 
-    // 📋 Validaciones obligatorias
+    // 📋 Validación obligatoria de campos clave
     if (
       !name?.trim() ||
-      !price ||
+      typeof price !== 'number' ||
       !category?.trim() ||
       !subcategory?.trim() ||
       !tallaTipo?.trim() ||
@@ -40,34 +39,29 @@ const createProduct = async (req, res) => {
       !Array.isArray(images) ||
       images.length !== 1
     ) {
-      console.warn('🛑 Faltan campos obligatorios para crear producto')
+      console.warn('🛑 Faltan campos obligatorios o están mal formateados.')
       return res.status(400).json({ message: '⚠️ Faltan campos obligatorios o formato inválido.' })
     }
 
-    // 🔍 Producto duplicado
+    // 🔍 Evitar duplicados por nombre + subcategoría
     const existe = await Product.findOne({
       name: name.trim(),
       subcategory: subcategory.trim().toLowerCase()
     })
 
     if (existe) {
-      console.warn(`🛑 Producto duplicado detectado: ${name} - ${subcategory}`)
       return res.status(409).json({
         message: '⚠️ Ya existe un producto con ese nombre y subcategoría.'
       })
     }
 
-    // ✅ Imagen principal
+    // ✅ Validar imagen principal
     const [mainImage] = images
     if (!mainImage.url || !mainImage.cloudinaryId || !mainImage.talla || !mainImage.color) {
       return res.status(400).json({ message: '⚠️ Imagen principal incompleta o inválida.' })
     }
 
-    // 🎯 Validar variantes
-    if (!Array.isArray(variants)) {
-      return res.status(400).json({ message: '⚠️ Formato inválido para variantes.' })
-    }
-
+    // 🔎 Validar variantes
     let stockGeneral = 0
 
     if (variants.length > 0) {
@@ -76,14 +70,15 @@ const createProduct = async (req, res) => {
       }
 
       const combinaciones = new Set()
+
       for (const v of variants) {
-        const talla = v.talla?.toLowerCase()?.trim()
-        const color = v.color?.toLowerCase()?.trim()
+        const talla = v.talla?.trim().toLowerCase()
+        const color = v.color?.trim().toLowerCase()
         const stock = v.stock
 
         if (!talla || !color || !v.imageUrl || !v.cloudinaryId || typeof stock !== 'number') {
           return res.status(400).json({
-            message: '⚠️ Cada variante debe tener talla, color, imagen, cloudinaryId y stock numérico.'
+            message: '⚠️ Cada variante debe tener talla, color, imagen, cloudinaryId y stock válido.'
           })
         }
 
@@ -97,7 +92,7 @@ const createProduct = async (req, res) => {
         combinaciones.add(clave)
       }
     } else {
-      // ✅ Validar stock general si NO hay variantes
+      // ☑️ Validar stock general si no hay variantes
       stockGeneral = parseInt(stock)
       if (isNaN(stockGeneral) || stockGeneral < 0) {
         return res.status(400).json({
@@ -106,9 +101,9 @@ const createProduct = async (req, res) => {
       }
     }
 
-    // 🎨 Normalizar tallas
+    // 🔠 Normalizar tallas
     const tallasLimpias = Array.isArray(sizes)
-      ? sizes.filter(s => typeof s === 'string' && s.trim().length > 0).map(s => s.trim().toUpperCase())
+      ? sizes.filter(t => typeof t === 'string' && t.trim()).map(t => t.trim().toUpperCase())
       : []
 
     // 📦 Crear producto
@@ -116,27 +111,29 @@ const createProduct = async (req, res) => {
       name: name.trim(),
       description: description.trim(),
       price,
-      category: category.toLowerCase().trim(),
-      subcategory: subcategory.toLowerCase().trim(),
-      tallaTipo: tallaTipo.toLowerCase().trim(),
+      category: category.trim().toLowerCase(),
+      subcategory: subcategory.trim().toLowerCase(),
+      tallaTipo: tallaTipo.trim().toLowerCase(),
       featured,
       variants,
-      stock: stockGeneral, // solo si no hay variantes
+      stock: variants.length === 0 ? stockGeneral : undefined,
       images,
-      color: color.trim(),
+      color: color.trim().toLowerCase(),
       sizes: tallasLimpias,
-      createdBy: createdBy.trim()
+      createdBy: createdBy.trim(),
+      isActive: true // ✅ Asegurar visibilidad
     })
 
     const saved = await producto.save()
+    console.log(`✅ Producto creado: ${saved.name} [${saved.category}/${saved.subcategory}]`)
 
-    console.log(`📦 Producto creado: ${name} - ${category}/${subcategory} por ${createdBy}`)
     return res.status(201).json(saved)
-  } catch (error) {
-    console.error('❌ Error al crear producto:', error)
+
+  } catch (err) {
+    console.error('❌ Error al crear producto:', err)
     return res.status(500).json({
       message: '❌ Error interno al crear producto',
-      error: error.message
+      error: err.message
     })
   }
 }

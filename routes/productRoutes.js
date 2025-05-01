@@ -23,34 +23,41 @@ import {
 
 const router = express.Router()
 
-/* -------------------------------------------------------------------------- */
-/* 📦 RUTAS DE PRODUCTOS                                                      */
-/* -------------------------------------------------------------------------- */
+/* ──────────────────────────────────────────────────────────────────────────── */
+/* 📦 RUTAS DE PRODUCTOS                                                       */
+/* ──────────────────────────────────────────────────────────────────────────── */
 
-/* ------------------------- 🔓 Rutas Públicas ------------------------------- */
+/* ------------------------- 🔓 Rutas Públicas -------------------------------- */
 
 /**
- * 📥 Obtener todos los productos (PÚBLICO)
+ * 📥 Obtener todos los productos (catálogo y panel público)
+ * Query params soportados:
+ * - nombre
+ * - categoria
+ * - subcategoria
+ * - precioMin / precioMax
+ * - featured
+ * - pagina / limite
  */
 router.get('/', getAllProducts)
 
 /**
- * 🔍 Obtener un producto por ID (PÚBLICO)
+ * 🔍 Obtener un producto por ID
+ * Público pero validado como ObjectId
  */
 router.get(
   '/:id',
-  [
-    param('id')
-      .isMongoId()
-      .withMessage('⚠️ ID de producto inválido')
-  ],
+  param('id')
+    .isMongoId()
+    .withMessage('⚠️ El ID proporcionado no es válido'),
   getProductById
 )
 
-/* ------------------------ 🔐 Rutas Protegidas ------------------------------ */
+/* ------------------------- 🔐 Rutas Privadas -------------------------------- */
 
 /**
- * ➕ Crear producto (SOLO ADMIN)
+ * ➕ Crear un nuevo producto
+ * Solo accesible por administradores autenticados
  */
 router.post(
   '/',
@@ -61,7 +68,8 @@ router.post(
 )
 
 /**
- * ✏️ Actualizar producto (SOLO ADMIN)
+ * ✏️ Actualizar producto por ID
+ * Solo admins autenticados
  */
 router.put(
   '/:id',
@@ -70,26 +78,23 @@ router.put(
   [
     param('id')
       .isMongoId()
-      .withMessage('⚠️ ID de producto inválido')
+      .withMessage('⚠️ El ID proporcionado no es válido')
   ],
   updateProductValidation,
   updateProduct
 )
 
 /**
- * 🗑️ Eliminar producto (SOLO ADMIN)
+ * 🗑️ Eliminar producto por ID (y sus imágenes)
  */
 router.delete(
   '/:id',
   authMiddleware,
   adminOnly,
-  [
-    param('id')
-      .isMongoId()
-      .withMessage('⚠️ ID inválido')
-  ],
+  param('id')
+    .isMongoId()
+    .withMessage('⚠️ ID inválido'),
   deleteProduct
 )
 
-// 🚀 Exportar router
 export default router

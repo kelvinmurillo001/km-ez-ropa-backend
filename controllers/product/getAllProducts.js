@@ -1,8 +1,7 @@
-// backend/controllers/product/getAllProducts.js
 import Product from '../../models/Product.js'
 
 /**
- * 📥 Obtener todos los productos (para catálogo o panel) con filtros + paginación
+ * 📥 Obtener productos con filtros avanzados y stock real
  */
 const getAllProducts = async (req, res) => {
   try {
@@ -17,12 +16,13 @@ const getAllProducts = async (req, res) => {
       limite = 12
     } = req.query
 
-    // Filtro base sin validar stock todavía
+    // 🧹 Filtro base
     const filtro = {
       isActive: true,
       price: { $exists: true, $gt: 0 }
     }
 
+    // 🎯 Filtros dinámicos
     if (nombre.trim()) {
       filtro.name = { $regex: new RegExp(nombre.trim(), 'i') }
     }
@@ -39,6 +39,7 @@ const getAllProducts = async (req, res) => {
       filtro.featured = true
     }
 
+    // 💲 Filtro de rango de precios
     const min = parseFloat(precioMin)
     const max = parseFloat(precioMax)
     if (!isNaN(min) || !isNaN(max)) {
@@ -47,39 +48,38 @@ const getAllProducts = async (req, res) => {
       if (!isNaN(max)) filtro.price.$lte = max
     }
 
-    const page = Math.max(parseInt(pagina), 1)
-    const limit = Math.min(Math.max(parseInt(limite), 1), 50)
+    // 📄 Paginación segura
+    const page = Math.max(parseInt(pagina) || 1, 1)
+    const limit = Math.min(Math.max(parseInt(limite) || 12, 1), 50)
     const skip = (page - 1) * limit
 
-    // Obtener productos base sin filtrar por stock
-    const [productosSinFiltrar, totalBruto] = await Promise.all([
-      Product.find(filtro)
-        .sort({ createdAt: -1 })
-        .lean(),
+    // ⚙️ Obtener todos los productos antes de filtrar por stock
+    const [productosSinStock, totalBruto] = await Promise.all([
+      Product.find(filtro).sort({ createdAt: -1 }).lean(),
       Product.countDocuments(filtro)
     ])
 
-    // Filtrar por stock total real (principal + variantes activas)
-    const productosConStock = productosSinFiltrar
+    // 🔎 Calcular stock total (base + variantes activas)
+    const productosConStock = productosSinStock
       .map(p => {
-        const stockPrincipal = typeof p.stock === 'number' ? p.stock : 0
+        const stockBase = typeof p.stock === 'number' ? p.stock : 0
         const stockVariantes = Array.isArray(p.variants)
           ? p.variants
-              .filter(v => v.activo !== false)
-              .reduce((total, v) => total + (v.stock || 0), 0)
+              .filter(v => v?.activo !== false)
+              .reduce((acc, v) => acc + (v.stock || 0), 0)
           : 0
 
-        const stockTotal = stockPrincipal + stockVariantes
+        const stockTotal = stockBase + stockVariantes
         return { ...p, stockTotal }
       })
       .filter(p => p.stockTotal > 0)
 
-    // Paginación manual después del filtrado
+    // 🔁 Paginación post-filtrado
     const total = productosConStock.length
     const totalPaginas = Math.ceil(total / limit)
     const productosPaginados = productosConStock.slice(skip, skip + limit)
 
-    console.log(`📦 Productos válidos con stock: ${productosPaginados.length} | Total: ${total}`)
+    console.log(`📦 Productos válidos con stock: ${productosPaginados.length} de ${totalBruto} encontrados (total: ${total})`)
 
     return res.status(200).json({
       productos: productosPaginados,

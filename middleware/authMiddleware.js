@@ -3,21 +3,23 @@ import jwt from 'jsonwebtoken'
 import User from '../models/User.js'
 
 /**
- * 🔐 Middleware: Verifica autenticación mediante JWT
+ * 🔐 Middleware: Verifica autenticación de usuarios mediante JWT
  */
 const authMiddleware = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization
 
-    // 📛 Encabezado faltante o incorrecto
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // 📛 Verificar encabezado de autorización
+    if (!authHeader?.startsWith('Bearer ')) {
       return res.status(401).json({
         ok: false,
         message: '🔐 Acceso denegado. Token no proporcionado o mal formado.'
       })
     }
 
+    // 📦 Extraer token
     const token = authHeader.split(' ')[1]?.trim()
+
     if (!token || token.length < 10) {
       return res.status(401).json({
         ok: false,
@@ -25,7 +27,7 @@ const authMiddleware = async (req, res, next) => {
       })
     }
 
-    // 🔍 Verificar JWT
+    // 🔍 Verificar validez del token
     let decoded
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET)
@@ -37,16 +39,16 @@ const authMiddleware = async (req, res, next) => {
       })
     }
 
-    // 🧑‍💼 Buscar usuario
+    // 👤 Buscar usuario asociado
     const user = await User.findById(decoded.id).select('-password')
     if (!user) {
       return res.status(401).json({
         ok: false,
-        message: '🚫 Usuario no encontrado. Es posible que haya sido eliminado.'
+        message: '🚫 Usuario no encontrado o eliminado del sistema.'
       })
     }
 
-    // ✅ Usuario verificado
+    // ✅ Autenticación exitosa
     req.user = user
     next()
   } catch (error) {
