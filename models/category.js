@@ -13,16 +13,21 @@ const categorySchema = new mongoose.Schema(
       minlength: [2, '⚠️ El nombre debe tener al menos 2 caracteres'],
       maxlength: [50, '⚠️ El nombre no debe superar los 50 caracteres']
     },
+
     subcategories: {
       type: [String],
       default: [],
       validate: {
-        validator: (arr) => arr.every(sub => typeof sub === 'string' && sub.trim().length >= 2),
-        message: '⚠️ Cada subcategoría debe ser una cadena válida de al menos 2 caracteres'
+        validator: arr =>
+          Array.isArray(arr) &&
+          arr.every(sub => typeof sub === 'string' && sub.trim().length >= 2),
+        message: '⚠️ Cada subcategoría debe ser un texto válido de al menos 2 caracteres'
       },
-      set: (arr) => arr.map(sub => sub.trim().toLowerCase())
+      set: arr =>
+        arr.map(sub => sub.trim().toLowerCase()) // 🧼 Normalizar
     }
-    // 🧩 Futuras mejoras (comentadas para desarrollo futuro):
+
+    // 🔮 Futuras mejoras (activar cuando se necesiten)
     // icon: { type: String, trim: true },
     // isActive: { type: Boolean, default: true }
   },
@@ -31,15 +36,15 @@ const categorySchema = new mongoose.Schema(
   }
 )
 
-// 🔍 Índice único insensible a mayúsculas/minúsculas (strength:2)
+// 🔍 Índice sensible a minúsculas y acentos para unicidad
 categorySchema.index(
   { name: 1 },
   {
     unique: true,
-    collation: { locale: 'es', strength: 2 }
+    collation: { locale: 'es', strength: 2 } // fuerza 2 ignora acentos y mayúsculas
   }
 )
 
-// 🚀 Exportar el modelo
+// 🚀 Exportar modelo
 const Category = mongoose.model('Category', categorySchema)
 export default Category

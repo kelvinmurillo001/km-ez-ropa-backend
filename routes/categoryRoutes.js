@@ -1,6 +1,6 @@
 // 📁 routes/categoryRoutes.js
-import express from 'express'
-import { body, param } from 'express-validator'
+import express from 'express';
+import { body, param } from 'express-validator';
 
 // 📦 Controladores
 import {
@@ -9,13 +9,13 @@ import {
   addSubcategory,
   deleteCategory,
   deleteSubcategory
-} from '../controllers/categoryController.js'
+} from '../controllers/categoryController.js';
 
 // 🛡️ Middlewares
-import authMiddleware from '../middleware/authMiddleware.js'
-import adminOnly from '../middleware/adminOnly.js'
+import authMiddleware from '../middleware/authMiddleware.js';
+import adminOnly from '../middleware/adminOnly.js';
 
-const router = express.Router()
+const router = express.Router();
 
 /* -------------------------------------------------------------------------- */
 /* 🗂️ RUTAS DE CATEGORÍAS                                                    */
@@ -23,11 +23,16 @@ const router = express.Router()
 
 /**
  * 📥 Obtener todas las categorías (PÚBLICO)
+ * Devuelve un array de objetos con:
+ *   - _id
+ *   - nombre
+ *   - subcategorias: []
  */
-router.get('/', getAllCategories)
+router.get('/', getAllCategories);
 
 /**
  * ➕ Crear nueva categoría (SOLO ADMIN)
+ * Body: { name: String, subcategory?: String }
  */
 router.post(
   '/',
@@ -52,10 +57,12 @@ router.post(
       .withMessage('⚠️ La subcategoría debe tener al menos 2 caracteres')
   ],
   createCategory
-)
+);
 
 /**
  * ➕ Agregar subcategoría (SOLO ADMIN)
+ * Param: categoryId
+ * Body: { subcategory: String }
  */
 router.post(
   '/:categoryId/subcategories',
@@ -75,10 +82,11 @@ router.post(
       .withMessage('⚠️ La subcategoría debe tener al menos 2 caracteres')
   ],
   addSubcategory
-)
+);
 
 /**
  * 🗑️ Eliminar categoría completa (SOLO ADMIN)
+ * Param: id
  */
 router.delete(
   '/:id',
@@ -90,10 +98,11 @@ router.delete(
       .withMessage('⚠️ ID inválido')
   ],
   deleteCategory
-)
+);
 
 /**
- * 🗑️ Eliminar subcategoría de una categoría (SOLO ADMIN)
+ * 🗑️ Eliminar subcategoría específica de una categoría (SOLO ADMIN)
+ * Param: categoryId, subcategory
  */
 router.delete(
   '/:categoryId/subcategories/:subcategory',
@@ -111,7 +120,7 @@ router.delete(
       .withMessage('⚠️ Subcategoría requerida')
   ],
   deleteSubcategory
-)
+);
 
 // 🚀 Exportar router
-export default router
+export default router;
