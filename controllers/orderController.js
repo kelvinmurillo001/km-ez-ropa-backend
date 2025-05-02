@@ -8,6 +8,9 @@ import crypto from 'crypto'
  */
 export const createOrder = async (req, res) => {
   try {
+    console.log("📦 Datos recibidos en createOrder:");
+    console.dir(req.body, { depth: null });
+
     const {
       items,
       total,
@@ -33,7 +36,7 @@ export const createOrder = async (req, res) => {
       return res.status(400).json({ ok: false, message: '⚠️ Total inválido.' })
     }
 
-    if (email && !/^\S+@\S+\.\S+$/.test(email)) {
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
       return res.status(400).json({ ok: false, message: '⚠️ Email inválido.' })
     }
 
@@ -89,7 +92,6 @@ export const createOrder = async (req, res) => {
         { new: true }
       )
 
-      // Si se agota el stock, desactiva la variante
       if (producto) {
         const variante = producto.variants.find(v => v.talla === item.talla.toLowerCase())
         if (variante && variante.stock <= 0) {
@@ -108,7 +110,8 @@ export const createOrder = async (req, res) => {
       data: newOrder
     })
   } catch (error) {
-    console.error('❌ Error creando pedido:', error)
+    console.error("❌ Error creando pedido:", error);
+    console.error("❌ Stack trace:", error.stack);
     return res.status(500).json({ ok: false, message: '❌ Error interno creando el pedido.', error: error.message })
   }
 }
