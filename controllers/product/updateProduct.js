@@ -77,7 +77,7 @@ const updateProduct = async (req, res) => {
 
       const seen = new Set()
 
-      // 🔁 Borrar variantes antiguas
+      // 🔁 Borrar variantes anteriores del Cloudinary
       for (const v of product.variants) {
         if (v.cloudinaryId) await cloudinary.uploader.destroy(v.cloudinaryId)
       }
@@ -105,7 +105,7 @@ const updateProduct = async (req, res) => {
           imageUrl: v.imageUrl.trim(),
           cloudinaryId: v.cloudinaryId.trim(),
           stock: v.stock,
-          activo: v.activo !== false
+          activo: v.activo !== false // activo es true por defecto
         })
       }
     }
@@ -124,11 +124,11 @@ const updateProduct = async (req, res) => {
     product.images = processedImages
     product.variants = processedVariants
 
-    // =============== 🧮 Stock ===============
+    // =============== 🧮 Stock lógico ===============
     if (processedVariants.length === 0) {
       product.stock = typeof stock === 'number' && stock >= 0 ? stock : 0
     } else {
-      product.stock = undefined
+      product.stock = undefined // evita duplicidad
     }
 
     await product.save()
