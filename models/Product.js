@@ -97,6 +97,10 @@ const productSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  isDraft: {
+    type: Boolean,
+    default: false
+  },
   images: {
     type: [{
       url: {
@@ -178,7 +182,7 @@ const productSchema = new mongoose.Schema({
   }
 }, { timestamps: true })
 
-// ✅ Virtual: stockTotal (sumar variantes o usar stock base)
+// ✅ Virtual: stockTotal
 productSchema.virtual('stockTotal').get(function () {
   if (this.variants?.length > 0) {
     return this.variants.reduce((sum, v) => sum + (v.stock || 0), 0)
@@ -189,7 +193,7 @@ productSchema.virtual('stockTotal').get(function () {
 productSchema.set('toJSON', { virtuals: true })
 productSchema.set('toObject', { virtuals: true })
 
-// 🧠 Hook para generar slug y metadescripción si no existen
+// 🧠 Hook pre-save
 productSchema.pre('save', function (next) {
   if (!this.slug && this.name) {
     const normalized = this.name
@@ -211,7 +215,7 @@ productSchema.pre('save', function (next) {
   next()
 })
 
-// 🧠 Índices para búsquedas eficientes
+// 🧠 Índices
 productSchema.index({ name: 1, category: 1, subcategory: 1 }, { background: true })
 productSchema.index({ category: 1, subcategory: 1, tallaTipo: 1 })
 
