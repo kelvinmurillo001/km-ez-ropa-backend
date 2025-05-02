@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from 'mongoose'
 
 // ✅ Subesquema para variantes
 const variantSchema = new mongoose.Schema({
@@ -34,7 +34,7 @@ const variantSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   }
-}, { _id: false });
+}, { _id: false })
 
 // ✅ Esquema principal del producto
 const productSchema = new mongoose.Schema({
@@ -141,13 +141,13 @@ const productSchema = new mongoose.Schema({
       },
       {
         validator: function (val) {
-          const seen = new Set();
+          const seen = new Set()
           for (const v of val) {
-            const key = `${v.talla}-${v.color}`;
-            if (seen.has(key)) return false;
-            seen.add(key);
+            const key = `${v.talla}-${v.color}`
+            if (seen.has(key)) return false
+            seen.add(key)
           }
-          return true;
+          return true
         },
         message: '⚠️ No puede haber variantes duplicadas (talla + color)'
       }
@@ -180,18 +180,18 @@ const productSchema = new mongoose.Schema({
     trim: true,
     maxlength: 160
   }
-}, { timestamps: true });
+}, { timestamps: true })
 
 // ✅ Virtual: stockTotal
 productSchema.virtual('stockTotal').get(function () {
   if (this.variants?.length > 0) {
-    return this.variants.reduce((sum, v) => sum + (v.stock || 0), 0);
+    return this.variants.reduce((sum, v) => sum + (v.stock || 0), 0)
   }
-  return this.stock || 0;
-});
+  return this.stock || 0
+})
 
-productSchema.set('toJSON', { virtuals: true });
-productSchema.set('toObject', { virtuals: true });
+productSchema.set('toJSON', { virtuals: true })
+productSchema.set('toObject', { virtuals: true })
 
 // 🧠 Hook pre-save
 productSchema.pre('save', function (next) {
@@ -204,21 +204,21 @@ productSchema.pre('save', function (next) {
       .replace(/ñ/g, 'n')
       .replace(/\s+/g, '-')
       .replace(/[^\w-]/g, '')
-      .substring(0, 100);
-    this.slug = normalized;
+      .substring(0, 100)
+    this.slug = normalized
   }
 
   if (!this.metaDescription && this.name && this.category) {
-    this.metaDescription = `Compra ${this.name} en nuestra sección de ${this.category}. ¡Calidad garantizada en KM & EZ ROPA!`;
+    this.metaDescription = `Compra ${this.name} en nuestra sección de ${this.category}. ¡Calidad garantizada en KM & EZ ROPA!`
   }
 
-  next();
-});
+  next()
+})
 
 // 🧠 Índices
-productSchema.index({ name: 1, category: 1, subcategory: 1 }, { background: true });
-productSchema.index({ category: 1, subcategory: 1, tallaTipo: 1 });
+productSchema.index({ name: 1, category: 1, subcategory: 1 }, { background: true })
+productSchema.index({ category: 1, subcategory: 1, tallaTipo: 1 })
 
 // 🚀 Exportar modelo
-const Product = mongoose.model('Product', productSchema);
-export default Product;
+const Product = mongoose.model('Product', productSchema)
+export default Product

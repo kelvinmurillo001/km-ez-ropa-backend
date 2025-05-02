@@ -89,7 +89,7 @@ export const createOrderValidation = [
     .optional()
     .isObject()
     .withMessage('⚠️ Datos de factura inválidos.'),
-  
+
   body('factura.razonSocial')
     .optional()
     .isString()
