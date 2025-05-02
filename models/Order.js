@@ -1,4 +1,3 @@
-// 📁 backend/models/Order.js
 import mongoose from 'mongoose'
 
 // 📦 Subesquema de ítems del pedido
@@ -29,6 +28,31 @@ const orderItemSchema = new mongoose.Schema(
       type: Number,
       required: true,
       min: [0, '⚠️ El precio no puede ser negativo']
+    }
+  },
+  { _id: false }
+)
+
+// 🧾 Subesquema de Factura
+const facturaSchema = new mongoose.Schema(
+  {
+    razonSocial: {
+      type: String,
+      trim: true,
+      minlength: 2,
+      maxlength: 100
+    },
+    ruc: {
+      type: String,
+      trim: true,
+      minlength: 8,
+      maxlength: 20
+    },
+    email: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, '⚠️ Email de facturación inválido']
     }
   },
   { _id: false }
@@ -78,7 +102,7 @@ const orderSchema = new mongoose.Schema(
     },
     estado: {
       type: String,
-      enum: ['pendiente', 'en_proceso', 'enviado', 'cancelado'],
+      enum: ['pendiente', 'en_proceso', 'enviado', 'cancelado', 'pagado'],
       default: 'pendiente'
     },
     direccion: {
@@ -88,7 +112,7 @@ const orderSchema = new mongoose.Schema(
     },
     metodoPago: {
       type: String,
-      enum: ['efectivo', 'tarjeta', 'paypal'],
+      enum: ['efectivo', 'tarjeta', 'paypal', 'transferencia'],
       default: 'efectivo'
     },
     seguimiento: {
@@ -101,6 +125,10 @@ const orderSchema = new mongoose.Schema(
       trim: true,
       unique: true,
       sparse: true
+    },
+    factura: {
+      type: facturaSchema,
+      default: {}
     }
   },
   {

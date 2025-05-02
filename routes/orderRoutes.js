@@ -8,14 +8,14 @@ import {
   actualizarEstadoPedido,
   getOrderStats,
   trackOrder,
-  deleteOrder // ✅ Importado
+  deleteOrder
 } from '../controllers/orderController.js'
 
 // 🛡️ Middlewares
 import authMiddleware from '../middleware/authMiddleware.js'
 import adminOnly from '../middleware/adminOnly.js'
 
-// ✅ Validaciones centralizadas
+// ✅ Validaciones
 import {
   createOrderValidation,
   updateOrderStatusValidation
@@ -83,7 +83,7 @@ router.get(
 )
 
 /**
- * 📊 Alias de estadísticas de ventas (SOLO ADMIN)
+ * 📊 Alias para resumen de ventas
  */
 router.get(
   '/stats/ventas',
@@ -93,7 +93,7 @@ router.get(
 )
 
 /**
- * 🔎 Seguimiento de pedido (PÚBLICO) con validación de código
+ * 🔎 Seguimiento de pedido por código (PÚBLICO)
  */
 router.get(
   '/track/:codigo',

@@ -41,6 +41,7 @@ export const createOrder = async (req, res) => {
       return res.status(400).json({ ok: false, message: '⚠️ Teléfono inválido.' })
     }
 
+    // Validar productos y stock
     for (const item of items) {
       if (!item.talla) {
         return res.status(400).json({ ok: false, message: `⚠️ Talla requerida en producto: ${item.name}` })
@@ -61,6 +62,7 @@ export const createOrder = async (req, res) => {
       }
     }
 
+    // Generar código único de seguimiento
     const codigoSeguimiento = crypto.randomBytes(6).toString('hex').toUpperCase()
 
     const newOrder = new Order({
@@ -72,13 +74,18 @@ export const createOrder = async (req, res) => {
       direccion: direccion?.trim() || '',
       metodoPago: metodoPago?.trim().toLowerCase() || 'efectivo',
       nota: nota?.trim() || '',
-      factura: typeof factura === 'object' ? factura : {},
+      factura: {
+        razonSocial: factura?.razonSocial?.trim() || '',
+        ruc: factura?.ruc?.trim() || '',
+        email: factura?.email?.trim()?.toLowerCase() || ''
+      },
       estado: metodoPago?.toLowerCase() === 'transferencia' ? 'pendiente' : 'pagado',
       codigoSeguimiento
     })
 
     await newOrder.save()
 
+    // Actualizar stock por variante
     for (const item of items) {
       const producto = await Product.findOneAndUpdate(
         { _id: item.productId, 'variants.talla': item.talla.toLowerCase() },
@@ -86,6 +93,7 @@ export const createOrder = async (req, res) => {
         { new: true }
       )
 
+      // Si se agota el stock, desactiva la variante
       if (producto) {
         const variante = producto.variants.find(v => v.talla === item.talla.toLowerCase())
         if (variante && variante.stock <= 0) {
@@ -106,139 +114,5 @@ export const createOrder = async (req, res) => {
   } catch (error) {
     console.error('❌ Error creando pedido:', error)
     return res.status(500).json({ ok: false, message: '❌ Error interno creando el pedido.', error: error.message })
-  }
-}
-
-/**
- * 📋 Obtener todos los pedidos (admin)
- */
-export const getOrders = async (req, res) => {
-  try {
-    const orders = await Order.find().sort({ createdAt: -1 })
-    return res.status(200).json({ ok: true, message: '✅ Pedidos cargados correctamente', data: orders })
-  } catch (error) {
-    return res.status(500).json({ ok: false, message: '❌ Error obteniendo pedidos.', error: error.message })
-  }
-}
-
-/**
- * 🔄 Actualizar estado de un pedido (admin)
- */
-export const actualizarEstadoPedido = async (req, res) => {
-  try {
-    const { id } = req.params
-    const { estado } = req.body
-    const estadosValidos = ['pendiente', 'en_proceso', 'enviado', 'cancelado']
-
-    if (!estadosValidos.includes(estado)) {
-      return res.status(400).json({ ok: false, message: '⚠️ Estado no válido.' })
-    }
-
-    const pedido = await Order.findById(id)
-    if (!pedido) {
-      return res.status(404).json({ ok: false, message: '❌ Pedido no encontrado.' })
-    }
-
-    pedido.estado = estado
-    await pedido.save()
-
-    await sendNotification({
-      nombreCliente: pedido.nombreCliente,
-      telefono: pedido.telefono,
-      email: pedido.email,
-      estadoActual: pedido.estado
-    })
-
-    return res.status(200).json({ ok: true, message: '✅ Estado actualizado', data: pedido })
-  } catch (error) {
-    return res.status(500).json({ ok: false, message: '❌ Error actualizando estado.', error: error.message })
-  }
-}
-
-/**
- * 📈 Obtener estadísticas de pedidos
- */
-export const getOrderStats = async (req, res) => {
-  try {
-    const pedidos = await Order.find()
-    const hoy = new Date().setHours(0, 0, 0, 0)
-
-    const resumen = {
-      total: pedidos.length,
-      pendiente: 0,
-      en_proceso: 0,
-      enviado: 0,
-      cancelado: 0,
-      hoy: 0,
-      ventasTotales: 0
-    }
-
-    for (const p of pedidos) {
-      const estado = p.estado || 'pendiente'
-      if (resumen[estado] !== undefined) resumen[estado]++
-      if (estado === 'enviado') resumen.ventasTotales += parseFloat(p.total || 0)
-
-      const fecha = new Date(p.createdAt).setHours(0, 0, 0, 0)
-      if (fecha === hoy) resumen.hoy++
-    }
-
-    resumen.ventasTotales = Number(resumen.ventasTotales.toFixed(2))
-
-    return res.status(200).json({ ok: true, message: '✅ Estadísticas generadas', data: resumen })
-  } catch (error) {
-    return res.status(500).json({ ok: false, message: '❌ Error generando estadísticas.', error: error.message })
-  }
-}
-
-/**
- * 🔎 Seguimiento de pedido (público)
- */
-export const trackOrder = async (req, res) => {
-  try {
-    const { codigo } = req.params
-    const pedido = await Order.findOne({ codigoSeguimiento: codigo })
-
-    if (!pedido) {
-      return res.status(404).json({ ok: false, message: '❌ Pedido no encontrado.' })
-    }
-
-    return res.status(200).json({
-      ok: true,
-      message: '✅ Pedido encontrado',
-      estadoActual: pedido.estado,
-      resumen: {
-        nombre: pedido.nombreCliente,
-        direccion: pedido.direccion,
-        metodoPago: pedido.metodoPago,
-        total: pedido.total
-      }
-    })
-  } catch (error) {
-    return res.status(500).json({ ok: false, message: '❌ Error buscando pedido.', error: error.message })
-  }
-}
-
-/**
- * 🗑️ Eliminar pedido (admin)
- */
-export const deleteOrder = async (req, res) => {
-  try {
-    const { id } = req.params
-
-    const pedido = await Order.findById(id)
-    if (!pedido) {
-      return res.status(404).json({ ok: false, message: '❌ Pedido no encontrado.' })
-    }
-
-    await Order.findByIdAndDelete(id)
-
-    return res.status(200).json({
-      ok: true,
-      message: '✅ Pedido eliminado correctamente.',
-      idEliminado: id
-    })
-  } catch (error) {
-    console.error('❌ Error eliminando pedido:', error)
-    return res.status(500).json({ ok: false, message: '❌ Error eliminando pedido.', error: error.message })
   }
 }

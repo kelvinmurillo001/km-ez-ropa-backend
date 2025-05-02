@@ -10,6 +10,29 @@ export const createOrderValidation = [
     .isArray({ min: 1 })
     .withMessage('⚠️ El pedido debe contener al menos un producto.'),
 
+  body('items.*.productId')
+    .isMongoId()
+    .withMessage('⚠️ ID de producto inválido.'),
+
+  body('items.*.name')
+    .isString()
+    .trim()
+    .isLength({ min: 2 })
+    .withMessage('⚠️ Nombre del producto inválido.'),
+
+  body('items.*.talla')
+    .isString()
+    .trim()
+    .withMessage('⚠️ Talla del producto inválida.'),
+
+  body('items.*.cantidad')
+    .isInt({ min: 1 })
+    .withMessage('⚠️ Cantidad debe ser al menos 1.'),
+
+  body('items.*.precio')
+    .isFloat({ min: 0 })
+    .withMessage('⚠️ Precio inválido.'),
+
   body('total')
     .isFloat({ min: 0.01 })
     .withMessage('⚠️ El total debe ser un número mayor a 0.'),
@@ -19,19 +42,19 @@ export const createOrderValidation = [
     .escape()
     .notEmpty()
     .withMessage('⚠️ El nombre del cliente es obligatorio.')
-    .isLength({ min: 2 })
-    .withMessage('⚠️ Mínimo 2 caracteres.'),
+    .isLength({ min: 2, max: 100 })
+    .withMessage('⚠️ El nombre debe tener entre 2 y 100 caracteres.'),
 
   body('email')
-    .optional()
+    .notEmpty()
+    .withMessage('⚠️ Email es obligatorio.')
     .isEmail()
     .withMessage('⚠️ Email inválido.')
     .normalizeEmail(),
 
   body('telefono')
-    .optional()
+    .notEmpty()
     .isString()
-    .withMessage('⚠️ El teléfono debe ser texto.')
     .isLength({ min: 7, max: 20 })
     .withMessage('⚠️ Teléfono inválido.'),
 
@@ -40,40 +63,50 @@ export const createOrderValidation = [
     .trim()
     .escape()
     .isString()
-    .withMessage('⚠️ La nota debe ser texto válido.')
     .isLength({ max: 300 })
     .withMessage('⚠️ Nota demasiado larga.'),
 
   body('direccion')
-    .optional()
-    .trim()
-    .escape()
+    .notEmpty()
+    .withMessage('⚠️ Dirección es obligatoria.')
     .isString()
-    .withMessage('⚠️ Dirección inválida.')
     .isLength({ min: 5, max: 300 })
     .withMessage('⚠️ Dirección muy corta o muy larga.'),
 
   body('metodoPago')
-    .optional()
-    .trim()
-    .escape()
+    .notEmpty()
     .isString()
-    .withMessage('⚠️ Método de pago inválido.')
-    .isLength({ min: 3, max: 50 })
+    .isIn(['efectivo', 'tarjeta', 'paypal', 'transferencia'])
     .withMessage('⚠️ Método de pago inválido.'),
 
   body('estado')
     .optional()
-    .trim()
-    .escape()
     .isString()
-    .isLength({ min: 3, max: 20 })
+    .isIn(['pendiente', 'en_proceso', 'enviado', 'cancelado', 'pagado'])
     .withMessage('⚠️ Estado inválido.'),
 
   body('factura')
     .optional()
     .isObject()
-    .withMessage('⚠️ Datos de factura inválidos.')
+    .withMessage('⚠️ Datos de factura inválidos.'),
+  
+  body('factura.razonSocial')
+    .optional()
+    .isString()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('⚠️ Razón social inválida.'),
+
+  body('factura.ruc')
+    .optional()
+    .isString()
+    .isLength({ min: 8, max: 20 })
+    .withMessage('⚠️ RUC o cédula inválido.'),
+
+  body('factura.email')
+    .optional()
+    .isEmail()
+    .withMessage('⚠️ Email de facturación inválido.')
+    .normalizeEmail()
 ]
 
 /**
@@ -89,6 +122,6 @@ export const updateOrderStatusValidation = [
     .escape()
     .notEmpty()
     .withMessage('⚠️ El estado es obligatorio.')
-    .isIn(['pendiente', 'en_proceso', 'enviado', 'cancelado'])
+    .isIn(['pendiente', 'en_proceso', 'enviado', 'cancelado', 'pagado'])
     .withMessage('⚠️ Estado no válido.')
 ]
