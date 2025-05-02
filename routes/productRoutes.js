@@ -23,41 +23,32 @@ import {
 
 const router = express.Router()
 
-/* ──────────────────────────────────────────────────────────────────────────── */
-/* 📦 RUTAS DE PRODUCTOS                                                       */
-/* ──────────────────────────────────────────────────────────────────────────── */
+/* -------------------------------------------------------------------------- */
+/* 📦 RUTAS DE PRODUCTOS                                                      */
+/* -------------------------------------------------------------------------- */
 
-/* ------------------------- 🔓 Rutas Públicas -------------------------------- */
+/* ------------------------- 🔓 Rutas Públicas ------------------------------- */
 
 /**
- * 📥 Obtener todos los productos (catálogo y panel público)
- * Query params soportados:
- * - nombre
- * - categoria
- * - subcategoria
- * - precioMin / precioMax
- * - featured
- * - pagina / limite
+ * 📥 Obtener todos los productos (catálogo público o panel)
+ * Query: nombre, categoria, subcategoria, precioMin, precioMax, featured, pagina, limite
  */
 router.get('/', getAllProducts)
 
 /**
- * 🔍 Obtener un producto por ID
- * Público pero validado como ObjectId
+ * 🔍 Obtener producto por ID (validación segura)
  */
 router.get(
   '/:id',
   param('id')
-    .isMongoId()
-    .withMessage('⚠️ El ID proporcionado no es válido'),
+    .isMongoId().withMessage('⚠️ El ID proporcionado no es válido'),
   getProductById
 )
 
-/* ------------------------- 🔐 Rutas Privadas -------------------------------- */
+/* ------------------------- 🔐 Rutas Privadas (Solo Admin) ------------------ */
 
 /**
- * ➕ Crear un nuevo producto
- * Solo accesible por administradores autenticados
+ * ➕ Crear producto
  */
 router.post(
   '/',
@@ -69,7 +60,6 @@ router.post(
 
 /**
  * ✏️ Actualizar producto por ID
- * Solo admins autenticados
  */
 router.put(
   '/:id',
@@ -77,23 +67,21 @@ router.put(
   adminOnly,
   [
     param('id')
-      .isMongoId()
-      .withMessage('⚠️ El ID proporcionado no es válido')
+      .isMongoId().withMessage('⚠️ El ID proporcionado no es válido'),
+    ...updateProductValidation
   ],
-  updateProductValidation,
   updateProduct
 )
 
 /**
- * 🗑️ Eliminar producto por ID (y sus imágenes)
+ * 🗑️ Eliminar producto por ID
  */
 router.delete(
   '/:id',
   authMiddleware,
   adminOnly,
   param('id')
-    .isMongoId()
-    .withMessage('⚠️ ID inválido'),
+    .isMongoId().withMessage('⚠️ ID inválido'),
   deleteProduct
 )
 

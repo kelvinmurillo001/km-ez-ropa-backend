@@ -1,11 +1,13 @@
+// 📁 backend/validators/productValidator.js
 import { body } from 'express-validator'
 
-/**
- * 🔐 Validaciones compartidas
- */
+/* -------------------------------------------------------------------------- */
+/* 🔐 Reglas Comunes para Imagen Principal                                    */
+/* -------------------------------------------------------------------------- */
 const imagenPrincipalRules = [
   body('images')
-    .isArray({ min: 1, max: 1 }).withMessage('⚠️ Debes enviar una imagen principal (array con 1 objeto).'),
+    .isArray({ min: 1, max: 1 })
+    .withMessage('⚠️ Debes enviar una imagen principal (array con 1 objeto).'),
 
   body('images.*.url')
     .notEmpty().withMessage('⚠️ La imagen principal necesita una URL válida.'),
@@ -20,10 +22,14 @@ const imagenPrincipalRules = [
     .notEmpty().withMessage('⚠️ El color de la imagen es obligatorio.')
 ]
 
+/* -------------------------------------------------------------------------- */
+/* 🎨 Reglas Comunes para Variantes                                           */
+/* -------------------------------------------------------------------------- */
 const variantesRules = [
   body('variants')
     .optional()
-    .isArray({ max: 4 }).withMessage('⚠️ Máximo 4 variantes permitidas.'),
+    .isArray({ max: 4 })
+    .withMessage('⚠️ Máximo 4 variantes permitidas.'),
 
   body('variants.*.talla')
     .optional()
@@ -43,12 +49,13 @@ const variantesRules = [
 
   body('variants.*.stock')
     .optional()
-    .isInt({ min: 0 }).withMessage('⚠️ El stock de cada variante debe ser un número entero ≥ 0.')
+    .isInt({ min: 0 })
+    .withMessage('⚠️ El stock de la variante debe ser un número entero ≥ 0.')
 ]
 
-/**
- * ➕ Validaciones para crear producto
- */
+/* -------------------------------------------------------------------------- */
+/* 🆕 Validaciones para CREAR un Producto                                     */
+/* -------------------------------------------------------------------------- */
 export const createProductValidation = [
   body('name')
     .notEmpty().withMessage('⚠️ El nombre del producto es obligatorio.')
@@ -72,7 +79,7 @@ export const createProductValidation = [
 
   body('sizes')
     .optional()
-    .isArray().withMessage('⚠️ El campo sizes debe ser un arreglo de tallas.'),
+    .isArray().withMessage('⚠️ El campo sizes debe ser un arreglo.'),
 
   body('stock')
     .optional()
@@ -90,9 +97,9 @@ export const createProductValidation = [
   ...variantesRules
 ]
 
-/**
- * ✏️ Validaciones para actualizar producto
- */
+/* -------------------------------------------------------------------------- */
+/* ✏️ Validaciones para ACTUALIZAR un Producto                                */
+/* -------------------------------------------------------------------------- */
 export const updateProductValidation = [
   body('name')
     .optional()
@@ -128,12 +135,13 @@ export const updateProductValidation = [
 
   body('featured')
     .optional()
-    .isBoolean().withMessage('⚠️ El campo featured debe ser booleano.'),
+    .isBoolean().withMessage('⚠️ El campo "featured" debe ser booleano.'),
 
   body('images')
     .optional()
     .isArray().withMessage('⚠️ Images debe ser un arreglo.'),
 
+  // 👇 Adaptar reglas de imagen para uso opcional
   ...imagenPrincipalRules.map(rule => rule.optional()),
   ...variantesRules
 ]

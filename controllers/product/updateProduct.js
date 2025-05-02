@@ -1,11 +1,16 @@
+// 📁 backend/controllers/products/updateProduct.js
 import Product from '../../models/Product.js'
 import { cloudinary } from '../../config/cloudinary.js'
 import { validationResult } from 'express-validator'
+import { calcularStockTotal } from '../../utils/calculateStock.js'
 
+/**
+ * ✏️ Actualizar un producto existente
+ */
 const updateProduct = async (req, res) => {
   const errores = validationResult(req)
   if (!errores.isEmpty()) {
-    console.warn('🛑 Errores de validación en updateProduct:', errores.array())
+    console.warn('🛑 Errores de validación:', errores.array())
     return res.status(400).json({ errors: errores.array() })
   }
 
@@ -22,16 +27,15 @@ const updateProduct = async (req, res) => {
       images = [],
       sizes = [],
       color = '',
-      stock // si no hay variantes
+      stock // solo si no hay variantes
     } = req.body
 
     const product = await Product.findById(id)
     if (!product) {
-      console.warn(`🛑 Producto no encontrado - ID: ${id}`)
       return res.status(404).json({ message: '❌ Producto no encontrado' })
     }
 
-    // 🔄 Procesar imagen principal si viene una nueva
+    // =============== 📸 Imagen principal ===============
     let processedImages = product.images
 
     if (Array.isArray(images) && images.length === 1) {
@@ -40,20 +44,20 @@ const updateProduct = async (req, res) => {
 
       if (!url || !cloudinaryId || !talla || !imgColor) {
         return res.status(400).json({
-          message: '⚠️ Imagen principal debe incluir url, cloudinaryId, talla y color'
+          message: '⚠️ Imagen principal incompleta (url, cloudinaryId, talla, color)'
         })
       }
 
-      const nuevaImg = url.trim()
-      const imgYaExiste = product.images[0]?.url === nuevaImg
+      const nuevaUrl = url.trim()
+      const yaExiste = product.images[0]?.url === nuevaUrl
 
-      if (!imgYaExiste) {
+      if (!yaExiste) {
         for (const img of product.images) {
           if (img.cloudinaryId) await cloudinary.uploader.destroy(img.cloudinaryId)
         }
 
         processedImages = [{
-          url: nuevaImg,
+          url: nuevaUrl,
           cloudinaryId: cloudinaryId.trim(),
           talla: talla.trim().toLowerCase(),
           color: imgColor.trim().toLowerCase()
@@ -63,16 +67,19 @@ const updateProduct = async (req, res) => {
       return res.status(400).json({ message: '⚠️ Solo se permite una imagen principal' })
     }
 
-    // 🎨 Procesar variantes
+    // =============== 👕 Variantes ===============
     let processedVariants = []
+
     if (Array.isArray(variants) && variants.length > 0) {
       if (variants.length > 4) {
         return res.status(400).json({ message: '⚠️ Máximo 4 variantes permitidas' })
       }
 
       const seen = new Set()
-      for (const old of product.variants) {
-        if (old.cloudinaryId) await cloudinary.uploader.destroy(old.cloudinaryId)
+
+      // 🔁 Borrar variantes antiguas
+      for (const v of product.variants) {
+        if (v.cloudinaryId) await cloudinary.uploader.destroy(v.cloudinaryId)
       }
 
       for (const v of variants) {
@@ -80,9 +87,9 @@ const updateProduct = async (req, res) => {
         const col = v.color?.trim().toLowerCase()
         const clave = `${talla}-${col}`
 
-        if (!v.imageUrl || !v.cloudinaryId || !talla || !col || typeof v.stock !== 'number') {
+        if (!talla || !col || !v.imageUrl || !v.cloudinaryId || typeof v.stock !== 'number') {
           return res.status(400).json({
-            message: '⚠️ Cada variante debe tener talla, color, imagen, cloudinaryId y stock numérico'
+            message: '⚠️ Variante incompleta (talla, color, imagen, cloudinaryId, stock)'
           })
         }
 
@@ -93,16 +100,17 @@ const updateProduct = async (req, res) => {
         seen.add(clave)
 
         processedVariants.push({
-          imageUrl: v.imageUrl.trim(),
-          cloudinaryId: v.cloudinaryId.trim(),
           talla,
           color: col,
-          stock: v.stock
+          imageUrl: v.imageUrl.trim(),
+          cloudinaryId: v.cloudinaryId.trim(),
+          stock: v.stock,
+          activo: v.activo !== false
         })
       }
     }
 
-    // 🧼 Asignar campos actualizados
+    // =============== 🧼 Campos generales ===============
     if (name) product.name = name.trim()
     if (!isNaN(price)) product.price = Number(price)
     if (category) product.category = category.trim().toLowerCase()
@@ -110,33 +118,32 @@ const updateProduct = async (req, res) => {
     if (tallaTipo) product.tallaTipo = tallaTipo.trim().toLowerCase()
     if (typeof color === 'string') product.color = color.trim()
     if (Array.isArray(sizes)) product.sizes = sizes.map(s => s.trim())
-
     product.featured = featured === true || featured === 'true'
-    product.images = processedImages
-    product.variants = processedVariants
     product.updatedBy = req.user?.username || 'admin'
 
-    // 🧮 Lógica de stock
+    product.images = processedImages
+    product.variants = processedVariants
+
+    // =============== 🧮 Stock ===============
     if (processedVariants.length === 0) {
-      if (typeof stock === 'number' && stock >= 0) {
-        product.stock = stock
-      } else {
-        product.stock = 0
-      }
+      product.stock = typeof stock === 'number' && stock >= 0 ? stock : 0
     } else {
-      product.stock = undefined // evitar duplicidad
+      product.stock = undefined
     }
 
-    const updated = await product.save()
+    await product.save()
 
-    console.log(`✅ Producto actualizado: ${product.name} (ID: ${product._id}) por ${product.updatedBy}`)
+    console.log(`✏️ Producto actualizado: ${product.name} (ID: ${product._id})`)
 
     return res.status(200).json({
       message: '✅ Producto actualizado correctamente',
-      producto: updated
+      producto: {
+        ...product.toObject(),
+        stockTotal: calcularStockTotal(product)
+      }
     })
   } catch (error) {
-    console.error('❌ Error al actualizar producto:', error)
+    console.error('❌ Error actualizando producto:', error)
     return res.status(500).json({
       message: '❌ Error interno al actualizar producto',
       error: error.message

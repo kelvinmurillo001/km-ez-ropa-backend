@@ -1,5 +1,6 @@
 import mongoose from 'mongoose'
 import Product from '../../models/Product.js'
+import { calcularStockTotal } from '../../utils/calculateStock.js'
 
 /**
  * 🔍 Obtener un producto por ID
@@ -27,15 +28,8 @@ const getProductById = async (req, res) => {
       })
     }
 
-    // ✅ Calcular stock total (sólo variantes activas)
-    let stockTotal = 0
-    if (Array.isArray(producto.variants) && producto.variants.length > 0) {
-      stockTotal = producto.variants
-        .filter(v => v?.activo !== false)
-        .reduce((sum, v) => sum + (v.stock || 0), 0)
-    } else if (typeof producto.stock === 'number') {
-      stockTotal = producto.stock
-    }
+    // ✅ Calcular stock total usando helper
+    const stockTotal = calcularStockTotal(producto)
 
     console.log(`🔍 Producto obtenido: ${producto.name} (ID: ${id}) [Usuario: ${req.user?.username || 'público'}]`)
 
