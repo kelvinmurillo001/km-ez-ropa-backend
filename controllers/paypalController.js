@@ -19,13 +19,20 @@ export const createOrderController = async (req, res) => {
 
     const orden = await crearOrden(total)
 
+    if (!orden?.id) {
+      return res.status(502).json({
+        ok: false,
+        message: '⚠️ No se pudo crear la orden en PayPal.'
+      })
+    }
+
     return res.status(200).json({
       ok: true,
       message: '✅ Orden de PayPal creada exitosamente.',
       data: orden
     })
   } catch (error) {
-    console.error('❌ Error en createOrderController:', error)
+    if (process.env.NODE_ENV === 'development') console.error('❌ createOrderController:', error)
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al crear la orden de PayPal.',
@@ -51,13 +58,20 @@ export const captureOrderController = async (req, res) => {
 
     const captura = await capturarOrden(orderId)
 
+    if (!captura?.status) {
+      return res.status(502).json({
+        ok: false,
+        message: '⚠️ La captura de la orden no fue exitosa.'
+      })
+    }
+
     return res.status(200).json({
       ok: true,
       message: '✅ Orden de PayPal capturada exitosamente.',
       data: captura
     })
   } catch (error) {
-    console.error('❌ Error en captureOrderController:', error)
+    if (process.env.NODE_ENV === 'development') console.error('❌ captureOrderController:', error)
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al capturar la orden de PayPal.',

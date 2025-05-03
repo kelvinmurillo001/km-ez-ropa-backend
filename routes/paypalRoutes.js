@@ -1,14 +1,12 @@
 // 📁 backend/routes/paypalRoutes.js
+
 import express from 'express'
-import {
-  createOrderController,
-  captureOrderController
-} from '../controllers/paypalController.js'
+import { createOrderController, captureOrderController } from '../controllers/paypalController.js'
 
 const router = express.Router()
 
 /* -------------------------------------------------------------------------- */
-/* 💳 RUTAS INTEGRACIÓN PAYPAL                                                */
+/* 💳 RUTAS INTEGRACIÓN PAYPAL USANDO CONTROLADORES                           */
 /* -------------------------------------------------------------------------- */
 
 /**
