@@ -6,8 +6,8 @@ import config from '../config/configuracionesito.js'
 
 // 🔐 Variables de entorno de PayPal
 const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID
-const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET
-const PAYPAL_API = process.env.PAYPAL_API || 'https://api-m.sandbox.paypal.com'
+const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_SECRET
+const PAYPAL_API = process.env.PAYPAL_API_BASE || 'https://api-m.sandbox.paypal.com'
 
 // ⚠️ Validación inicial
 if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
