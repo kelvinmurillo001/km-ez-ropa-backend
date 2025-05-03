@@ -1,5 +1,4 @@
 // 📁 backend/services/paypalService.js
-
 import axios from 'axios'
 import https from 'https'
 import config from '../config/configuracionesito.js'
@@ -52,8 +51,10 @@ async function obtenerTokenPayPal () {
 // 🛒 Crear una nueva orden en PayPal
 export async function crearOrden (total) {
   try {
-    if (!total || isNaN(total)) {
-      throw new Error('Total inválido')
+    if (!total || isNaN(total) || total <= 0) {
+      const msg = 'Total inválido'
+      console.error('❌ Error creando orden PayPal:', msg)
+      throw new Error(msg)
     }
 
     const token = await obtenerTokenPayPal()
@@ -82,14 +83,18 @@ export async function crearOrden (total) {
     return res.data
   } catch (error) {
     console.error('❌ Error creando orden PayPal:', error.message)
-    throw new Error('No se pudo crear la orden PayPal.')
+    throw new Error(error.message || 'No se pudo crear la orden PayPal.')
   }
 }
 
 // 💵 Capturar una orden existente en PayPal
 export async function capturarOrden (orderId) {
   try {
-    if (!orderId) throw new Error('orderId es requerido')
+    if (!orderId || typeof orderId !== 'string' || orderId.trim().length < 5) {
+      const msg = 'orderId es requerido'
+      console.error('❌ Error capturando orden PayPal:', msg)
+      throw new Error(msg)
+    }
 
     const token = await obtenerTokenPayPal()
 
@@ -107,6 +112,6 @@ export async function capturarOrden (orderId) {
     return res.data
   } catch (error) {
     console.error('❌ Error capturando orden PayPal:', error.message)
-    throw new Error('No se pudo capturar la orden PayPal.')
+    throw new Error(error.message || 'No se pudo capturar la orden PayPal.')
   }
 }

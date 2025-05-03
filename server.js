@@ -1,3 +1,4 @@
+// 📁 backend/server.js
 // 🌐 Dependencias principales
 import dotenv from 'dotenv'
 dotenv.config() // ✅ Cargar variables desde .env
@@ -35,6 +36,7 @@ import statsRoutes from './routes/statsRoutes.js'
 import uploadRoutes from './routes/uploadRoutes.js'
 import paypalRoutes from './routes/paypalRoutes.js'
 
+// ✅ Crear app
 const app = express()
 
 /* -------------------------------------------------------------------------- */
@@ -134,22 +136,27 @@ app.use('*', (req, res) => {
 app.use(errorHandler)
 
 /* -------------------------------------------------------------------------- */
-/* 🚀 Conectar a MongoDB y arrancar servidor                                  */
+/* 🚀 Conectar a MongoDB y arrancar servidor (solo si no es test)             */
 /* -------------------------------------------------------------------------- */
-const startServer = async () => {
-  try {
-    await mongoose.connect(config.mongoUri)
-    console.log('✅ Conectado exitosamente a MongoDB Atlas')
+if (process.env.NODE_ENV !== 'test') {
+  const startServer = async () => {
+    try {
+      await mongoose.connect(config.mongoUri)
+      console.log('✅ Conectado exitosamente a MongoDB Atlas')
 
-    app.listen(config.port, () => {
-      console.log(`🚀 Servidor escuchando en: http://localhost:${config.port}`)
-      console.log(`🌍 Modo: ${config.env}`)
-    })
-  } catch (err) {
-    console.error('❌ Error conectando con MongoDB:', err.message)
-    console.error('🔍 Revisa IP autorizada y credenciales de conexión .env')
-    process.exit(1)
+      app.listen(config.port, () => {
+        console.log(`🚀 Servidor escuchando en: http://localhost:${config.port}`)
+        console.log(`🌍 Modo: ${config.env}`)
+      })
+    } catch (err) {
+      console.error('❌ Error conectando con MongoDB:', err.message)
+      console.error('🔍 Revisa IP autorizada y credenciales de conexión .env')
+      process.exit(1)
+    }
   }
+
+  startServer()
 }
 
-startServer()
+// ✅ Exportar app para Supertest
+export default app
