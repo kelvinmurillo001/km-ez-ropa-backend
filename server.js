@@ -1,4 +1,7 @@
 // 🌐 Dependencias principales
+import dotenv from 'dotenv'
+dotenv.config() // ✅ Cargar variables desde .env
+
 import express from 'express'
 import mongoose from 'mongoose'
 import cors from 'cors'
