@@ -1,3 +1,4 @@
+// backend/models/Product.js
 import mongoose from 'mongoose'
 
 // ✅ Subesquema para variantes

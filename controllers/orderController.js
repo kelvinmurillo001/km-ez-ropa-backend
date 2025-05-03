@@ -1,6 +1,7 @@
 import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import { sendNotification } from '../utils/notifications.js';
+import { checkVariantDisponible, verificarProductoAgotado } from '../utils/checkProductAvailability.js';
 
 /**
  * 🛒 Crear nuevo pedido (público)
@@ -43,7 +44,7 @@ export const createOrder = async (req, res) => {
       return res.status(400).json({ ok: false, message: '⚠️ Teléfono inválido.' });
     }
 
-    // Validar productos y stock
+    // Validar productos y variantes
     for (const item of items) {
       if (!item.talla || !item.color) {
         return res.status(400).json({ ok: false, message: `⚠️ Talla y color requeridos en: ${item.name}` });
@@ -54,18 +55,13 @@ export const createOrder = async (req, res) => {
         return res.status(404).json({ ok: false, message: `❌ Producto no encontrado: ${item.name}` });
       }
 
-      const variante = producto.variants.find(
-        v => v.talla === item.talla.toLowerCase() && v.color === item.color.toLowerCase()
-      );
-      if (!variante || !variante.activo) {
-        return res.status(400).json({ ok: false, message: `❌ Variante no disponible: ${item.name} - ${item.talla} - ${item.color}` });
-      }
-
-      if (item.cantidad > variante.stock) {
-        return res.status(400).json({ ok: false, message: `❌ Stock insuficiente para ${item.name} - ${item.talla} - ${item.color}` });
+      const result = checkVariantDisponible(producto.variants, item.talla, item.color, item.cantidad);
+      if (!result.ok) {
+        return res.status(400).json({ ok: false, message: result.message });
       }
     }
 
+    // Crear el pedido (el código de seguimiento se genera automáticamente)
     const newOrder = new Order({
       items,
       total: totalParsed,
@@ -81,6 +77,7 @@ export const createOrder = async (req, res) => {
 
     await newOrder.save();
 
+    // Descontar stock y desactivar variantes agotadas
     for (const item of items) {
       const producto = await Product.findOneAndUpdate(
         {
@@ -101,8 +98,11 @@ export const createOrder = async (req, res) => {
         if (variante && variante.stock <= 0) {
           variante.activo = false;
           producto.markModified('variants');
-          await producto.save();
         }
+
+        const agotado = verificarProductoAgotado(producto.variants);
+        producto.isActive = !agotado;
+        await producto.save();
       }
     }
 

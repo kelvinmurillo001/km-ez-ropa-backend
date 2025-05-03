@@ -1,3 +1,4 @@
+// backend/models/Order.js
 import mongoose from 'mongoose'
 
 // 📦 Subesquema de ítems del pedido
@@ -17,7 +18,14 @@ const orderItemSchema = new mongoose.Schema(
     talla: {
       type: String,
       trim: true,
-      default: 'Única'
+      required: [true, '⚠️ Talla requerida'],
+      minlength: 1
+    },
+    color: {
+      type: String,
+      trim: true,
+      required: [true, '⚠️ Color requerido'],
+      minlength: 1
     },
     cantidad: {
       type: Number,
@@ -108,7 +116,9 @@ const orderSchema = new mongoose.Schema(
     direccion: {
       type: String,
       trim: true,
-      default: ''
+      required: [true, '⚠️ Dirección requerida'],
+      minlength: [5, '⚠️ Dirección muy corta'],
+      maxlength: [300, '⚠️ Dirección demasiado larga']
     },
     metodoPago: {
       type: String,
