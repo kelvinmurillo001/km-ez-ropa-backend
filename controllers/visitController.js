@@ -4,7 +4,7 @@ import fs from 'fs/promises'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
-// 🧭 Ruta absoluta segura (para __dirname en ESM)
+// 📍 Corrección para __dirname en ESM
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
@@ -21,13 +21,16 @@ const leerVisitas = async () => {
     const visitas = json.count ?? json.visitas
     return typeof visitas === 'number' && visitas >= 0 ? visitas : 0
   } catch (error) {
-    console.warn('⚠️ Archivo de visitas no encontrado o corrupto. Se usa 0.')
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('⚠️ Archivo de visitas no encontrado o inválido:', error.message)
+    }
     return 0
   }
 }
 
 /* -------------------------------------------------------------------------- */
 /* 📈 Registrar una nueva visita                                              */
+/* @route POST /api/visitas                                                   */
 /* -------------------------------------------------------------------------- */
 export const registrarVisita = async (req, res) => {
   try {
@@ -46,13 +49,14 @@ export const registrarVisita = async (req, res) => {
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al registrar visita.',
-      error: err.message
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
     })
   }
 }
 
 /* -------------------------------------------------------------------------- */
 /* 📊 Obtener total de visitas                                                */
+/* @route GET /api/visitas                                                    */
 /* -------------------------------------------------------------------------- */
 export const obtenerVisitas = async (req, res) => {
   try {
@@ -68,7 +72,7 @@ export const obtenerVisitas = async (req, res) => {
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al obtener visitas.',
-      error: err.message
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
     })
   }
 }

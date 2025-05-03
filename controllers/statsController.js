@@ -13,18 +13,19 @@ const __dirname = path.dirname(__filename)
 // 📍 Ruta al archivo de visitas
 const visitasPath = path.join(__dirname, '..', 'data', 'visitas.json')
 
-/* -------------------------------------------------------------------------- */
-/* 📊 Obtener estadísticas generales para dashboard admin                    */
-/* -------------------------------------------------------------------------- */
+/**
+ * 📊 Obtener estadísticas generales para el dashboard de administrador
+ * @route GET /api/stats/resumen
+ */
 export const getResumenEstadisticas = async (req, res) => {
   try {
-    // 🔍 Obtener productos y pedidos
+    // 🔍 Obtener productos y pedidos en paralelo
     const [productos, pedidos] = await Promise.all([
       Product.find(),
       Order.find()
     ])
 
-    // 👁️ Leer visitas desde archivo local
+    // 📈 Cargar visitas desde archivo
     let visitas = 0
     try {
       const raw = await fs.readFile(visitasPath, 'utf-8')
@@ -37,18 +38,17 @@ export const getResumenEstadisticas = async (req, res) => {
       console.warn(`⚠️ No se pudo leer visitas desde visitas.json: ${err.message}`)
     }
 
-    // 📅 Calcular fecha de hoy (inicio del día)
+    // 📅 Obtener pedidos de hoy
     const hoy = new Date()
     hoy.setHours(0, 0, 0, 0)
-
-    // 🧮 Cálculos
-    const productosDestacados = productos.filter(p => p.featured).length
 
     const pedidosHoy = pedidos.filter(p => {
       const fechaPedido = new Date(p.createdAt)
       return !isNaN(fechaPedido) && fechaPedido >= hoy
     }).length
 
+    // 🧮 Cálculos adicionales
+    const productosDestacados = productos.filter(p => p.featured).length
     const pedidosEnviados = pedidos.filter(p => p.estado === 'enviado')
     const ventasTotales = pedidosEnviados.reduce((sum, p) => sum + parseFloat(p.total || 0), 0)
 
@@ -58,7 +58,7 @@ export const getResumenEstadisticas = async (req, res) => {
       return acc
     }, {})
 
-    // 📤 Respuesta al cliente
+    // 📤 Respuesta final
     return res.status(200).json({
       ok: true,
       message: '✅ Estadísticas generales obtenidas correctamente.',
@@ -77,7 +77,7 @@ export const getResumenEstadisticas = async (req, res) => {
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al generar estadísticas.',
-      error: err.message
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
     })
   }
 }

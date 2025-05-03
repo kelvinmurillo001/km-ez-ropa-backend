@@ -1,4 +1,3 @@
-// backend/models/Product.js
 import mongoose from 'mongoose'
 
 // ✅ Subesquema para variantes
@@ -43,8 +42,8 @@ const productSchema = new mongoose.Schema({
     type: String,
     required: [true, '⚠️ El nombre del producto es obligatorio'],
     trim: true,
-    minlength: [2, '⚠️ Mínimo 2 caracteres'],
-    maxlength: [100, '⚠️ Máximo 100 caracteres']
+    minlength: 2,
+    maxlength: 100
   },
   description: {
     type: String,
@@ -54,7 +53,7 @@ const productSchema = new mongoose.Schema({
   price: {
     type: Number,
     required: [true, '⚠️ El precio es obligatorio'],
-    min: [0, '⚠️ El precio no puede ser negativo']
+    min: 0
   },
   category: {
     type: String,
@@ -67,7 +66,7 @@ const productSchema = new mongoose.Schema({
     required: [true, '⚠️ La subcategoría es obligatoria'],
     trim: true,
     lowercase: true,
-    minlength: [2, '⚠️ Mínimo 2 caracteres']
+    minlength: 2
   },
   tallaTipo: {
     type: String,
@@ -80,7 +79,7 @@ const productSchema = new mongoose.Schema({
     type: [String],
     default: [],
     validate: {
-      validator: (val) => val.every((t) => typeof t === 'string' && t.trim().length > 0),
+      validator: val => val.every(t => typeof t === 'string' && t.trim().length > 0),
       message: '⚠️ Cada talla debe ser texto válido'
     }
   },
@@ -129,15 +128,16 @@ const productSchema = new mongoose.Schema({
       }
     }],
     validate: {
-      validator: (val) => Array.isArray(val) && val.length >= 1,
+      validator: val => Array.isArray(val) && val.length >= 1,
       message: '⚠️ Debes proporcionar al menos una imagen'
     }
   },
   variants: {
     type: [variantSchema],
+    default: [],
     validate: [
       {
-        validator: (val) => val.length <= 4,
+        validator: val => val.length <= 4,
         message: '⚠️ Máximo 4 variantes por producto'
       },
       {
@@ -152,17 +152,16 @@ const productSchema = new mongoose.Schema({
         },
         message: '⚠️ No puede haber variantes duplicadas (talla + color)'
       }
-    ],
-    default: []
+    ]
   },
   stock: {
     type: Number,
-    min: 0,
-    default: 0
+    default: 0,
+    min: 0
   },
   createdBy: {
     type: String,
-    required: [true, '⚠️ Campo createdBy requerido'],
+    required: true,
     trim: true,
     default: 'admin'
   },
@@ -183,21 +182,20 @@ const productSchema = new mongoose.Schema({
   }
 }, { timestamps: true })
 
-// ✅ Virtual: stockTotal
+// 🧮 Virtual: stockTotal
 productSchema.virtual('stockTotal').get(function () {
-  if (this.variants?.length > 0) {
-    return this.variants.reduce((sum, v) => sum + (v.stock || 0), 0)
-  }
-  return this.stock || 0
+  return this.variants?.length > 0
+    ? this.variants.reduce((sum, v) => sum + (v.stock || 0), 0)
+    : (this.stock || 0)
 })
 
 productSchema.set('toJSON', { virtuals: true })
 productSchema.set('toObject', { virtuals: true })
 
-// 🧠 Hook pre-save
+// 🧠 Hook: Pre-save para generar slug y metadescripción
 productSchema.pre('save', function (next) {
   if (!this.slug && this.name) {
-    const normalized = this.name
+    this.slug = this.name
       .toLowerCase()
       .trim()
       .normalize('NFD')
@@ -206,7 +204,6 @@ productSchema.pre('save', function (next) {
       .replace(/\s+/g, '-')
       .replace(/[^\w-]/g, '')
       .substring(0, 100)
-    this.slug = normalized
   }
 
   if (!this.metaDescription && this.name && this.category) {
@@ -216,7 +213,7 @@ productSchema.pre('save', function (next) {
   next()
 })
 
-// 🧠 Índices
+// 🔍 Índices para búsquedas optimizadas
 productSchema.index({ name: 1, category: 1, subcategory: 1 }, { background: true })
 productSchema.index({ category: 1, subcategory: 1, tallaTipo: 1 })
 

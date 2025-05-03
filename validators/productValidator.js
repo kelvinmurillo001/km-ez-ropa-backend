@@ -2,28 +2,29 @@
 import { body } from 'express-validator'
 
 /* -------------------------------------------------------------------------- */
-/* 🔐 Reglas Comunes para Imagen Principal                                    */
+/* 📸 Reglas para Imágenes Principales                                        */
 /* -------------------------------------------------------------------------- */
 const imagenPrincipalRules = [
   body('images')
     .isArray({ min: 1, max: 1 })
-    .withMessage('⚠️ Debes enviar una imagen principal (array con 1 objeto).'),
+    .withMessage('⚠️ Debes enviar una imagen principal en formato array con un solo objeto.'),
 
   body('images.*.url')
-    .notEmpty().withMessage('⚠️ La imagen principal necesita una URL válida.'),
+    .notEmpty().withMessage('⚠️ La imagen necesita una URL válida.')
+    .isURL().withMessage('⚠️ La URL de la imagen es inválida.'),
 
   body('images.*.cloudinaryId')
     .notEmpty().withMessage('⚠️ cloudinaryId de imagen requerido.'),
 
   body('images.*.talla')
-    .notEmpty().withMessage('⚠️ La talla de la imagen es obligatoria.'),
+    .notEmpty().withMessage('⚠️ Talla de la imagen requerida.'),
 
   body('images.*.color')
-    .notEmpty().withMessage('⚠️ El color de la imagen es obligatorio.')
+    .notEmpty().withMessage('⚠️ Color de la imagen requerido.')
 ]
 
 /* -------------------------------------------------------------------------- */
-/* 🎨 Reglas Comunes para Variantes                                           */
+/* 🎨 Reglas para Variantes                                                   */
 /* -------------------------------------------------------------------------- */
 const variantesRules = [
   body('variants')
@@ -32,29 +33,25 @@ const variantesRules = [
     .withMessage('⚠️ Máximo 4 variantes permitidas.'),
 
   body('variants.*.talla')
-    .optional()
-    .notEmpty().withMessage('⚠️ Cada variante requiere una talla válida.'),
+    .notEmpty().withMessage('⚠️ Cada variante necesita una talla.'),
 
   body('variants.*.color')
-    .optional()
-    .notEmpty().withMessage('⚠️ Cada variante requiere un color válido.'),
+    .notEmpty().withMessage('⚠️ Cada variante necesita un color.'),
 
   body('variants.*.imageUrl')
-    .optional()
-    .notEmpty().withMessage('⚠️ Cada variante requiere una imagen.'),
+    .notEmpty().withMessage('⚠️ La variante debe incluir una imagen.')
+    .isURL().withMessage('⚠️ La URL de la imagen de variante es inválida.'),
 
   body('variants.*.cloudinaryId')
-    .optional()
-    .notEmpty().withMessage('⚠️ Cada variante requiere un cloudinaryId.'),
+    .notEmpty().withMessage('⚠️ cloudinaryId requerido para la variante.'),
 
   body('variants.*.stock')
-    .optional()
     .isInt({ min: 0 })
-    .withMessage('⚠️ El stock de la variante debe ser un número entero ≥ 0.')
+    .withMessage('⚠️ El stock de la variante debe ser un número entero mayor o igual a 0.')
 ]
 
 /* -------------------------------------------------------------------------- */
-/* 🆕 Validaciones para CREAR un Producto                                     */
+/* 🆕 Validaciones para CREAR Producto                                        */
 /* -------------------------------------------------------------------------- */
 export const createProductValidation = [
   body('name')
@@ -83,22 +80,22 @@ export const createProductValidation = [
 
   body('stock')
     .optional()
-    .isInt({ min: 0 }).withMessage('⚠️ El stock debe ser un número entero ≥ 0.'),
+    .isInt({ min: 0 }).withMessage('⚠️ El stock debe ser un número entero mayor o igual a 0.'),
 
   body('featured')
     .optional()
-    .isBoolean().withMessage('⚠️ El campo "featured" debe ser booleano.'),
+    .isBoolean().withMessage('⚠️ featured debe ser booleano.'),
 
   body('color')
     .optional()
-    .isString().withMessage('⚠️ El color debe ser texto.'),
+    .isString().withMessage('⚠️ Color inválido.'),
 
   ...imagenPrincipalRules,
   ...variantesRules
 ]
 
 /* -------------------------------------------------------------------------- */
-/* ✏️ Validaciones para ACTUALIZAR un Producto                                */
+/* ✏️ Validaciones para ACTUALIZAR Producto                                   */
 /* -------------------------------------------------------------------------- */
 export const updateProductValidation = [
   body('name')
@@ -131,17 +128,17 @@ export const updateProductValidation = [
 
   body('stock')
     .optional()
-    .isInt({ min: 0 }).withMessage('⚠️ El stock debe ser un número entero ≥ 0.'),
+    .isInt({ min: 0 }).withMessage('⚠️ El stock debe ser un número entero mayor o igual a 0.'),
 
   body('featured')
     .optional()
-    .isBoolean().withMessage('⚠️ El campo "featured" debe ser booleano.'),
+    .isBoolean().withMessage('⚠️ featured debe ser booleano.'),
 
   body('images')
     .optional()
     .isArray().withMessage('⚠️ Images debe ser un arreglo.'),
 
-  // 👇 Adaptar reglas de imagen para uso opcional
+  // Adaptamos las reglas de imagen para que sean opcionales en update
   ...imagenPrincipalRules.map(rule => rule.optional()),
-  ...variantesRules
+  ...variantesRules.map(rule => rule.optional())
 ]

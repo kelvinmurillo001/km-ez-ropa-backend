@@ -4,9 +4,9 @@ import axios from 'axios'
 import https from 'https'
 import config from '../config/configuracionesito.js'
 
-// 🔐 Variables de entorno de PayPal
+// 🔐 Variables de entorno de PayPal (CORREGIDO: CLIENT_SECRET)
 const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID
-const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_SECRET
+const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET
 const PAYPAL_API = process.env.PAYPAL_API_BASE || 'https://api-m.sandbox.paypal.com'
 
 // ⚠️ Validación inicial
@@ -41,9 +41,7 @@ async function obtenerTokenPayPal () {
     const token = res.data.access_token
     if (!token) throw new Error('Token vacío recibido de PayPal')
 
-    // 👇 Solo para debug, puedes eliminar en producción
     console.log('✅ Token PayPal obtenido')
-
     return token
   } catch (error) {
     console.error('❌ Error obteniendo token PayPal:', error.message)

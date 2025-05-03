@@ -22,9 +22,12 @@ router.post(
   '/registrar',
   (req, res, next) => {
     const userAgent = req.headers['user-agent'] || ''
-    if (/curl|postman|bot|crawler/i.test(userAgent)) {
-      return res.status(403).json({ message: '🚫 Acceso automatizado denegado' })
+
+    // Bloquear bots o herramientas automatizadas comunes
+    if (/curl|postman|bot|crawler|axios/i.test(userAgent)) {
+      return res.status(403).json({ ok: false, message: '🚫 Acceso automatizado denegado' })
     }
+
     next()
   },
   registrarVisita
@@ -34,7 +37,12 @@ router.post(
  * 📊 Obtener total de visitas acumuladas (SOLO ADMIN)
  * GET /api/visitas
  */
-router.get('/', authMiddleware, adminOnly, obtenerVisitas)
+router.get(
+  '/',
+  authMiddleware,
+  adminOnly,
+  obtenerVisitas
+)
 
 // 🚀 Exportar router
 export default router

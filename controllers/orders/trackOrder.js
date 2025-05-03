@@ -1,3 +1,5 @@
+// 📁 backend/controllers/orders/trackOrder.js
+
 import Order from '../../models/Order.js'
 
 /**
@@ -24,24 +26,28 @@ const trackOrder = async (req, res) => {
       })
     }
 
-    res.status(200).json({
+    const resumen = {
+      nombre: pedido.nombreCliente || 'Sin nombre',
+      total: pedido.total || 0,
+      metodoPago: pedido.metodoPago || 'no especificado',
+      direccion: pedido.direccion || 'no proporcionada',
+      nota: pedido.nota || '',
+      fecha: pedido.createdAt || null
+    }
+
+    return res.status(200).json({
       ok: true,
       message: '✅ Pedido encontrado',
       seguimiento: pedido.seguimiento || '',
-      estadoActual: pedido.estado,
-      resumen: {
-        nombre: pedido.nombreCliente,
-        total: pedido.total,
-        metodoPago: pedido.metodoPago || 'no especificado',
-        direccion: pedido.direccion || 'no proporcionada'
-      }
+      estadoActual: pedido.estado || 'pendiente',
+      resumen
     })
   } catch (err) {
     console.error('❌ Error en trackOrder:', err)
-    res.status(500).json({
+    return res.status(500).json({
       ok: false,
       message: '❌ Error en el servidor al buscar el pedido',
-      error: err.message
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
     })
   }
 }

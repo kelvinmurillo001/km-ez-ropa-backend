@@ -1,18 +1,18 @@
 // 📁 backend/config/configuracionesito.js
-// 🎯 Cargar y validar la configuración global del proyecto
+// 🎯 Carga y validación de configuración global del proyecto
 
 import path from 'path'
 import dotenv from 'dotenv'
 import { fileURLToPath } from 'url'
 
-// 📍 Corrección para obtener __dirname en ESModules
+// 📍 Obtener __dirname en ESModules
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-// ✅ Cargar variables de entorno desde .env
+// ✅ Cargar archivo .env
 dotenv.config({ path: path.resolve(__dirname, '..', '.env') })
 
-// 🧩 Lista de variables de entorno obligatorias
+// 🧩 Variables de entorno requeridas
 const requiredVars = [
   'PORT',
   'MONGO_URI',
@@ -29,61 +29,63 @@ const requiredVars = [
   'PAYPAL_API_BASE'
 ]
 
-// 🚨 Validar existencia de todas las variables
+// 🚨 Validar existencia de variables
 const missing = requiredVars.filter(key => !process.env[key])
 if (missing.length > 0) {
   console.error(`❌ Error: Faltan variables en .env: ${missing.join(', ')}`)
   process.exit(1)
 }
 
-// 🌐 Limpiar y normalizar dominios para CORS
+// 🌐 Limpiar y validar ORIGINS permitidos
 const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',')
   .map(origin => origin.trim().replace(/\/$/, ''))
   .filter(origin => /^https?:\/\/.+/.test(origin))
 
-// 🛡️ Construir objeto de configuración global
+// 🛠️ Configuración principal
 const config = {
-  // 🔧 Entorno
+  // Entorno de ejecución
   env: process.env.NODE_ENV || 'development',
+
+  // Puerto del servidor
   port: Number(process.env.PORT) || 5000,
 
-  // 🗄️ Base de Datos MongoDB
+  // MongoDB Atlas URI
   mongoUri: process.env.MONGO_URI,
 
-  // 🔒 Tokens JWT
+  // Autenticación JWT
   jwtSecret: process.env.JWT_SECRET,
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET,
 
-  // 🧑‍💼 Credenciales Admin
+  // Admin
   adminUser: process.env.ADMIN_USER,
   adminPass: process.env.ADMIN_PASS,
 
-  // ☁️ Configuración de Cloudinary
+  // Cloudinary
   cloudinary: {
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET
   },
 
-  // 💳 Configuración de PayPal
+  // PayPal SDK
   paypal: {
     clientId: process.env.PAYPAL_CLIENT_ID,
     clientSecret: process.env.PAYPAL_CLIENT_SECRET,
     apiBase: process.env.PAYPAL_API_BASE
   },
 
-  // 🌐 Dominios permitidos para CORS
+  // Seguridad: CORS
   allowedOrigins,
 
-  // 🛡️ Seguridad Adicional
-  rateLimitWindow: parseInt(process.env.RATE_LIMIT_WINDOW) || 5, // minutos
-  rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX) || 100, // máximo solicitudes por ventana
+  // Seguridad adicional
+  rateLimitWindow: parseInt(process.env.RATE_LIMIT_WINDOW) || 5, // en minutos
+  rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX) || 100,
   enableXSSProtection: true,
   enableMongoSanitize: true,
   enableHPP: true
 }
 
-// 🧪 Mostrar resumen de configuración en modo desarrollo
+// 🧪 Mostrar resumen si no es producción
 if (config.env !== 'production') {
   console.log('🧪 Modo DEV activo')
   console.log('✅ Variables cargadas correctamente:')
