@@ -25,9 +25,8 @@ const generateRefreshToken = (user) => {
 }
 
 /**
- * 🔐 Login exclusivo para administradores
- * @route POST /api/auth/login
- * @access Público
+ * 🎫 POST /api/auth/login
+ * Login exclusivo para administradores con username + password
  */
 export const loginAdmin = async (req, res) => {
   try {
@@ -51,7 +50,7 @@ export const loginAdmin = async (req, res) => {
       })
     }
 
-    // 🔍 Buscar usuario con password y refreshToken
+    // 🔍 Buscar usuario (solo admins) y obtener campos privados
     const user = await User.findOne({ username }).select('+password +refreshToken')
 
     if (!user || user.role !== 'admin') {
@@ -62,7 +61,7 @@ export const loginAdmin = async (req, res) => {
       })
     }
 
-    // ✅ Comparar contraseña
+    // 🔐 Comparar contraseña
     const isMatch = await user.matchPassword(password)
     if (!isMatch) {
       console.warn(`🛑 Login fallido - contraseña incorrecta para: ${username}`)
@@ -82,7 +81,7 @@ export const loginAdmin = async (req, res) => {
 
     console.log(`✅ Login exitoso del administrador: ${username}`)
 
-    // ✅ Respuesta con doble token
+    // ✅ Enviar tokens + info mínima
     return res.status(200).json({
       ok: true,
       message: '✅ Login exitoso',
@@ -95,6 +94,7 @@ export const loginAdmin = async (req, res) => {
         role: user.role
       }
     })
+
   } catch (error) {
     console.error('❌ Error en loginAdmin:', error)
     return res.status(500).json({

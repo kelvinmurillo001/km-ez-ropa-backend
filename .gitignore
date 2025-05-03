@@ -1,18 +1,53 @@
-# 👉 Ignorar node_modules
+# 👉 Ignorar dependencias
 node_modules/
 
 # 👉 Ignorar logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 
 # 👉 Ignorar entorno
 .env
 .env.local
+.env.development
+.env.production
+.env.test
+
+# 👉 Ignorar archivos de construcción (Vite, Webpack, etc.)
+dist/
+build/
+.vite/
+.cache/
+*.tsbuildinfo
 
 # 👉 Ignorar sistema operativo
 .DS_Store
 Thumbs.db
 
-# 👉 Ignorar VSCode
+# 👉 Ignorar editor/configs temporales
 .vscode/
+.idea/
+*.swp
+*.swo
+
+# 👉 Ignorar sesiones, tokens o datos temporales
+*.pid
+*.seed
+*.sqlite
+*.log
+coverage/
+connect.sid
+sessions/
+
+# 👉 Ignorar pruebas o salidas de test
+coverage/
+jest-*.json
+
+# 👉 Ignorar lockfiles específicos si no usas esos gestores
+# package-lock.json (solo si usas yarn o pnpm exclusivamente)
+# yarn.lock
+# pnpm-lock.yaml
+
+# 👉 Archivos personalizados de Render (si aplicara)
+render.yaml

@@ -1,7 +1,8 @@
 // 📁 backend/server.js
+
 // 🌐 Dependencias principales
 import dotenv from 'dotenv'
-dotenv.config() // ✅ Cargar variables desde .env
+dotenv.config()
 
 import express from 'express'
 import mongoose from 'mongoose'
@@ -15,6 +16,8 @@ import slowDown from 'express-slow-down'
 import mongoSanitize from 'express-mongo-sanitize'
 import xssClean from 'xss-clean'
 import hpp from 'hpp'
+import session from 'express-session'
+import passport from 'passport'
 import { fileURLToPath } from 'url'
 
 // 📍 Corrección para __dirname en ESModules
@@ -25,8 +28,12 @@ const __dirname = path.dirname(__filename)
 import config from './config/configuracionesito.js'
 import errorHandler from './middleware/errorHandler.js'
 
-// 🔗 Rutas
-import authRoutes from './routes/authRoutes.js'
+// 🔐 Passport config
+import './config/passport.js'
+
+// 🔗 Rutas API
+import authRoutes from './routes/authRoutes.js' // login admin tradicional
+import googleAuthRoutes from './routes/auth.js' // login con Google
 import productRoutes from './routes/productRoutes.js'
 import categoryRoutes from './routes/categoryRoutes.js'
 import promoRoutes from './routes/promoRoutes.js'
@@ -40,7 +47,7 @@ import paypalRoutes from './routes/paypalRoutes.js'
 const app = express()
 
 /* -------------------------------------------------------------------------- */
-/* 🔒 Protección contra abusos (RateLimit + SlowDown)                         */
+/* 🔒 Protección contra abusos                                                */
 /* -------------------------------------------------------------------------- */
 app.use(rateLimit({
   windowMs: config.rateLimitWindow * 60 * 1000,
@@ -57,14 +64,14 @@ app.use(slowDown({
 }))
 
 /* -------------------------------------------------------------------------- */
-/* 🛡️ Sanitización y protección contra ataques                                */
+/* 🛡️ Sanitización de seguridad                                               */
 /* -------------------------------------------------------------------------- */
 if (config.enableMongoSanitize) app.use(mongoSanitize())
 if (config.enableXSSProtection) app.use(xssClean())
 if (config.enableHPP) app.use(hpp())
 
 /* -------------------------------------------------------------------------- */
-/* 🌐 Configuración dinámica de CORS                                          */
+/* 🌐 CORS dinámico                                                            */
 /* -------------------------------------------------------------------------- */
 app.use(cors({
   origin: (origin, callback) => {
@@ -86,6 +93,23 @@ app.use(morgan(config.env === 'production' ? 'tiny' : 'dev'))
 app.use(express.json({ limit: '5mb' }))
 
 /* -------------------------------------------------------------------------- */
+/* 🔐 Configurar sesiones + Passport                                          */
+/* -------------------------------------------------------------------------- */
+app.use(session({
+  secret: 'claveSuperSecretaCambiala',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: config.env === 'production',
+    httpOnly: true,
+    sameSite: 'lax'
+  }
+}))
+
+app.use(passport.initialize())
+app.use(passport.session())
+
+/* -------------------------------------------------------------------------- */
 /* 💨 Compresión HTTP                                                         */
 /* -------------------------------------------------------------------------- */
 app.use(compression({
@@ -102,7 +126,8 @@ app.use('/assets', express.static(path.join(__dirname, 'frontend', 'assets')))
 /* -------------------------------------------------------------------------- */
 /* 📚 Rutas API                                                                */
 /* -------------------------------------------------------------------------- */
-app.use('/api/auth', authRoutes)
+app.use('/api/auth', authRoutes)        // login admin manual
+app.use('/auth', googleAuthRoutes)      // login con Google
 app.use('/api/products', productRoutes)
 app.use('/api/categories', categoryRoutes)
 app.use('/api/promos', promoRoutes)
@@ -136,7 +161,7 @@ app.use('*', (req, res) => {
 app.use(errorHandler)
 
 /* -------------------------------------------------------------------------- */
-/* 🚀 Conectar a MongoDB y arrancar servidor (solo si no es test)             */
+/* 🚀 Conectar a MongoDB y arrancar servidor                                  */
 /* -------------------------------------------------------------------------- */
 if (process.env.NODE_ENV !== 'test') {
   const startServer = async () => {
