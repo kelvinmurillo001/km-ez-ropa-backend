@@ -3,6 +3,7 @@ import { crearOrden, capturarOrden } from '../services/paypalService.js'
 
 /**
  * 🛒 Crear una orden en PayPal
+ * @route POST /api/paypal/create-order
  */
 export const createOrderController = async (req, res) => {
   try {
@@ -27,14 +28,15 @@ export const createOrderController = async (req, res) => {
     console.error('❌ Error en createOrderController:', error)
     return res.status(500).json({
       ok: false,
-      message: '❌ Error al crear la orden de PayPal.',
-      error: error.message
+      message: '❌ Error interno al crear la orden de PayPal.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     })
   }
 }
 
 /**
- * 💵 Capturar/Confirmar una orden en PayPal
+ * 💵 Capturar una orden en PayPal
+ * @route POST /api/paypal/capture-order
  */
 export const captureOrderController = async (req, res) => {
   try {
@@ -58,8 +60,8 @@ export const captureOrderController = async (req, res) => {
     console.error('❌ Error en captureOrderController:', error)
     return res.status(500).json({
       ok: false,
-      message: '❌ Error al capturar la orden de PayPal.',
-      error: error.message
+      message: '❌ Error interno al capturar la orden de PayPal.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     })
   }
 }

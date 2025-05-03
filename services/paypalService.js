@@ -1,7 +1,7 @@
 // 📁 backend/services/paypalService.js
 
 import axios from 'axios'
-import https from 'https' // ⬅️ Ignorar SSL en entorno de testing
+import https from 'https'
 import config from '../config/configuracionesito.js'
 
 // 🔐 Variables de entorno de PayPal
@@ -9,63 +9,106 @@ const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID
 const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET
 const PAYPAL_API = process.env.PAYPAL_API || 'https://api-m.sandbox.paypal.com'
 
-// ⚡ Configuración especial de Axios para desarrollo
-const isTesting = process.env.NODE_ENV !== 'production'
+// ⚠️ Validación inicial
+if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
+  console.warn('⚠️ PAYPAL_CLIENT_ID o PAYPAL_CLIENT_SECRET no definidos en .env')
+}
 
+// ⚡ Axios config para entorno de desarrollo
+const isTesting = process.env.NODE_ENV !== 'production'
 const axiosClient = isTesting
   ? axios.create({
-    httpsAgent: new https.Agent({ rejectUnauthorized: false })
-  })
+      httpsAgent: new https.Agent({ rejectUnauthorized: false })
+    })
   : axios
 
 // 🔑 Obtener token de acceso a PayPal
 async function obtenerTokenPayPal () {
-  const credentials = Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`).toString('base64')
+  try {
+    const credentials = Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`).toString('base64')
 
-  const res = await axiosClient.post(`${PAYPAL_API}/v1/oauth2/token`, 'grant_type=client_credentials', {
-    headers: {
-      Authorization: `Basic ${credentials}`,
-      'Content-Type': 'application/x-www-form-urlencoded'
-    }
-  })
+    const res = await axiosClient.post(
+      `${PAYPAL_API}/v1/oauth2/token`,
+      'grant_type=client_credentials',
+      {
+        headers: {
+          Authorization: `Basic ${credentials}`,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      }
+    )
 
-  return res.data.access_token
+    const token = res.data.access_token
+    if (!token) throw new Error('Token vacío recibido de PayPal')
+
+    // 👇 Solo para debug, puedes eliminar en producción
+    console.log('✅ Token PayPal obtenido')
+
+    return token
+  } catch (error) {
+    console.error('❌ Error obteniendo token PayPal:', error.message)
+    throw new Error('Error al autenticar con PayPal. Verifica tus credenciales.')
+  }
 }
 
 // 🛒 Crear una nueva orden en PayPal
 export async function crearOrden (total) {
-  const token = await obtenerTokenPayPal()
+  try {
+    if (!total || isNaN(total)) {
+      throw new Error('Total inválido')
+    }
 
-  const res = await axiosClient.post(`${PAYPAL_API}/v2/checkout/orders`, {
-    intent: 'CAPTURE',
-    purchase_units: [
+    const token = await obtenerTokenPayPal()
+
+    const res = await axiosClient.post(
+      `${PAYPAL_API}/v2/checkout/orders`,
       {
-        amount: {
-          currency_code: 'USD',
-          value: total.toFixed(2)
+        intent: 'CAPTURE',
+        purchase_units: [
+          {
+            amount: {
+              currency_code: 'USD',
+              value: total.toFixed(2)
+            }
+          }
+        ]
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       }
-    ]
-  }, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
-  })
+    )
 
-  return res.data
+    return res.data
+  } catch (error) {
+    console.error('❌ Error creando orden PayPal:', error.message)
+    throw new Error('No se pudo crear la orden PayPal.')
+  }
 }
 
 // 💵 Capturar una orden existente en PayPal
 export async function capturarOrden (orderId) {
-  const token = await obtenerTokenPayPal()
+  try {
+    if (!orderId) throw new Error('orderId es requerido')
 
-  const res = await axiosClient.post(`${PAYPAL_API}/v2/checkout/orders/${orderId}/capture`, {}, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
-  })
+    const token = await obtenerTokenPayPal()
 
-  return res.data
+    const res = await axiosClient.post(
+      `${PAYPAL_API}/v2/checkout/orders/${orderId}/capture`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    )
+
+    return res.data
+  } catch (error) {
+    console.error('❌ Error capturando orden PayPal:', error.message)
+    throw new Error('No se pudo capturar la orden PayPal.')
+  }
 }
