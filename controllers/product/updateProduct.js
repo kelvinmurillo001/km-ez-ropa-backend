@@ -1,4 +1,3 @@
-// 📁 backend/controllers/products/updateProduct.js
 import Product from '../../models/Product.js'
 import { cloudinary } from '../../config/cloudinary.js'
 import { validationResult } from 'express-validator'
@@ -37,7 +36,6 @@ const updateProduct = async (req, res) => {
 
     // =============== 📸 Imagen principal ===============
     let processedImages = product.images
-
     if (Array.isArray(images) && images.length === 1) {
       const [mainImage] = images
       const { url, cloudinaryId, talla, color: imgColor } = mainImage
@@ -69,15 +67,12 @@ const updateProduct = async (req, res) => {
 
     // =============== 👕 Variantes ===============
     let processedVariants = []
-
     if (Array.isArray(variants) && variants.length > 0) {
       if (variants.length > 4) {
         return res.status(400).json({ message: '⚠️ Máximo 4 variantes permitidas' })
       }
 
       const seen = new Set()
-
-      // 🔁 Borrar variantes anteriores del Cloudinary
       for (const v of product.variants) {
         if (v.cloudinaryId) await cloudinary.uploader.destroy(v.cloudinaryId)
       }
@@ -105,13 +100,37 @@ const updateProduct = async (req, res) => {
           imageUrl: v.imageUrl.trim(),
           cloudinaryId: v.cloudinaryId.trim(),
           stock: v.stock,
-          activo: v.activo !== false // activo es true por defecto
+          activo: v.activo !== false
         })
       }
     }
 
     // =============== 🧼 Campos generales ===============
-    if (name) product.name = name.trim()
+    if (name && name !== product.name) {
+      product.name = name.trim()
+
+      // 🧠 Actualizar slug si el nombre cambió
+      const slugBase = name.trim().toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/ñ/g, 'n').replace(/\s+/g, '-').replace(/[^\w-]/g, '')
+
+      let slug = slugBase
+      let intentos = 0
+      let exists = await Product.findOne({ slug, _id: { $ne: product._id } })
+
+      while (exists && intentos < 5) {
+        slug = `${slugBase}-${Math.random().toString(36).substring(2, 6)}`
+        exists = await Product.findOne({ slug, _id: { $ne: product._id } })
+        intentos++
+      }
+
+      if (exists) {
+        return res.status(409).json({ message: '⚠️ No se pudo generar un slug único' })
+      }
+
+      product.slug = slug
+    }
+
     if (!isNaN(price)) product.price = Number(price)
     if (category) product.category = category.trim().toLowerCase()
     if (subcategory) product.subcategory = subcategory.trim().toLowerCase()
@@ -128,7 +147,7 @@ const updateProduct = async (req, res) => {
     if (processedVariants.length === 0) {
       product.stock = typeof stock === 'number' && stock >= 0 ? stock : 0
     } else {
-      product.stock = undefined // evita duplicidad
+      product.stock = undefined
     }
 
     await product.save()

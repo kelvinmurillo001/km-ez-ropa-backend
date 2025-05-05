@@ -173,7 +173,8 @@ const productSchema = new mongoose.Schema({
   slug: {
     type: String,
     trim: true,
-    lowercase: true
+    lowercase: true,
+    unique: true // ✅ Asegura que cada producto tenga un slug único
   },
   metaDescription: {
     type: String,

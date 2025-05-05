@@ -2,7 +2,7 @@ import Product from '../../models/Product.js'
 import { validationResult } from 'express-validator'
 
 /**
- * ✅ Crear nuevo producto (con o sin variantes)
+ * ✅ Crear nuevo producto (con o sin variantes) + slug único
  */
 const createProduct = async (req, res) => {
   const errores = validationResult(req)
@@ -28,7 +28,6 @@ const createProduct = async (req, res) => {
       createdBy
     } = req.body
 
-    // 📋 Validación obligatoria de campos clave
     if (
       !name?.trim() ||
       typeof price !== 'number' ||
@@ -39,11 +38,10 @@ const createProduct = async (req, res) => {
       !Array.isArray(images) ||
       images.length !== 1
     ) {
-      console.warn('🛑 Faltan campos obligatorios o están mal formateados.')
       return res.status(400).json({ message: '⚠️ Faltan campos obligatorios o formato inválido.' })
     }
 
-    // 🔍 Evitar duplicados por nombre + subcategoría
+    // 🔍 Verificar duplicado por nombre + subcategoría
     const existe = await Product.findOne({
       name: name.trim(),
       subcategory: subcategory.trim().toLowerCase()
@@ -61,16 +59,14 @@ const createProduct = async (req, res) => {
       return res.status(400).json({ message: '⚠️ Imagen principal incompleta o inválida.' })
     }
 
-    // 🔎 Validar variantes
+    // 🔍 Validar variantes
     let stockGeneral = 0
-
     if (variants.length > 0) {
       if (variants.length > 4) {
         return res.status(400).json({ message: '⚠️ Máximo 4 variantes permitidas.' })
       }
 
       const combinaciones = new Set()
-
       for (const v of variants) {
         const talla = v.talla?.trim().toLowerCase()
         const color = v.color?.trim().toLowerCase()
@@ -88,11 +84,9 @@ const createProduct = async (req, res) => {
             message: '⚠️ Variantes duplicadas detectadas (talla + color).'
           })
         }
-
         combinaciones.add(clave)
       }
     } else {
-      // ☑️ Validar stock general si no hay variantes
       stockGeneral = parseInt(stock)
       if (isNaN(stockGeneral) || stockGeneral < 0) {
         return res.status(400).json({
@@ -101,10 +95,29 @@ const createProduct = async (req, res) => {
       }
     }
 
-    // 🔠 Normalizar tallas
+    // 🔡 Normalizar tallas
     const tallasLimpias = Array.isArray(sizes)
       ? sizes.filter(t => typeof t === 'string' && t.trim()).map(t => t.trim().toUpperCase())
       : []
+
+    // 🧠 Generar slug único basado en nombre
+    const slugBase = name.trim().toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/ñ/g, 'n').replace(/\s+/g, '-').replace(/[^\w-]/g, '')
+
+    let slug = slugBase
+    let slugExists = await Product.findOne({ slug })
+    let intentos = 0
+
+    while (slugExists && intentos < 5) {
+      intentos++
+      slug = `${slugBase}-${Math.random().toString(36).substring(2, 6)}`
+      slugExists = await Product.findOne({ slug })
+    }
+
+    if (slugExists) {
+      return res.status(500).json({ message: '⚠️ No se pudo generar un slug único. Intenta con otro nombre.' })
+    }
 
     // 📦 Crear producto
     const producto = new Product({
@@ -121,12 +134,12 @@ const createProduct = async (req, res) => {
       color: color.trim().toLowerCase(),
       sizes: tallasLimpias,
       createdBy: createdBy.trim(),
-      isActive: true // ✅ Asegurar visibilidad
+      isActive: true,
+      slug // 🆕 agregado manualmente
     })
 
     const saved = await producto.save()
-    console.log(`✅ Producto creado: ${saved.name} [${saved.category}/${saved.subcategory}]`)
-
+    console.log(`✅ Producto creado: ${saved.name} [${saved.slug}]`)
     return res.status(201).json(saved)
 
   } catch (err) {
