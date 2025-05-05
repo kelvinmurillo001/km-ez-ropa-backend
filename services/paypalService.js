@@ -3,30 +3,25 @@ import axios from 'axios'
 import https from 'https'
 import config from '../config/configuracionesito.js'
 
-// 🔐 Variables de entorno de PayPal (CORREGIDO: CLIENT_SECRET)
+// 🔐 Variables de entorno de PayPal
 const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID
 const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET
 const PAYPAL_API = process.env.PAYPAL_API_BASE || 'https://api-m.sandbox.paypal.com'
 
-// ⚠️ Validación inicial
 if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
-  console.warn('⚠️ PAYPAL_CLIENT_ID o PAYPAL_CLIENT_SECRET no definidos en .env')
+  console.warn('⚠️ PAYPAL_CLIENT_ID o PAYPAL_CLIENT_SECRET no están definidos')
 }
 
-// ⚡ Axios config para entorno de desarrollo
 const isTesting = process.env.NODE_ENV !== 'production'
 const axiosClient = isTesting
-  ? axios.create({
-      httpsAgent: new https.Agent({ rejectUnauthorized: false })
-    })
+  ? axios.create({ httpsAgent: new https.Agent({ rejectUnauthorized: false }) })
   : axios
 
-// 🔑 Obtener token de acceso a PayPal
+// 🔑 Obtener token de acceso
 async function obtenerTokenPayPal () {
   try {
     const credentials = Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`).toString('base64')
-
-    const res = await axiosClient.post(
+    const response = await axiosClient.post(
       `${PAYPAL_API}/v1/oauth2/token`,
       'grant_type=client_credentials',
       {
@@ -37,29 +32,22 @@ async function obtenerTokenPayPal () {
       }
     )
 
-    const token = res.data.access_token
-    if (!token) throw new Error('Token vacío recibido de PayPal')
+    if (!response.data?.access_token) {
+      throw new Error('Token vacío recibido de PayPal')
+    }
 
-    console.log('✅ Token PayPal obtenido')
-    return token
-  } catch (error) {
-    console.error('❌ Error obteniendo token PayPal:', error.message)
-    throw new Error('Error al autenticar con PayPal. Verifica tus credenciales.')
+    return response.data.access_token
+  } catch (err) {
+    console.error('❌ Error al obtener token de PayPal:', err.response?.data || err.message)
+    throw new Error('❌ No se pudo autenticar con PayPal. Verifica tus credenciales y entorno.')
   }
 }
 
-// 🛒 Crear una nueva orden en PayPal
+// 🛒 Crear orden
 export async function crearOrden (total) {
   try {
-    if (!total || isNaN(total) || total <= 0) {
-      const msg = 'Total inválido'
-      console.error('❌ Error creando orden PayPal:', msg)
-      throw new Error(msg)
-    }
-
     const token = await obtenerTokenPayPal()
-
-    const res = await axiosClient.post(
+    const response = await axiosClient.post(
       `${PAYPAL_API}/v2/checkout/orders`,
       {
         intent: 'CAPTURE',
@@ -80,25 +68,18 @@ export async function crearOrden (total) {
       }
     )
 
-    return res.data
-  } catch (error) {
-    console.error('❌ Error creando orden PayPal:', error.message)
-    throw new Error(error.message || 'No se pudo crear la orden PayPal.')
+    return response.data
+  } catch (err) {
+    console.error('❌ Error creando orden en PayPal:', err.response?.data || err.message)
+    throw new Error('❌ Fallo al crear orden en PayPal')
   }
 }
 
-// 💵 Capturar una orden existente en PayPal
+// 💵 Capturar orden
 export async function capturarOrden (orderId) {
   try {
-    if (!orderId || typeof orderId !== 'string' || orderId.trim().length < 5) {
-      const msg = 'orderId es requerido'
-      console.error('❌ Error capturando orden PayPal:', msg)
-      throw new Error(msg)
-    }
-
     const token = await obtenerTokenPayPal()
-
-    const res = await axiosClient.post(
+    const response = await axiosClient.post(
       `${PAYPAL_API}/v2/checkout/orders/${orderId}/capture`,
       {},
       {
@@ -109,9 +90,9 @@ export async function capturarOrden (orderId) {
       }
     )
 
-    return res.data
-  } catch (error) {
-    console.error('❌ Error capturando orden PayPal:', error.message)
-    throw new Error(error.message || 'No se pudo capturar la orden PayPal.')
+    return response.data
+  } catch (err) {
+    console.error('❌ Error capturando orden en PayPal:', err.response?.data || err.message)
+    throw new Error('❌ Fallo al capturar orden en PayPal')
   }
 }

@@ -10,7 +10,7 @@ import {
 const router = express.Router()
 
 /* -------------------------------------------------------------------------- */
-/* 💳 RUTAS PAYPAL                                                             */
+/* 💳 RUTAS DE INTEGRACIÓN CON PAYPAL                                         */
 /* -------------------------------------------------------------------------- */
 
 /**
@@ -27,4 +27,7 @@ router.post('/create-order', createOrderController)
  */
 router.post('/capture-order', captureOrderController)
 
+/* -------------------------------------------------------------------------- */
+/* 📦 EXPORTAR                                                                */
+/* -------------------------------------------------------------------------- */
 export default router

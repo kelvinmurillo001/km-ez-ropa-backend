@@ -23,7 +23,7 @@ export const createOrderController = async (req, res) => {
       return res.status(502).json({
         ok: false,
         message: '⚠️ No se pudo crear la orden en PayPal.',
-        error: orden?.message || null
+        error: orden?.message || 'Respuesta inválida de PayPal'
       })
     }
 
@@ -33,14 +33,12 @@ export const createOrderController = async (req, res) => {
       data: orden
     })
   } catch (error) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('❌ Error en createOrderController:', error)
-    }
+    console.error('❌ Error en createOrderController:', error?.response?.data || error.message)
 
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al crear la orden de PayPal.',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: process.env.NODE_ENV === 'development' ? (error?.message || error) : undefined
     })
   }
 }
@@ -66,7 +64,8 @@ export const captureOrderController = async (req, res) => {
       return res.status(502).json({
         ok: false,
         message: '⚠️ La captura de la orden no fue exitosa.',
-        status: captura?.status || 'desconocido'
+        status: captura?.status || 'desconocido',
+        raw: process.env.NODE_ENV === 'development' ? captura : undefined
       })
     }
 
@@ -76,14 +75,12 @@ export const captureOrderController = async (req, res) => {
       data: captura
     })
   } catch (error) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('❌ Error en captureOrderController:', error)
-    }
+    console.error('❌ Error en captureOrderController:', error?.response?.data || error.message)
 
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al capturar la orden de PayPal.',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: process.env.NODE_ENV === 'development' ? (error?.message || error) : undefined
     })
   }
 }
