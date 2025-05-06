@@ -1,78 +1,86 @@
 // 📁 backend/controllers/visitController.js
-
 import fs from 'fs/promises'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import config from '../config/configuracionesito.js'
+import logger from '../utils/logger.js' // 📦 Logger centralizado
 
-// 📍 Corrección para __dirname en ESM
+// 📍 Corrección para __dirname en ES Modules
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-// 📂 Ruta al archivo de visitas
-const filePath = path.join(__dirname, '..', 'data', 'visitas.json')
+// 📍 Ruta al archivo de visitas (configurable si se requiere)
+const visitasFilePath = path.join(__dirname, '..', 'data', 'visitas.json')
 
-/* -------------------------------------------------------------------------- */
-/* 🧮 Función auxiliar para leer visitas                                       */
-/* -------------------------------------------------------------------------- */
+/**
+ * 🧮 Leer contador de visitas desde JSON
+ * @returns {Promise<number>}
+ */
 const leerVisitas = async () => {
   try {
-    const data = await fs.readFile(filePath, 'utf8')
-    const json = JSON.parse(data)
-    const visitas = json.count ?? json.visitas
-    return typeof visitas === 'number' && visitas >= 0 ? visitas : 0
-  } catch (error) {
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('⚠️ Archivo de visitas no encontrado o inválido:', error.message)
+    const contenido = await fs.readFile(visitasFilePath, 'utf-8')
+    const json = JSON.parse(contenido)
+    const count =
+      typeof json.count === 'number' && json.count >= 0
+        ? json.count
+        : typeof json.visitas === 'number' && json.visitas >= 0
+        ? json.visitas
+        : 0
+    return count
+  } catch (err) {
+    if (config.env !== 'production') {
+      logger.warn(`⚠️ No se pudo leer visitas.json: ${err.message}`)
     }
     return 0
   }
 }
 
-/* -------------------------------------------------------------------------- */
-/* 📈 Registrar una nueva visita                                              */
-/* @route POST /api/visitas                                                   */
-/* -------------------------------------------------------------------------- */
+/**
+ * 📈 Registrar una nueva visita incrementando el contador
+ * @route   POST /api/visitas
+ * @access  Público
+ */
 export const registrarVisita = async (req, res) => {
   try {
-    const visitasActuales = await leerVisitas()
-    const nuevasVisitas = visitasActuales + 1
+    const actuales = await leerVisitas()
+    const nuevas = actuales + 1
 
-    await fs.writeFile(filePath, JSON.stringify({ count: nuevasVisitas }, null, 2))
+    await fs.writeFile(visitasFilePath, JSON.stringify({ count: nuevas }, null, 2))
 
     return res.status(200).json({
       ok: true,
       message: '✅ Visita registrada correctamente.',
-      data: { total: nuevasVisitas }
+      data: { totalVisitas: nuevas }
     })
   } catch (err) {
-    console.error('❌ Error al registrar visita:', err)
+    logger.error('❌ Error registrando visita:', err)
     return res.status(500).json({
       ok: false,
-      message: '❌ Error interno al registrar visita.',
-      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+      message: '❌ Error al registrar visita.',
+      ...(config.env !== 'production' && { error: err.message })
     })
   }
 }
 
-/* -------------------------------------------------------------------------- */
-/* 📊 Obtener total de visitas                                                */
-/* @route GET /api/visitas                                                    */
-/* -------------------------------------------------------------------------- */
-export const obtenerVisitas = async (req, res) => {
+/**
+ * 📊 Obtener total de visitas acumuladas
+ * @route   GET /api/visitas
+ * @access  Público
+ */
+export const obtenerVisitas = async (_req, res) => {
   try {
     const total = await leerVisitas()
-
     return res.status(200).json({
       ok: true,
       message: '✅ Total de visitas obtenido correctamente.',
-      data: { total }
+      data: { totalVisitas: total }
     })
   } catch (err) {
-    console.error('❌ Error al obtener visitas:', err)
+    logger.error('❌ Error obteniendo visitas:', err)
     return res.status(500).json({
       ok: false,
-      message: '❌ Error interno al obtener visitas.',
-      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+      message: '❌ Error al obtener visitas.',
+      ...(config.env !== 'production' && { error: err.message })
     })
   }
 }

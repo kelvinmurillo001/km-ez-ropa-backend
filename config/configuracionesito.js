@@ -5,95 +5,97 @@ import path from 'path'
 import dotenv from 'dotenv'
 import { fileURLToPath } from 'url'
 
-// 📍 Obtener __dirname en ESModules
+// 📍 __dirname para ESModules
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-// ✅ Cargar archivo .env
+// ✅ Cargar variables del entorno desde .env
 dotenv.config({ path: path.resolve(__dirname, '..', '.env') })
 
-// 🧩 Variables de entorno requeridas
+// 🧩 Variables requeridas
 const requiredVars = [
-  'PORT',
-  'MONGO_URI',
-  'JWT_SECRET',
-  'JWT_REFRESH_SECRET',
-  'ADMIN_USER',
-  'ADMIN_PASS',
-  'CLOUDINARY_CLOUD_NAME',
-  'CLOUDINARY_API_KEY',
-  'CLOUDINARY_API_SECRET',
-  'ALLOWED_ORIGINS',
-  'PAYPAL_CLIENT_ID',
-  'PAYPAL_CLIENT_SECRET',
-  'PAYPAL_API_BASE'
+  'PORT', 'MONGO_URI', 'JWT_SECRET', 'JWT_REFRESH_SECRET',
+  'ADMIN_USER', 'ADMIN_PASS', 'SESSION_SECRET',
+  'CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET',
+  'ALLOWED_ORIGINS', 'RATE_LIMIT_WINDOW', 'RATE_LIMIT_MAX',
+  'PAYPAL_CLIENT_ID', 'PAYPAL_CLIENT_SECRET', 'PAYPAL_API_BASE',
+  'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET',
+  'EMAIL_FROM', 'EMAIL_PASSWORD'
 ]
 
-// 🚨 Validar existencia de variables
-const missing = requiredVars.filter(key => !process.env[key])
+// 🚨 Validar existencia
+const missing = requiredVars.filter(k => !process.env[k])
 if (missing.length > 0) {
-  console.error(`❌ Error: Faltan variables en .env: ${missing.join(', ')}`)
+  console.error(`❌ Faltan variables en .env: ${missing.join(', ')}`)
   process.exit(1)
 }
 
-// 🌐 Limpiar y validar ORIGINS permitidos
-const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',')
+// 🌐 Orígenes permitidos (cors)
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  .split(',')
   .map(origin => origin.trim().replace(/\/$/, ''))
   .filter(origin => /^https?:\/\/.+/.test(origin))
 
-// 🛠️ Configuración principal
+// 🛠️ Configuración final
 const config = {
-  // Entorno de ejecución
-  env: process.env.NODE_ENV || 'development',
-
-  // Puerto del servidor
+  env: (process.env.NODE_ENV || 'development').toLowerCase(),
   port: Number(process.env.PORT) || 5000,
-
-  // MongoDB Atlas URI
   mongoUri: process.env.MONGO_URI,
 
-  // Autenticación JWT
+  sessionSecret: process.env.SESSION_SECRET,
+  sessionTTL: Number.parseInt(process.env.SESSION_TTL, 10) || 14 * 24 * 60 * 60, // segundos
+
   jwtSecret: process.env.JWT_SECRET,
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET,
 
-  // Admin
   adminUser: process.env.ADMIN_USER,
   adminPass: process.env.ADMIN_PASS,
 
-  // Cloudinary
   cloudinary: {
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET
   },
 
-  // PayPal SDK
   paypal: {
     clientId: process.env.PAYPAL_CLIENT_ID,
     clientSecret: process.env.PAYPAL_CLIENT_SECRET,
     apiBase: process.env.PAYPAL_API_BASE
   },
 
-  // Seguridad: CORS
+  google: {
+    clientId: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET
+  },
+
+  email: {
+    from: process.env.EMAIL_FROM,
+    password: process.env.EMAIL_PASSWORD
+  },
+
   allowedOrigins,
 
-  // Seguridad adicional
-  rateLimitWindow: parseInt(process.env.RATE_LIMIT_WINDOW) || 5, // en minutos
-  rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX) || 100,
+  rateLimitWindow: Number.parseInt(process.env.RATE_LIMIT_WINDOW, 10) || 15,
+  rateLimitMax: Number.parseInt(process.env.RATE_LIMIT_MAX, 10) || 100,
+
   enableXSSProtection: true,
   enableMongoSanitize: true,
   enableHPP: true
 }
 
-// 🧪 Mostrar resumen si no es producción
+// 🧪 Solo en modo desarrollo: mostrar configuración crítica
 if (config.env !== 'production') {
-  console.log('🧪 Modo DEV activo')
-  console.log('✅ Variables cargadas correctamente:')
+  console.log('🧪 Modo DEV activo - Configuración resumida:')
   console.log('🌐 ALLOWED_ORIGINS:', config.allowedOrigins)
-  console.log('🔑 JWT Secret:', config.jwtSecret ? 'Presente' : 'Falta')
-  console.log('🔄 JWT Refresh Secret:', config.jwtRefreshSecret ? 'Presente' : 'Falta')
-  console.log('☁️ Cloudinary:', config.cloudinary.cloud_name ? 'Configurado' : 'Falta')
-  console.log('💳 PayPal ClientID:', config.paypal.clientId ? 'Cargado' : 'No cargado')
+  console.log('🔒 Claves cargadas correctamente:', {
+    JWT: !!config.jwtSecret,
+    REFRESH: !!config.jwtRefreshSecret,
+    SESSION: !!config.sessionSecret,
+    CLOUDINARY: !!config.cloudinary.cloud_name,
+    PAYPAL: !!config.paypal.clientId,
+    GOOGLE: !!config.google.clientId,
+    EMAIL: !!config.email.from
+  })
 }
 
 export default config

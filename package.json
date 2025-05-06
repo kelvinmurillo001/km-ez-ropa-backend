@@ -8,7 +8,8 @@
     "dev": "nodemon server.js",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js"
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
+    "fix-slugs": "node corregirSlugs.js"
   },
   "dependencies": {
     "axios": "^1.9.0",

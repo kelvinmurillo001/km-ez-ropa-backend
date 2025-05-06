@@ -2,7 +2,7 @@
 import express from 'express'
 import { body, param } from 'express-validator'
 
-// 📦 Controladores
+// 🎯 Controladores
 import {
   getAllCategories,
   createCategory,
@@ -11,23 +11,25 @@ import {
   deleteSubcategory
 } from '../controllers/categoryController.js'
 
-// 🛡️ Middlewares
+// 🛡️ Middlewares de autenticación y autorización
 import authMiddleware from '../middleware/authMiddleware.js'
 import adminOnly from '../middleware/adminOnly.js'
 
 const router = express.Router()
 
-/* -------------------------------------------------------------------------- */
-/* 🗂️ RUTAS DE CATEGORÍAS                                                    */
-/* -------------------------------------------------------------------------- */
+/* ───────────────────────────────────────────── */
+/* 🗂️ RUTAS: Categorías de productos             */
+/* ───────────────────────────────────────────── */
 
 /**
- * 📥 Obtener todas las categorías (PÚBLICO)
+ * 📥 GET /
+ * ➤ Obtener todas las categorías (PÚBLICO)
  */
 router.get('/', getAllCategories)
 
 /**
- * ➕ Crear nueva categoría (SOLO ADMIN)
+ * ➕ POST /
+ * ➤ Crear nueva categoría (SOLO ADMIN)
  */
 router.post(
   '/',
@@ -53,7 +55,8 @@ router.post(
 )
 
 /**
- * ➕ Agregar subcategoría (SOLO ADMIN)
+ * ➕ POST /:categoryId/subcategories
+ * ➤ Agregar subcategoría a una categoría (SOLO ADMIN)
  */
 router.post(
   '/:categoryId/subcategories',
@@ -75,7 +78,8 @@ router.post(
 )
 
 /**
- * 🗑️ Eliminar categoría completa (SOLO ADMIN)
+ * 🗑️ DELETE /:id
+ * ➤ Eliminar categoría completa (SOLO ADMIN)
  */
 router.delete(
   '/:id',
@@ -90,7 +94,8 @@ router.delete(
 )
 
 /**
- * 🗑️ Eliminar subcategoría específica de una categoría (SOLO ADMIN)
+ * 🗑️ DELETE /:categoryId/subcategories/:subcategory
+ * ➤ Eliminar una subcategoría específica (SOLO ADMIN)
  */
 router.delete(
   '/:categoryId/subcategories/:subcategory',
@@ -111,5 +116,4 @@ router.delete(
   deleteSubcategory
 )
 
-// 🚀 Exportar router
 export default router

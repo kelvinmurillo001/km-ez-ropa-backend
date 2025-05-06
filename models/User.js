@@ -2,6 +2,7 @@
 import mongoose from 'mongoose'
 import bcrypt from 'bcryptjs'
 
+// 🧩 Esquema de usuarios
 const userSchema = new mongoose.Schema(
   {
     googleId: {
@@ -12,6 +13,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
       minlength: [3, '⚠️ Mínimo 3 caracteres']
+      // ✅ Puedes validar existencia si no es OAuth
     },
     name: {
       type: String,
@@ -52,13 +54,21 @@ const userSchema = new mongoose.Schema(
         delete ret.refreshToken
         return ret
       }
+    },
+    toObject: {
+      transform: (_, ret) => {
+        delete ret.password
+        delete ret.refreshToken
+        return ret
+      }
     }
   }
 )
 
-/* 🔒 Hashear contraseña si fue modificada */
+/**
+ * 🔒 Hashear contraseña automáticamente si fue modificada
+ */
 userSchema.pre('save', async function (next) {
-  // Solo hashear si existe contraseña (login tradicional)
   if (!this.isModified('password') || !this.password) return next()
   try {
     const salt = await bcrypt.genSalt(12)
@@ -70,11 +80,16 @@ userSchema.pre('save', async function (next) {
   }
 })
 
-/* 🔑 Comparar contraseña ingresada con la guardada */
+/**
+ * 🔑 Método para comparar contraseñas
+ * @param {string} inputPassword - Contraseña a verificar
+ * @returns {Promise<boolean>}
+ */
 userSchema.methods.matchPassword = async function (inputPassword) {
   if (!this.password) return false
   return await bcrypt.compare(inputPassword, this.password)
 }
 
+// 🚀 Exportar modelo
 const User = mongoose.model('User', userSchema)
 export default User

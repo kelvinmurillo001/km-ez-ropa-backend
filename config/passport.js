@@ -2,46 +2,49 @@
 import passport from 'passport'
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
 import User from '../models/User.js'
+import config from './configuracionesito.js'
+
+// Valida la URL de callback; puede definirse en config.google.callbackURL
+const callbackURL = config.google.callbackURL || '/auth/google/callback'
 
 passport.use(
   new GoogleStrategy(
     {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: '/auth/google/callback'
+      clientID: config.google.clientId,
+      clientSecret: config.google.clientSecret,
+      callbackURL
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        // Buscar si ya existe un usuario con ese Google ID
-        const existingUser = await User.findOne({ googleId: profile.id })
-
-        if (existingUser) {
-          return done(null, existingUser)
+        // Obtener y validar email
+        const email = profile.emails?.[0]?.value?.toLowerCase()
+        if (!email) {
+          return done(new Error('No se pudo obtener el email de Google'), null)
         }
 
-        // Verificar si ya existe un usuario con ese email (sin Google ID)
-        const email = profile.emails[0].value.toLowerCase()
-        const userByEmail = await User.findOne({ email })
-
-        if (userByEmail) {
-          // Evitar duplicados: conectar el Google ID al usuario existente
-          userByEmail.googleId = profile.id
-          await userByEmail.save()
-          return done(null, userByEmail)
+        // Buscar usuario existente por Google ID o email
+        let user = await User.findOne({ googleId: profile.id })
+        if (!user) {
+          user = await User.findOne({ email })
+          if (user) {
+            // Vincula Google ID al usuario existente
+            user.googleId = profile.id
+            await user.save()
+          }
         }
 
-        // Asignar rol según correo
-        const isAdmin = email === 'admin@tudominio.com'
-        const role = isAdmin ? 'admin' : 'client'
+        // Si existe, retorna el usuario
+        if (user) {
+          return done(null, user)
+        }
 
-        // Crear nuevo usuario
+        // Si no existe, crear nuevo usuario con rol 'client'
         const newUser = await User.create({
           googleId: profile.id,
-          email: email,
+          email,
           name: profile.displayName,
-          role: role
+          role: 'client'
         })
-
         return done(null, newUser)
       } catch (err) {
         console.error('❌ Error en estrategia de Google:', err)
@@ -51,14 +54,10 @@ passport.use(
   )
 )
 
-// Serialización del usuario en sesión
-passport.serializeUser((user, done) => {
-  done(null, user.id)
-})
-
-// Deserialización del usuario desde sesión
+// Serialización y deserialización de sesión
+passport.serializeUser((user, done) => done(null, user.id))
 passport.deserializeUser((id, done) => {
   User.findById(id)
-    .then((user) => done(null, user))
-    .catch((err) => done(err, null))
+    .then(user => done(null, user))
+    .catch(err => done(err, null))
 })

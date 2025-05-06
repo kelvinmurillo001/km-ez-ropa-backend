@@ -4,32 +4,30 @@
 import { v2 as cloudinary } from 'cloudinary'
 import config from './configuracionesito.js'
 
-// ✅ Extraer credenciales y aplicar camelCase
-const {
-  cloud_name: cloudName,
-  api_key: apiKey,
-  api_secret: apiSecret
-} = config.cloudinary || {}
+// ✅ Extraer credenciales desde config
+const credentials = config.cloudinary || {}
+const cloudName = credentials.cloud_name
+const apiKey = credentials.api_key
+const apiSecret = credentials.api_secret
 
-// 🔐 Validar existencia de credenciales
+// 🔐 Validar credenciales necesarias
 if (!cloudName || !apiKey || !apiSecret) {
-  console.error('❌ Error: Faltan credenciales de Cloudinary. Verifica el archivo .env o la configuración.')
+  console.error('❌ Error: Credenciales de Cloudinary incompletas. Revisa tu archivo .env o configuraciones.')
   process.exit(1)
 }
 
-// ⚙️ Configurar Cloudinary
+// ⚙️ Configuración de Cloudinary
 cloudinary.config({
   cloud_name: cloudName,
   api_key: apiKey,
   api_secret: apiSecret
 })
 
-// 🐞 Mostrar configuración mínima en desarrollo
+// 🐞 Información en entorno de desarrollo
 if (config.env !== 'production') {
-  console.log('✅ Cloudinary configurado correctamente en modo desarrollo.')
+  console.log('✅ Cloudinary configurado (modo desarrollo)')
   console.log(`🌩️ Cloud Name: ${cloudName}`)
-  console.log('🔑 API Key: visible')
+  console.log(`🔑 API Key: ${apiKey.substring(0, 4)}****`)
 }
 
-// ✅ Exportar instancia configurada
 export { cloudinary }

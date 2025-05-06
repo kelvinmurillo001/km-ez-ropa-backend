@@ -30,7 +30,7 @@ const variantSchema = new mongoose.Schema({
     default: 0,
     min: [0, '⚠️ El stock no puede ser negativo']
   },
-  activo: {
+  isActive: {
     type: Boolean,
     default: true
   }
@@ -75,20 +75,6 @@ const productSchema = new mongoose.Schema({
     trim: true,
     lowercase: true
   },
-  sizes: {
-    type: [String],
-    default: [],
-    validate: {
-      validator: val => val.every(t => typeof t === 'string' && t.trim().length > 0),
-      message: '⚠️ Cada talla debe ser texto válido'
-    }
-  },
-  color: {
-    type: String,
-    trim: true,
-    lowercase: true,
-    default: ''
-  },
   featured: {
     type: Boolean,
     default: false
@@ -127,10 +113,24 @@ const productSchema = new mongoose.Schema({
         lowercase: true
       }
     }],
-    validate: {
-      validator: val => Array.isArray(val) && val.length >= 1,
-      message: '⚠️ Debes proporcionar al menos una imagen'
-    }
+    validate: [
+      {
+        validator: val => Array.isArray(val) && val.length >= 1,
+        message: '⚠️ Debes proporcionar al menos una imagen'
+      },
+      {
+        validator: val => {
+          const seen = new Set()
+          for (const img of val) {
+            const key = `${img.talla}-${img.color}`
+            if (seen.has(key)) return false
+            seen.add(key)
+          }
+          return true
+        },
+        message: '⚠️ No puede haber imágenes duplicadas con la misma talla y color'
+      }
+    ]
   },
   variants: {
     type: [variantSchema],
@@ -174,7 +174,8 @@ const productSchema = new mongoose.Schema({
     type: String,
     trim: true,
     lowercase: true,
-    unique: true // ✅ Asegura que cada producto tenga un slug único
+    unique: true,
+    maxlength: 100
   },
   metaDescription: {
     type: String,
@@ -193,10 +194,10 @@ productSchema.virtual('stockTotal').get(function () {
 productSchema.set('toJSON', { virtuals: true })
 productSchema.set('toObject', { virtuals: true })
 
-// 🧠 Hook: Pre-save para generar slug y metadescripción
-productSchema.pre('save', function (next) {
+// 🧠 Hook: Pre-validate para generar slug único
+productSchema.pre('validate', async function (next) {
   if (!this.slug && this.name) {
-    this.slug = this.name
+    let slugBase = this.name
       .toLowerCase()
       .trim()
       .normalize('NFD')
@@ -205,6 +206,15 @@ productSchema.pre('save', function (next) {
       .replace(/\s+/g, '-')
       .replace(/[^\w-]/g, '')
       .substring(0, 100)
+
+    let slug = slugBase
+    let counter = 1
+
+    while (await mongoose.models.Product.exists({ slug })) {
+      slug = `${slugBase}-${counter++}`
+    }
+
+    this.slug = slug
   }
 
   if (!this.metaDescription && this.name && this.category) {

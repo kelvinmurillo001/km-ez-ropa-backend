@@ -1,15 +1,26 @@
-import Order from '../models/Order.js';
-import Product from '../models/Product.js';
-import { sendNotification } from '../utils/notifications.js';
+// 📁 backend/controllers/orderController.js
+import mongoose from 'mongoose'
+import Order from '../models/Order.js'
+import Product from '../models/Product.js'
+import { sendNotification } from '../utils/notifications.js'
 import {
   checkVariantDisponible,
   verificarProductoAgotado
-} from '../utils/checkProductAvailability.js';
+} from '../utils/checkProductAvailability.js'
+import config from '../config/configuracionesito.js'
+import { validationResult } from 'express-validator'
 
 /**
  * 🛒 Crear nuevo pedido (público)
+ * @route   POST /api/orders
+ * @access  Público
  */
 export const createOrder = async (req, res) => {
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ ok: false, errors: errors.array() })
+  }
+
   try {
     const {
       items,
@@ -21,239 +32,198 @@ export const createOrder = async (req, res) => {
       direccion,
       metodoPago = 'efectivo',
       factura = {}
-    } = req.body;
+    } = req.body
 
     if (!Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ ok: false, message: '⚠️ El pedido debe contener al menos un producto.' });
+      return res.status(400).json({ ok: false, message: '⚠️ El pedido debe contener al menos un producto.' })
     }
-
     if (!nombreCliente || nombreCliente.trim().length < 2) {
-      return res.status(400).json({ ok: false, message: '⚠️ Nombre de cliente inválido.' });
+      return res.status(400).json({ ok: false, message: '⚠️ Nombre de cliente inválido.' })
     }
-
-    const totalParsed = parseFloat(total);
-    if (isNaN(totalParsed) || totalParsed <= 0) {
-      return res.status(400).json({ ok: false, message: '⚠️ Total inválido.' });
+    const totalNum = parseFloat(total)
+    if (isNaN(totalNum) || totalNum <= 0) {
+      return res.status(400).json({ ok: false, message: '⚠️ Total inválido.' })
     }
-
-    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
-      return res.status(400).json({ ok: false, message: '⚠️ Email inválido.' });
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      return res.status(400).json({ ok: false, message: '⚠️ Email inválido.' })
     }
-
-    if (!telefono || typeof telefono !== 'string' || telefono.trim().length < 6) {
-      return res.status(400).json({ ok: false, message: '⚠️ Teléfono inválido.' });
+    if (!telefono || telefono.trim().length < 6) {
+      return res.status(400).json({ ok: false, message: '⚠️ Teléfono inválido.' })
     }
 
     for (const item of items) {
-      if (!item.talla || !item.color) {
-        return res.status(400).json({ ok: false, message: `⚠️ Talla y color requeridos en: ${item.name}` });
+      const { productId, talla, color, cantidad } = item
+      if (!mongoose.Types.ObjectId.isValid(productId)) {
+        return res.status(400).json({ ok: false, message: `⚠️ ID de producto inválido: ${productId}` })
       }
-
-      const producto = await Product.findById(item.productId);
+      const producto = await Product.findById(productId).select('variants').lean()
       if (!producto) {
-        return res.status(404).json({ ok: false, message: `❌ Producto no encontrado: ${item.name}` });
+        return res.status(404).json({ ok: false, message: `❌ Producto no encontrado: ${productId}` })
       }
-
-      const result = checkVariantDisponible(producto.variants, item.talla, item.color, item.cantidad);
-      if (!result.ok) {
-        return res.status(400).json({ ok: false, message: result.message });
+      const disponibilidad = checkVariantDisponible(producto.variants, talla, color, cantidad)
+      if (!disponibilidad.ok) {
+        return res.status(400).json({ ok: false, message: disponibilidad.message })
       }
     }
 
-    const newOrder = new Order({
+    const newOrder = await Order.create({
       items,
-      total: totalParsed,
+      total: totalNum,
       nombreCliente: nombreCliente.trim(),
-      email: email.trim(),
+      email: email.trim().toLowerCase(),
       telefono: telefono.trim(),
       direccion: direccion.trim(),
       metodoPago: metodoPago.trim().toLowerCase(),
       nota: nota.trim(),
       factura,
       estado: metodoPago.toLowerCase() === 'transferencia' ? 'pendiente' : 'pagado'
-    });
+    })
 
-    await newOrder.save();
-
-    for (const item of items) {
-      const producto = await Product.findOneAndUpdate(
-        {
-          _id: item.productId,
-          'variants.talla': item.talla.toLowerCase(),
-          'variants.color': item.color.toLowerCase()
-        },
-        {
-          $inc: { 'variants.$.stock': -item.cantidad }
-        },
-        { new: true }
-      );
-
-      if (producto) {
-        const variante = producto.variants.find(
-          v => v.talla === item.talla.toLowerCase() && v.color === item.color.toLowerCase()
-        );
-
-        if (variante && variante.stock <= 0) {
-          variante.activo = false;
-          producto.markModified('variants');
+    await Promise.all(
+      items.map(async ({ productId, talla, color, cantidad }) => {
+        const updated = await Product.findOneAndUpdate(
+          { _id: productId, 'variants.talla': talla.toLowerCase(), 'variants.color': color.toLowerCase() },
+          { $inc: { 'variants.$.stock': -cantidad } },
+          { new: true }
+        )
+        if (updated) {
+          const variant = updated.variants.find(v => v.talla === talla.toLowerCase() && v.color === color.toLowerCase())
+          if (variant && variant.stock <= 0) variant.activo = false
+          updated.isActive = !verificarProductoAgotado(updated.variants)
+          await updated.save()
         }
+      })
+    )
 
-        const agotado = verificarProductoAgotado(producto.variants);
-        producto.isActive = !agotado;
-        await producto.save();
-      }
-    }
-
-    // ✅ Enviar notificación de confirmación al cliente
     await sendNotification({
       nombreCliente: newOrder.nombreCliente,
       telefono: newOrder.telefono,
       email: newOrder.email,
       estadoActual: newOrder.estado,
       tipo: 'creacion'
-    });
+    })
 
-    return res.status(201).json({
-      ok: true,
-      message: '✅ Pedido creado exitosamente',
-      data: newOrder
-    });
-  } catch (error) {
-    console.error('❌ Error creando pedido:', error);
-    return res.status(500).json({
-      ok: false,
-      message: '❌ Error interno creando el pedido.',
-      error: process.env.NODE_ENV !== 'production' ? error.message : undefined
-    });
+    return res.status(201).json({ ok: true, data: newOrder })
+  } catch (err) {
+    console.error('❌ Error creando pedido:', err)
+    return res.status(500).json({ ok: false, message: '❌ Error interno al crear pedido', ...(config.env !== 'production' && { error: err.message }) })
   }
-};
+}
 
 /**
  * 📋 Obtener todos los pedidos (admin)
  */
-export const getOrders = async (req, res) => {
+export const getOrders = async (_req, res) => {
   try {
-    const orders = await Order.find().sort({ createdAt: -1 });
-    return res.status(200).json({ ok: true, data: orders });
-  } catch (error) {
-    return res.status(500).json({ ok: false, message: '❌ Error obteniendo pedidos.', error: error.message });
+    const orders = await Order.find().sort({ createdAt: -1 }).lean()
+    return res.status(200).json({ ok: true, data: orders })
+  } catch (err) {
+    console.error('❌ Error obteniendo pedidos:', err)
+    return res.status(500).json({ ok: false, message: '❌ Error interno al obtener pedidos', ...(config.env !== 'production' && { error: err.message }) })
   }
-};
+}
 
 /**
  * 🔄 Actualizar estado de un pedido (admin)
  */
 export const actualizarEstadoPedido = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { estado } = req.body;
-    const estadosValidos = ['pendiente', 'en_proceso', 'enviado', 'cancelado', 'pagado'];
-
-    if (!estadosValidos.includes(estado)) {
-      return res.status(400).json({ ok: false, message: '⚠️ Estado no válido.' });
+    const id = String(req.params.id || '').trim()
+    const { estado } = req.body
+    const validStates = ['pendiente', 'en_proceso', 'enviado', 'cancelado', 'pagado']
+    if (!validStates.includes(estado)) {
+      return res.status(400).json({ ok: false, message: '⚠️ Estado no válido.' })
     }
-
-    const pedido = await Order.findById(id);
-    if (!pedido) {
-      return res.status(404).json({ ok: false, message: '❌ Pedido no encontrado.' });
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ ok: false, message: '⚠️ ID de pedido inválido.' })
     }
-
-    pedido.estado = estado;
-    await pedido.save();
-
+    const order = await Order.findById(id)
+    if (!order) {
+      return res.status(404).json({ ok: false, message: '❌ Pedido no encontrado.' })
+    }
+    order.estado = estado
+    await order.save()
     await sendNotification({
-      nombreCliente: pedido.nombreCliente,
-      telefono: pedido.telefono,
-      email: pedido.email,
-      estadoActual: pedido.estado,
+      nombreCliente: order.nombreCliente,
+      telefono: order.telefono,
+      email: order.email,
+      estadoActual: order.estado,
       tipo: 'estado'
-    });
-
-    return res.status(200).json({ ok: true, data: pedido });
-  } catch (error) {
-    return res.status(500).json({ ok: false, message: '❌ Error actualizando estado.', error: error.message });
+    })
+    return res.status(200).json({ ok: true, data: order })
+  } catch (err) {
+    console.error('❌ Error actualizando estado:', err)
+    return res.status(500).json({ ok: false, message: '❌ Error interno al actualizar estado', ...(config.env !== 'production' && { error: err.message }) })
   }
-};
+}
 
 /**
  * 📈 Obtener estadísticas de pedidos
  */
-export const getOrderStats = async (req, res) => {
+export const getOrderStats = async (_req, res) => {
   try {
-    const pedidos = await Order.find();
-    const hoy = new Date().setHours(0, 0, 0, 0);
-
-    const resumen = {
-      total: pedidos.length,
-      pendiente: 0,
-      en_proceso: 0,
-      enviado: 0,
-      cancelado: 0,
-      hoy: 0,
-      ventasTotales: 0
-    };
-
-    for (const p of pedidos) {
-      const estado = (p.estado || 'pendiente').toLowerCase();
-      if (resumen[estado] !== undefined) resumen[estado]++;
-      if (estado === 'enviado') resumen.ventasTotales += parseFloat(p.total || 0);
-
-      const fecha = new Date(p.createdAt).setHours(0, 0, 0, 0);
-      if (fecha === hoy) resumen.hoy++;
-    }
-
-    resumen.ventasTotales = Number(resumen.ventasTotales.toFixed(2));
-
-    return res.status(200).json({ ok: true, data: resumen });
-  } catch (error) {
-    return res.status(500).json({ ok: false, message: '❌ Error generando estadísticas.', error: error.message });
+    const orders = await Order.find().lean()
+    const today = new Date().setHours(0, 0, 0, 0)
+    const summary = { total: 0, pendiente: 0, en_proceso: 0, enviado: 0, cancelado: 0, hoy: 0, ventasTotales: 0 }
+    orders.forEach(o => {
+      summary.total++
+      const state = (o.estado || 'pendiente').toLowerCase()
+      if (summary[state] !== undefined) summary[state]++
+      if (state === 'enviado') summary.ventasTotales += parseFloat(o.total || 0)
+      if (new Date(o.createdAt).setHours(0, 0, 0, 0) === today) summary.hoy++
+    })
+    summary.ventasTotales = Number(summary.ventasTotales.toFixed(2))
+    return res.status(200).json({ ok: true, data: summary })
+  } catch (err) {
+    console.error('❌ Error generando estadísticas:', err)
+    return res.status(500).json({ ok: false, message: '❌ Error interno al generar estadísticas', ...(config.env !== 'production' && { error: err.message }) })
   }
-};
+}
 
 /**
  * 🔎 Seguimiento de pedido (público)
  */
 export const trackOrder = async (req, res) => {
   try {
-    const { codigo } = req.params;
-    const pedido = await Order.findOne({ codigoSeguimiento: codigo });
-
-    if (!pedido) {
-      return res.status(404).json({ ok: false, message: '❌ Pedido no encontrado.' });
+    const codigo = String(req.params.codigo || '').trim()
+    if (!codigo) {
+      return res.status(400).json({ ok: false, message: '⚠️ Código de seguimiento requerido.' })
     }
-
-    return res.status(200).json({
-      ok: true,
-      estadoActual: pedido.estado,
-      resumen: {
-        nombre: pedido.nombreCliente,
-        direccion: pedido.direccion,
-        metodoPago: pedido.metodoPago,
-        total: pedido.total
-      }
-    });
-  } catch (error) {
-    return res.status(500).json({ ok: false, message: '❌ Error buscando pedido.', error: error.message });
+    const order = await Order.findOne({ codigoSeguimiento: codigo }).lean()
+    if (!order) {
+      return res.status(404).json({ ok: false, message: '❌ Pedido no encontrado.' })
+    }
+    const summary = {
+      nombre: order.nombreCliente,
+      direccion: order.direccion,
+      metodoPago: order.metodoPago,
+      total: order.total,
+      estadoActual: order.estado
+    }
+    return res.status(200).json({ ok: true, data: summary })
+  } catch (err) {
+    console.error('❌ Error en seguimiento:', err)
+    return res.status(500).json({ ok: false, message: '❌ Error interno en seguimiento', ...(config.env !== 'production' && { error: err.message }) })
   }
-};
+}
 
 /**
  * 🗑️ Eliminar pedido (admin)
  */
 export const deleteOrder = async (req, res) => {
   try {
-    const { id } = req.params;
-    const pedido = await Order.findById(id);
-
-    if (!pedido) {
-      return res.status(404).json({ ok: false, message: '❌ Pedido no encontrado.' });
+    const id = String(req.params.id || '').trim()
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ ok: false, message: '⚠️ ID de pedido inválido.' })
     }
-
-    await Order.findByIdAndDelete(id);
-
-    return res.status(200).json({ ok: true, idEliminado: id });
-  } catch (error) {
-    console.error('❌ Error eliminando pedido:', error);
-    return res.status(500).json({ ok: false, message: '❌ Error eliminando pedido.', error: error.message });
+    const order = await Order.findById(id)
+    if (!order) {
+      return res.status(404).json({ ok: false, message: '❌ Pedido no encontrado.' })
+    }
+    await Order.deleteOne({ _id: id })
+    return res.status(200).json({ ok: true, data: { deletedId: id } })
+  } catch (err) {
+    console.error('❌ Error eliminando pedido:', err)
+    return res.status(500).json({ ok: false, message: '❌ Error interno al eliminar pedido', ...(config.env !== 'production' && { error: err.message }) })
   }
-};
+}

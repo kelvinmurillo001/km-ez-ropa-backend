@@ -1,27 +1,27 @@
 # 🔌 Dependencias y locks
-node_modules
+node_modules/
 package-lock.json
 yarn.lock
 
-# ⚙️ Archivos del sistema y variables de entorno
+# ⚙️ Archivos del sistema y entorno
 .DS_Store
 .env
 .env.*
 
 # 📦 Archivos generados o de build
-dist
-build
-uploads
-logs
+dist/
+build/
+uploads/
+logs/
 *.log
 
-# 🎨 Archivos multimedia o estáticos
-public
-assets
-frontend/assets
+# 🖼️ Multimedia y recursos estáticos
+public/
+assets/
+frontend/assets/
 
-# 🧾 Archivos de configuración o control de versiones
-.git
+# ⚙️ Configuración y control de versiones
+.git/
 .gitignore
 .prettierrc
 .prettierignore

@@ -1,63 +1,42 @@
 // 📁 backend/middleware/multer.js
 import multer from 'multer'
-import path from 'path'
-import fs from 'fs'
+import config from '../config/configuracionesito.js'
+import logger from '../utils/logger.js'
 
-// 📂 Ruta de subida de archivos
-const UPLOAD_DIR = path.resolve('uploads')
+/**
+ * 🧩 Middleware de Multer para manejo de uploads en memoria (Cloudinary)
+ */
 
-// 📂 Crear carpeta 'uploads' si no existe
-if (!fs.existsSync(UPLOAD_DIR)) {
-  try {
-    fs.mkdirSync(UPLOAD_DIR, { recursive: true })
-    console.log("📁 Carpeta 'uploads' creada correctamente")
-  } catch (err) {
-    console.error('❌ Error creando carpeta uploads:', err.message)
-  }
-}
+// 🚧 Configuración
+const MAX_FILE_SIZE = config.maxUploadSize || 2 * 1024 * 1024
+const ALLOWED_EXTENSIONS = config.allowedUploadExtensions || ['.jpg', '.jpeg', '.png', '.webp']
+const ALLOWED_MIME_TYPES = config.allowedUploadMimeTypes || ['image/jpeg', 'image/png', 'image/webp']
 
-// 🔒 Reglas de validación
-const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
-const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp']
-const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+// 💾 Almacenamiento en memoria (buffer para streaming)
+const storage = multer.memoryStorage()
 
-// 💾 Configuración de almacenamiento (multer.diskStorage)
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, UPLOAD_DIR)
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase()
-    const baseName = path
-      .basename(file.originalname, ext)
-      .toLowerCase()
-      .replace(/\s+/g, '-') // Reemplazar espacios por guiones
-      .replace(/[^a-z0-9-]/g, '') // Limpiar caracteres no permitidos
-      .substring(0, 50)
-
-    const uniqueFilename = `${Date.now()}-${baseName}${ext}`
-    cb(null, uniqueFilename)
-  }
-})
-
-// 🧪 Validación de archivos subidos
-const fileFilter = (req, file, cb) => {
-  const ext = path.extname(file.originalname).toLowerCase()
+// 🧪 Validación de archivo
+const fileFilter = (_req, file, cb) => {
+  const ext = file.originalname.slice(((file.originalname.lastIndexOf('.') - 1) >>> 0) + 1).toLowerCase()
   const mime = file.mimetype
 
-  if (ALLOWED_EXTENSIONS.includes(ext) && ALLOWED_MIME_TYPES.includes(mime)) {
-    cb(null, true)
-  } else {
-    console.warn(`⚠️ Archivo rechazado: ${file.originalname}`)
-    cb(new Error('❌ Solo se permiten imágenes en formato JPG, PNG o WEBP'), false)
-  }
+  const validExt = ALLOWED_EXTENSIONS.includes(`.${ext}`)
+  const validMime = ALLOWED_MIME_TYPES.includes(mime)
+
+  if (validExt && validMime) return cb(null, true)
+
+  logger.warn(`⚠️ Archivo rechazado: ${file.originalname} [ext: .${ext}, mime: ${mime}]`)
+
+  const error = new multer.MulterError('LIMIT_UNEXPECTED_FILE', file.fieldname)
+  error.message = '❌ Solo se permiten imágenes JPG, PNG o WEBP de hasta 2MB'
+  return cb(error, false)
 }
 
-// 🚀 Instancia de Multer exportada
+// 🚀 Exportar instancia
 const upload = multer({
   storage,
-  fileFilter,
-  limits: { fileSize: MAX_FILE_SIZE }
-})
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter
+}).single('file')
 
 export default upload

@@ -1,67 +1,77 @@
-// ✅ backend/utils/notifications.js
+import { sendNotification } from '../utils/notifications.js'
 
-// 🛠️ Preparado para integrar Twilio / WATI (WhatsApp) y Nodemailer / SendGrid (Email)
+describe('🧪 Notificaciones - Simulación de envío', () => {
+  const consoleLog = jest.spyOn(console, 'log').mockImplementation(() => {})
+  const consoleWarn = jest.spyOn(console, 'warn').mockImplementation(() => {})
+  const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {})
 
-/**
- * ⚙️ Función principal para enviar notificaciones
- * @param {Object} param0 - Datos del cliente y estado
- */
-export const sendNotification = async ({ nombreCliente, telefono, email, estadoActual }) => {
-  try {
-    const mensaje = generarMensaje(nombreCliente, estadoActual)
+  afterEach(() => {
+    jest.clearAllMocks()
+  })
 
-    // 📲 Simulación de envío de WhatsApp
-    await enviarWhatsapp(telefono, mensaje)
+  test('✅ Enviar notificación con todos los datos', async () => {
+    await sendNotification({
+      nombreCliente: 'Kelvin',
+      telefono: '0999999999',
+      email: 'kelvin@test.com',
+      estadoActual: 'preparando'
+    })
 
-    // 📧 Simulación de envío de Email
-    await enviarEmail(email, 'Actualización de tu Pedido', mensaje)
+    expect(consoleLog).toHaveBeenCalledWith(
+      '📲 WhatsApp a 0999999999: 🛠️ Hola Kelvin, estamos preparando tu pedido.'
+    )
+    expect(consoleLog).toHaveBeenCalledWith(
+      '📧 Email a kelvin@test.com: [Actualización de tu Pedido] 🛠️ Hola Kelvin, estamos preparando tu pedido.'
+    )
+    expect(consoleLog).toHaveBeenCalledWith('✅ Notificaciones enviadas correctamente.')
+  })
 
-    console.log('✅ Notificaciones enviadas correctamente.')
-  } catch (error) {
-    console.error('❌ Error enviando notificaciones:', error.message)
-  }
-}
+  test('⚠️ Mostrar advertencia si falta teléfono o email', async () => {
+    await sendNotification({
+      nombreCliente: 'Ana',
+      telefono: '',
+      email: '',
+      estadoActual: 'en camino'
+    })
 
-/**
- * 📝 Genera un mensaje amigable basado en el estado del pedido
- * @param {string} nombre - Nombre del cliente
- * @param {string} estado - Estado actual del pedido
- * @returns {string} - Mensaje generado
- */
-function generarMensaje (nombre, estado) {
-  const estados = {
-    recibido: `🎉 Hola ${nombre}, hemos recibido tu pedido. ¡Gracias por tu compra!`,
-    preparando: `🛠️ Hola ${nombre}, estamos preparando tu pedido.`,
-    'en camino': `🚚 Hola ${nombre}, tu pedido ya va en camino.`,
-    entregado: `✅ Hola ${nombre}, tu pedido fue entregado exitosamente. ¡Esperamos que lo disfrutes!`
-  }
+    expect(consoleWarn).toHaveBeenCalledWith('⚠️ No hay número de teléfono para enviar WhatsApp.')
+    expect(consoleWarn).toHaveBeenCalledWith('⚠️ No hay correo para enviar Email.')
+  })
 
-  return estados[estado.toLowerCase()] || `📦 Hola ${nombre}, actualización de tu pedido.`
-}
+  test('📦 Mensaje genérico si el estado no es reconocido', async () => {
+    await sendNotification({
+      nombreCliente: 'Luis',
+      telefono: '0999999999',
+      email: 'luis@test.com',
+      estadoActual: 'pendiente'
+    })
 
-/**
- * 📲 Simula envío de WhatsApp (puede integrarse Twilio, WATI, etc)
- * @param {string} telefono - Número de teléfono
- * @param {string} mensaje - Contenido del mensaje
- */
-async function enviarWhatsapp (telefono, mensaje) {
-  if (!telefono) {
-    console.warn('⚠️ No hay número de teléfono para enviar WhatsApp.')
-    return
-  }
-  console.log(`📲 WhatsApp a ${telefono}: ${mensaje}`)
-}
+    expect(consoleLog).toHaveBeenCalledWith(
+      '📲 WhatsApp a 0999999999: 📦 Hola Luis, actualización de tu pedido.'
+    )
+  })
 
-/**
- * 📧 Simula envío de Email (puede integrarse Nodemailer, SendGrid, etc)
- * @param {string} destinatario - Email destino
- * @param {string} asunto - Asunto del correo
- * @param {string} contenido - Contenido del mensaje
- */
-async function enviarEmail (destinatario, asunto, contenido) {
-  if (!destinatario) {
-    console.warn('⚠️ No hay correo para enviar Email.')
-    return
-  }
-  console.log(`📧 Email a ${destinatario}: [${asunto}] ${contenido}`)
-}
+  test('❌ Manejar errores sin crashear', async () => {
+    const errorMock = jest.fn(() => {
+      throw new Error('Fallo simulado')
+    })
+
+    // Sobrescribir temporalmente enviarWhatsapp o enviarEmail
+    const { __RewireAPI__ } = await import('../utils/notifications.js')
+    __RewireAPI__.__Rewire__('enviarWhatsapp', errorMock)
+
+    await sendNotification({
+      nombreCliente: 'Laura',
+      telefono: '1234567890',
+      email: 'laura@test.com',
+      estadoActual: 'recibido'
+    })
+
+    expect(consoleError).toHaveBeenCalledWith(
+      '❌ Error enviando notificaciones:',
+      'Fallo simulado'
+    )
+
+    __RewireAPI__.__ResetDependency__('enviarWhatsapp')
+  })
+})

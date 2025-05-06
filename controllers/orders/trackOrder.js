@@ -1,53 +1,59 @@
 // 📁 backend/controllers/orders/trackOrder.js
-
 import Order from '../../models/Order.js'
 
 /**
  * 🔍 Buscar pedido por código de seguimiento
- * @route GET /api/orders/track/:codigo
+ * @route   GET /api/orders/track/:codigo
+ * @access  Público
  */
 const trackOrder = async (req, res) => {
   try {
-    const { codigo } = req.params
+    // 📌 Sanitizar y validar código de seguimiento
+    const rawCode = String(req.params.codigo || '').trim().toUpperCase()
 
-    if (!codigo || typeof codigo !== 'string' || codigo.trim().length < 3) {
+    if (!/^[A-Z0-9_-]{3,}$/.test(rawCode)) {
       return res.status(400).json({
         ok: false,
-        message: '⚠️ Código de seguimiento inválido'
+        message: '⚠️ Código de seguimiento inválido (mínimo 3 caracteres, solo letras, números, guiones y guiones bajos)'
       })
     }
 
-    const pedido = await Order.findOne({ codigoSeguimiento: codigo.trim() }).lean()
+    // 🔎 Buscar pedido por código (case-sensitive por normalización previa)
+    const pedido = await Order.findOne({ codigoSeguimiento: rawCode })
+      .select('nombreCliente total metodoPago direccion nota createdAt seguimiento estado')
+      .lean()
 
     if (!pedido) {
       return res.status(404).json({
         ok: false,
-        message: '❌ Pedido no encontrado'
+        message: '❌ No se encontró ningún pedido con ese código de seguimiento.'
       })
     }
 
+    // 🧾 Construir resumen
     const resumen = {
-      nombre: pedido.nombreCliente || 'Sin nombre',
-      total: pedido.total || 0,
-      metodoPago: pedido.metodoPago || 'no especificado',
-      direccion: pedido.direccion || 'no proporcionada',
+      nombre: pedido.nombreCliente || 'Cliente desconocido',
+      total: typeof pedido.total === 'number' ? pedido.total : 0,
+      metodoPago: pedido.metodoPago || 'No especificado',
+      direccion: pedido.direccion || 'No proporcionada',
       nota: pedido.nota || '',
-      fecha: pedido.createdAt || null
+      fecha: pedido.createdAt ? new Date(pedido.createdAt).toISOString() : null
     }
 
     return res.status(200).json({
       ok: true,
-      message: '✅ Pedido encontrado',
-      seguimiento: pedido.seguimiento || '',
-      estadoActual: pedido.estado || 'pendiente',
-      resumen
+      data: {
+        seguimiento: pedido.seguimiento || '',
+        estadoActual: pedido.estado || 'pendiente',
+        resumen
+      }
     })
   } catch (err) {
-    console.error('❌ Error en trackOrder:', err)
+    console.error('❌ Error al rastrear pedido:', err)
     return res.status(500).json({
       ok: false,
-      message: '❌ Error en el servidor al buscar el pedido',
-      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+      message: '❌ Error interno del servidor al rastrear el pedido.',
+      ...(process.env.NODE_ENV !== 'production' && { error: err.message })
     })
   }
 }

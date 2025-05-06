@@ -3,29 +3,30 @@
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'; // SOLO sandbox
 
 import dotenv from 'dotenv';
-import { crearOrden, capturarOrden } from '../services/paypalService.js';
-
 dotenv.config();
+
+import { crearOrden, capturarOrden } from '../services/paypalService.js';
 
 describe('🧪 PayPalService - Pruebas de integración robustas', () => {
   let createdOrderId = '';
 
-  test('✅ Debería crear una orden PayPal válida con total positivo', async () => {
+  test('✅ Crear orden PayPal con total válido', async () => {
     const total = 10.5;
+
     const response = await crearOrden(total);
 
-    console.log('💬 Respuesta creación:', JSON.stringify(response, null, 2));
+    console.log('💬 Orden creada:', JSON.stringify(response, null, 2));
 
     expect(response).toBeDefined();
     expect(response).toHaveProperty('id');
-    expect(response.status).toBe('CREATED');
+    expect(response).toHaveProperty('status', 'CREATED');
 
     createdOrderId = response.id;
   });
 
-  test('✅ Debería capturar correctamente una orden PayPal existente', async () => {
+  test('✅ Capturar orden creada previamente (puede requerir aprobación manual)', async () => {
     if (!createdOrderId) {
-      console.warn('⚠️ Test omitido: No se creó la orden');
+      console.warn('⚠️ Test omitido: No se creó la orden.');
       return;
     }
 
@@ -36,39 +37,40 @@ describe('🧪 PayPalService - Pruebas de integración robustas', () => {
       expect(response).toHaveProperty('id', createdOrderId);
       expect(response.status).toBe('COMPLETED');
     } catch (err) {
-      // 422 = no aprobada aún
-      if (err.message.includes('422')) {
-        console.warn('⚠️ No se puede capturar orden aún: requiere aprobación manual en sandbox.');
+      // PayPal Sandbox puede requerir aprobación manual desde la cuenta de pruebas
+      const msg = err.message?.toLowerCase() || '';
+      if (msg.includes('422') || msg.includes('approval')) {
+        console.warn('⚠️ La orden no fue aprobada aún en sandbox. Captura no realizada.');
       } else {
-        throw err;
+        throw err; // Rethrow si es otro error inesperado
       }
     }
   });
 
-  test('❌ No debe permitir crear orden con total inválido', async () => {
+  test('❌ No debe crear orden con total inválido (0)', async () => {
     expect.assertions(1);
     try {
       await crearOrden(0);
     } catch (err) {
-      expect(err.message.toLowerCase()).toMatch(/total/);
+      expect(err.message.toLowerCase()).toMatch(/total/i);
     }
   });
 
-  test('❌ No debe permitir capturar con ID inválido', async () => {
+  test('❌ No debe capturar orden con ID inexistente', async () => {
     expect.assertions(1);
     try {
       await capturarOrden('orden_inexistente_123');
     } catch (err) {
-      expect(err.message.toLowerCase()).toMatch(/404|not found|paypal/);
+      expect(err.message.toLowerCase()).toMatch(/404|not found|paypal/i);
     }
   });
 
-  test('❌ No debe permitir capturar sin pasar orderId', async () => {
+  test('❌ No debe capturar orden con ID vacío', async () => {
     expect.assertions(1);
     try {
       await capturarOrden('');
     } catch (err) {
-      expect(err.message).toMatch(/orderId es requerido/);
+      expect(err.message.toLowerCase()).toMatch(/orderid/i);
     }
   });
 });

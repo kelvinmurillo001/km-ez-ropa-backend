@@ -1,63 +1,74 @@
 // 📁 backend/middleware/authMiddleware.js
 import jwt from 'jsonwebtoken'
 import User from '../models/User.js'
+import config from '../config/configuracionesito.js'
+import logger from '../utils/logger.js'
 
 /**
  * 🔐 Middleware: Verifica autenticación de usuarios mediante JWT
+ * @description Protege rutas privadas validando el token JWT en el header
+ * @access     Requiere que el usuario haya iniciado sesión
  */
 const authMiddleware = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization || '';
+    const authHeader = String(req.headers.authorization || '')
 
-    // 📛 Validar formato del header
+    // 🔍 Validar formato Bearer
     if (!authHeader.startsWith('Bearer ')) {
+      logger.warn(`🔐 Token mal formado en header: ${authHeader}`)
       return res.status(401).json({
         ok: false,
-        message: '🔐 Acceso denegado. Token no proporcionado o mal formado.'
-      });
+        message: '🔐 Acceso denegado. Formato de token incorrecto.'
+      })
     }
 
-    // 📦 Extraer token
-    const token = authHeader.split(' ')[1];
-    if (!token || token.length < 10) {
+    const token = authHeader.split(' ')[1]
+
+    // ⚠️ Validación básica de longitud
+    if (!token || token.length < 20) {
+      logger.warn('⛔ Token ausente o sospechosamente corto')
       return res.status(401).json({
         ok: false,
-        message: '⛔ Token inválido o sospechosamente corto.'
-      });
+        message: '⛔ Token inválido o no proporcionado.'
+      })
     }
 
-    // 🔍 Verificar token
-    let decoded;
+    // ✅ Verificación de JWT
+    let decoded
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
+      decoded = jwt.verify(token, config.jwtSecret)
     } catch (err) {
-      console.warn('⛔ JWT inválido:', err.message);
+      logger.warn(`⛔ JWT inválido o expirado: ${err.message}`)
       return res.status(401).json({
         ok: false,
         message: '⛔ Token expirado o inválido. Por favor inicia sesión nuevamente.'
-      });
+      })
     }
 
-    // 👤 Verificar existencia de usuario
-    const user = await User.findById(decoded.id).select('-password');
+    // 👤 Verificar usuario en base de datos
+    const user = await User.findById(decoded.id)
+      .select('-password -refreshToken')
+      .lean()
+
     if (!user) {
+      logger.warn(`🚫 Usuario no encontrado en DB: ${decoded.id}`)
       return res.status(401).json({
         ok: false,
-        message: '🚫 Usuario no encontrado o eliminado del sistema.'
-      });
+        message: '🚫 Usuario no autorizado o inexistente.'
+      })
     }
 
-    // ✅ Autenticado
-    req.user = user;
-    next();
-  } catch (error) {
-    console.error('❌ Error en authMiddleware:', error);
+    // 🧩 Añadir usuario al request
+    req.user = user
+    return next()
+  } catch (err) {
+    logger.error('❌ Error inesperado en authMiddleware:', err)
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al verificar autenticación.',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+      ...(config.env !== 'production' && { error: err.message })
+    })
   }
-};
+}
 
-export default authMiddleware;
+export default authMiddleware

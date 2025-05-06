@@ -1,3 +1,4 @@
+// 📁 backend/models/category.js
 import mongoose from 'mongoose'
 
 // 📦 Esquema de Categoría con subcategorías embebidas
@@ -21,30 +22,45 @@ const categorySchema = new mongoose.Schema({
         arr.every(sub => typeof sub === 'string' && sub.trim().length >= 2),
       message: '⚠️ Cada subcategoría debe tener al menos 2 caracteres'
     },
-    set: arr => arr.map(sub => sub.trim().toLowerCase()) // 🧼 Normalizar
+    set: arr => Array.isArray(arr)
+      ? [...new Set(arr.map(sub => sub.trim().toLowerCase()))] // 🔄 Evita duplicados y normaliza
+      : []
   },
 
-  // 🔮 Futuras mejoras:
   icon: {
     type: String,
     trim: true,
     default: ''
   },
+
   isActive: {
     type: Boolean,
     default: true
   }
 
 }, {
-  timestamps: true // 🕒 createdAt y updatedAt automáticos
+  timestamps: true,
+  toJSON: {
+    virtuals: true,
+    versionKey: false,
+    transform: (_doc, ret) => {
+      ret.id = ret._id.toString()
+      delete ret._id
+      return ret
+    }
+  },
+  toObject: {
+    virtuals: true,
+    versionKey: false
+  }
 })
 
-// 🔍 Índice sensible a minúsculas y acentos
+// 🔍 Índice con collation para búsquedas sin importar acentos o mayúsculas
 categorySchema.index(
   { name: 1 },
   {
     unique: true,
-    collation: { locale: 'es', strength: 2 }
+    collation: { locale: 'es', strength: 2 } // 📌 Ignora mayúsculas y tildes
   }
 )
 

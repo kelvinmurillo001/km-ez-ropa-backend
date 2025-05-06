@@ -8,10 +8,13 @@
     "ecmaVersion": "latest",
     "sourceType": "module"
   },
-  "ignorePatterns": ["node_modules/", "uploads/", "frontend/", "public/"],
+  "ignorePatterns": ["node_modules/", "uploads/", "frontend/", "public/", "tests/"],
   "rules": {
-    "no-unused-vars": ["warn"],
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
     "no-useless-escape": "warn",
-    "no-prototype-builtins": "warn"
+    "no-prototype-builtins": "warn",
+    "quotes": ["warn", "single"],
+    "semi": ["warn", "never"],
+    "comma-dangle": ["warn", "never"]
   }
 }

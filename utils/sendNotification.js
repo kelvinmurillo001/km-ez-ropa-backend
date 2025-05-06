@@ -1,83 +1,73 @@
-import nodemailer from "nodemailer";
+import { sendNotification } from '../utils/sendNotification.js'
+import nodemailer from 'nodemailer'
 
-// ✅ Configuración para cuentas Outlook / Hotmail / Office 365
-const transporter = nodemailer.createTransport({
-  host: "smtp.office365.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_FROM,       // ejemplo: tu-email@outlook.com
-    pass: process.env.EMAIL_PASSWORD    // contraseña o app password
-  },
-  tls: {
-    ciphers: 'SSLv3'
-  }
-});
+jest.mock('nodemailer')
 
-/**
- * Envía una notificación por correo al cliente.
- * Puede usarse tanto para la creación como para la actualización del pedido.
- *
- * @param {Object} params
- * @param {string} params.email - Correo del cliente
- * @param {string} params.nombreCliente - Nombre del cliente
- * @param {string} params.estadoActual - Estado del pedido (ej: "pendiente")
- * @param {string} [params.tipo] - 'creacion' o 'estado' (por defecto: 'estado')
- */
-export const sendNotification = async ({
-  email,
-  nombreCliente,
-  estadoActual,
-  tipo = 'estado'
-}) => {
-  if (!email || !estadoActual) return;
+describe('🧪 Envío de notificaciones por correo', () => {
+  const mockSendMail = jest.fn()
 
-  const estadoTexto = {
-    pendiente: "⏳ Pendiente",
-    en_proceso: "🛠️ Procesando",
-    procesando: "🛠️ Procesando",
-    enviado: "🚚 Enviado",
-    entregado: "📬 Entregado",
-    cancelado: "❌ Cancelado",
-    pagado: "💰 Pagado"
-  };
+  beforeAll(() => {
+    nodemailer.createTransport.mockReturnValue({
+      sendMail: mockSendMail
+    })
+  })
 
-  const asunto = tipo === "creacion"
-    ? "✅ Pedido recibido con éxito - KM & EZ ROPA"
-    : `📦 Tu pedido ha sido actualizado - Estado: ${estadoTexto[estadoActual] || estadoActual}`;
+  beforeEach(() => {
+    mockSendMail.mockClear()
+  })
 
-  const mensaje = tipo === "creacion"
-    ? `
-      <h2>Hola ${nombreCliente || "cliente"},</h2>
-      <p>Hemos recibido tu pedido y estamos procesándolo. 🎉</p>
-      <p>Estado actual: <strong style="color:#ff6d00;">${estadoTexto[estadoActual]}</strong></p>
-      <p>Te notificaremos cuando el estado cambie.</p>
-    `
-    : `
-      <h2>Hola ${nombreCliente || "cliente"},</h2>
-      <p>El estado de tu pedido ha sido actualizado a:</p>
-      <h3 style="color:#ff6d00;">${estadoTexto[estadoActual] || estadoActual}</h3>
-    `;
+  test('✅ Debería enviar correo de creación de pedido correctamente', async () => {
+    mockSendMail.mockResolvedValueOnce({ accepted: ['cliente@correo.com'] })
 
-  const mailOptions = {
-    from: `"KM & EZ ROPA" <${process.env.EMAIL_FROM}>`,
-    to: email,
-    subject: asunto,
-    html: `
-      <div style="font-family:sans-serif; color:#333;">
-        ${mensaje}
-        <p>📦 Puedes ver el detalle completo de tu pedido desde tu cuenta.</p>
-        <p>Gracias por confiar en <strong>KM & EZ ROPA</strong>.</p>
-        <br/>
-        <small>No respondas a este correo. Es una notificación automática.</small>
-      </div>
-    `
-  };
+    await sendNotification({
+      email: 'cliente@correo.com',
+      nombreCliente: 'Kelvin',
+      estadoActual: 'pendiente',
+      tipo: 'creacion'
+    })
 
-  try {
-    await transporter.sendMail(mailOptions);
-    console.log(`📧 Notificación de ${tipo} enviada a ${email}`);
-  } catch (err) {
-    console.error("❌ Error al enviar correo:", err.message);
-  }
-};
+    expect(mockSendMail).toHaveBeenCalledTimes(1)
+    const mail = mockSendMail.mock.calls[0][0]
+    expect(mail.to).toBe('cliente@correo.com')
+    expect(mail.subject).toMatch(/pedido recibido/i)
+    expect(mail.html).toContain('Hemos recibido tu pedido')
+    expect(mail.html).toContain('Kelvin')
+  })
+
+  test('✅ Debería enviar correo de actualización de estado correctamente', async () => {
+    await sendNotification({
+      email: 'cliente@test.com',
+      nombreCliente: 'Ana',
+      estadoActual: 'enviado'
+    })
+
+    expect(mockSendMail).toHaveBeenCalledTimes(1)
+    const mail = mockSendMail.mock.calls[0][0]
+    expect(mail.subject).toMatch(/estado/i)
+    expect(mail.html).toContain('El estado de tu pedido ha sido actualizado')
+    expect(mail.html).toContain('Ana')
+    expect(mail.html).toContain('Enviado')
+  })
+
+  test('❌ No debe enviar si falta email o estadoActual', async () => {
+    await sendNotification({ email: '', estadoActual: 'pendiente' })
+    await sendNotification({ email: 'test@test.com' }) // sin estado
+
+    expect(mockSendMail).not.toHaveBeenCalled()
+  })
+
+  test('❌ Debe registrar error si falla el envío', async () => {
+    const errorMock = new Error('Simulado')
+    mockSendMail.mockRejectedValueOnce(errorMock)
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+
+    await sendNotification({
+      email: 'fallo@correo.com',
+      nombreCliente: 'Laura',
+      estadoActual: 'cancelado'
+    })
+
+    expect(consoleSpy).toHaveBeenCalledWith('❌ Error al enviar correo:', 'Simulado')
+    consoleSpy.mockRestore()
+  })
+})

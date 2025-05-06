@@ -17,25 +17,34 @@ import adminOnly from '../middleware/adminOnly.js'
 
 const router = express.Router()
 
-/* -------------------------------------------------------------------------- */
-/* 📄 RUTAS DE PROMOCIONES                                                    */
-/* -------------------------------------------------------------------------- */
+/* ───────────────────────────────────────────── */
+/* 📄 RUTAS DE PROMOCIONES                       */
+/* ───────────────────────────────────────────── */
+
+/* 🔓 Públicas */
 
 /**
- * 🔓 Obtener promociones activas y vigentes (PÚBLICO)
- * GET /api/promos
+ * 📢 GET /api/promos
+ * ➤ Obtener promociones activas y vigentes
  */
 router.get('/', getPromotion)
 
-/**
- * 🔐 Obtener todas las promociones (SOLO ADMIN)
- * GET /api/promos/admin
- */
-router.get('/admin', authMiddleware, adminOnly, getAllPromotions)
+/* 🔐 Solo administrador */
 
 /**
- * 🔐 Crear o actualizar una promoción (SOLO ADMIN)
- * PUT /api/promos
+ * 📋 GET /api/promos/admin
+ * ➤ Obtener todas las promociones
+ */
+router.get(
+  '/admin',
+  authMiddleware,
+  adminOnly,
+  getAllPromotions
+)
+
+/**
+ * ✏️ PUT /api/promos
+ * ➤ Crear o actualizar promoción
  */
 router.put(
   '/',
@@ -96,8 +105,8 @@ router.put(
 )
 
 /**
- * 🔁 Activar o desactivar promoción (SOLO ADMIN)
- * PATCH /api/promos/:id/estado
+ * 🔁 PATCH /api/promos/:id/estado
+ * ➤ Activar o desactivar una promoción
  */
 router.patch(
   '/:id/estado',
@@ -112,8 +121,8 @@ router.patch(
 )
 
 /**
- * 🗑️ Eliminar una promoción (SOLO ADMIN)
- * DELETE /api/promos/:id
+ * 🗑️ DELETE /api/promos/:id
+ * ➤ Eliminar promoción por ID
  */
 router.delete(
   '/:id',
@@ -127,5 +136,4 @@ router.delete(
   deletePromotion
 )
 
-// 🚀 Exportar router
 export default router

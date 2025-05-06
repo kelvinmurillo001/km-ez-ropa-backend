@@ -1,7 +1,8 @@
+// 📁 backend/routes/orderRoutes.js
 import express from 'express'
 import { param } from 'express-validator'
 
-// 🧠 Controladores
+// 🎯 Controladores
 import {
   createOrder,
   getOrders,
@@ -23,12 +24,13 @@ import {
 
 const router = express.Router()
 
-/* -------------------------------------------------------------------------- */
-/* 🛒 RUTAS DE PEDIDOS                                                        */
-/* -------------------------------------------------------------------------- */
+/* ───────────────────────────────────────────── */
+/* 🛒 RUTAS: Gestión de Pedidos                  */
+/* ───────────────────────────────────────────── */
 
 /**
- * 🛍️ Crear nuevo pedido (PÚBLICO)
+ * 🛍️ POST /
+ * ➤ Crear nuevo pedido (PÚBLICO)
  */
 router.post(
   '/',
@@ -37,7 +39,8 @@ router.post(
 )
 
 /**
- * 📋 Obtener todos los pedidos (SOLO ADMIN)
+ * 📋 GET /
+ * ➤ Obtener todos los pedidos (SOLO ADMIN)
  */
 router.get(
   '/',
@@ -47,7 +50,8 @@ router.get(
 )
 
 /**
- * 🔄 Actualizar estado de un pedido (SOLO ADMIN)
+ * 🔄 PUT /:id/estado
+ * ➤ Actualizar estado de un pedido (SOLO ADMIN)
  */
 router.put(
   '/:id/estado',
@@ -58,7 +62,8 @@ router.put(
 )
 
 /**
- * 🗑️ Eliminar pedido (SOLO ADMIN)
+ * 🗑️ DELETE /:id
+ * ➤ Eliminar pedido por ID (SOLO ADMIN)
  */
 router.delete(
   '/:id',
@@ -73,7 +78,8 @@ router.delete(
 )
 
 /**
- * 📊 Obtener estadísticas de pedidos (SOLO ADMIN)
+ * 📊 GET /resumen
+ * ➤ Obtener resumen de estadísticas de pedidos (SOLO ADMIN)
  */
 router.get(
   '/resumen',
@@ -83,7 +89,8 @@ router.get(
 )
 
 /**
- * 📊 Alias para resumen de ventas
+ * 📊 GET /stats/ventas
+ * ➤ Alias para obtener resumen de ventas (SOLO ADMIN)
  */
 router.get(
   '/stats/ventas',
@@ -93,7 +100,8 @@ router.get(
 )
 
 /**
- * 🔎 Seguimiento de pedido por código (PÚBLICO)
+ * 🔎 GET /track/:codigo
+ * ➤ Seguimiento de pedido por código de seguimiento (PÚBLICO)
  */
 router.get(
   '/track/:codigo',
@@ -105,5 +113,4 @@ router.get(
   trackOrder
 )
 
-// 🚀 Exportar router
 export default router

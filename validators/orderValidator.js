@@ -2,9 +2,7 @@
 
 import { body, param } from 'express-validator'
 
-/**
- * 🧾 Validaciones para crear un pedido
- */
+/* 🧾 Validaciones para crear un pedido */
 export const createOrderValidation = [
   body('items')
     .isArray({ min: 1 })
@@ -17,7 +15,7 @@ export const createOrderValidation = [
   body('items.*.name')
     .isString()
     .trim()
-    .isLength({ min: 2 })
+    .isLength({ min: 2, max: 100 })
     .withMessage('⚠️ Nombre del producto inválido.'),
 
   body('items.*.talla')
@@ -41,7 +39,7 @@ export const createOrderValidation = [
 
   body('total')
     .isFloat({ min: 0.01 })
-    .withMessage('⚠️ El total debe ser un número mayor a 0.'),
+    .withMessage('⚠️ El total debe ser mayor a 0.'),
 
   body('nombreCliente')
     .isString()
@@ -57,6 +55,7 @@ export const createOrderValidation = [
 
   body('telefono')
     .isString()
+    .trim()
     .isLength({ min: 7, max: 20 })
     .withMessage('⚠️ Teléfono inválido.'),
 
@@ -72,7 +71,7 @@ export const createOrderValidation = [
     .isString()
     .trim()
     .isLength({ min: 5, max: 300 })
-    .withMessage('⚠️ Dirección muy corta o muy larga.'),
+    .withMessage('⚠️ Dirección inválida.'),
 
   body('metodoPago')
     .isString()
@@ -93,12 +92,14 @@ export const createOrderValidation = [
   body('factura.razonSocial')
     .optional()
     .isString()
+    .trim()
     .isLength({ min: 2, max: 100 })
     .withMessage('⚠️ Razón social inválida.'),
 
   body('factura.ruc')
     .optional()
     .isString()
+    .trim()
     .isLength({ min: 8, max: 20 })
     .withMessage('⚠️ RUC o cédula inválido.'),
 
@@ -109,9 +110,7 @@ export const createOrderValidation = [
     .withMessage('⚠️ Email de facturación inválido.')
 ]
 
-/**
- * 🔄 Validaciones para actualizar estado del pedido
- */
+/* 🔄 Validaciones para actualizar estado del pedido */
 export const updateOrderStatusValidation = [
   param('id')
     .isMongoId()
@@ -119,7 +118,6 @@ export const updateOrderStatusValidation = [
 
   body('estado')
     .trim()
-    .escape()
     .notEmpty()
     .isIn(['pendiente', 'en_proceso', 'enviado', 'cancelado', 'pagado'])
     .withMessage('⚠️ Estado no válido.')

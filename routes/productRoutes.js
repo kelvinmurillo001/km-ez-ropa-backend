@@ -1,3 +1,4 @@
+// 📁 backend/routes/productRoutes.js
 import express from 'express'
 import { param } from 'express-validator'
 
@@ -9,7 +10,7 @@ import {
   createProduct,
   updateProduct,
   deleteProduct
-} from '../controllers/product/index.js'
+} from '../controllers/products/index.js'
 
 // 🛡️ Middlewares
 import authMiddleware from '../middleware/authMiddleware.js'
@@ -25,15 +26,15 @@ import { filtroProductosValidator } from '../validators/filtroProductosValidator
 
 const router = express.Router()
 
-/* -------------------------------------------------------------------------- */
-/* 📦 RUTAS DE PRODUCTOS                                                      */
-/* -------------------------------------------------------------------------- */
+/* ───────────────────────────────────────────── */
+/* 📦 RUTAS DE PRODUCTOS                         */
+/* ───────────────────────────────────────────── */
 
-/* ------------------------- 🔓 Rutas Públicas ------------------------------- */
+/* 🔓 Rutas públicas */
 
 /**
- * 📥 Obtener todos los productos (catálogo público o panel)
- * Query: nombre, categoria, subcategoria, precioMin, precioMax, featured, pagina, limite
+ * 📥 GET /api/products
+ * ➤ Obtener productos con filtros (catálogo)
  */
 router.get(
   '/',
@@ -43,27 +44,36 @@ router.get(
 )
 
 /**
- * 🔍 Obtener producto por ID
+ * 🔍 GET /api/products/slug/:slug
+ * ➤ Obtener producto por slug
+ */
+router.get(
+  '/slug/:slug',
+  param('slug')
+    .matches(/^[a-z0-9-]+$/)
+    .withMessage('⚠️ Slug inválido'),
+  validarErrores,
+  getProductBySlug
+)
+
+/**
+ * 🔍 GET /api/products/:id
+ * ➤ Obtener producto por ID
  */
 router.get(
   '/:id',
-  param('id').isMongoId().withMessage('⚠️ El ID proporcionado no es válido'),
+  param('id')
+    .isMongoId()
+    .withMessage('⚠️ El ID proporcionado no es válido'),
   validarErrores,
   getProductById
 )
 
-/**
- * 🔍 Obtener producto por SLUG
- */
-router.get(
-  '/slug/:slug',
-  getProductBySlug
-)
-
-/* ------------------------- 🔐 Rutas Privadas (Solo Admin) ------------------ */
+/* 🔐 Rutas privadas (Solo Admin) */
 
 /**
- * ➕ Crear producto
+ * ➕ POST /api/products
+ * ➤ Crear nuevo producto
  */
 router.post(
   '/',
@@ -75,7 +85,8 @@ router.post(
 )
 
 /**
- * ✏️ Actualizar producto
+ * ✏️ PUT /api/products/:id
+ * ➤ Actualizar producto existente
  */
 router.put(
   '/:id',
@@ -90,13 +101,16 @@ router.put(
 )
 
 /**
- * 🗑️ Eliminar producto
+ * 🗑️ DELETE /api/products/:id
+ * ➤ Eliminar producto
  */
 router.delete(
   '/:id',
   authMiddleware,
   adminOnly,
-  param('id').isMongoId().withMessage('⚠️ ID inválido'),
+  param('id')
+    .isMongoId()
+    .withMessage('⚠️ ID inválido'),
   validarErrores,
   deleteProduct
 )

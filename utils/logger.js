@@ -1,28 +1,41 @@
-// 📁 backend/utils/logger.js
+import logger from '../utils/logger.js'
 
-const logPrefix = '[KM-EZ ROPA]'
+describe('🧪 logger utils', () => {
+  const originalEnv = process.env.NODE_ENV
+  const consoleLog = jest.spyOn(console, 'log').mockImplementation(() => {})
+  const consoleWarn = jest.spyOn(console, 'warn').mockImplementation(() => {})
+  const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {})
+  const consoleDebug = jest.spyOn(console, 'debug').mockImplementation(() => {})
 
-/**
- * ✅ Utilidad para logs personalizados
- */
-const logger = {
-  info: (...args) => {
-    console.log(`${logPrefix} ✅`, ...args)
-  },
+  afterEach(() => {
+    jest.clearAllMocks()
+    process.env.NODE_ENV = originalEnv
+  })
 
-  warn: (...args) => {
-    console.warn(`${logPrefix} ⚠️`, ...args)
-  },
+  test('✅ logger.info debe llamar console.log con prefijo', () => {
+    logger.info('Mensaje info')
+    expect(consoleLog).toHaveBeenCalledWith('[KM-EZ ROPA] ✅', 'Mensaje info')
+  })
 
-  error: (...args) => {
-    console.error(`${logPrefix} ❌`, ...args)
-  },
+  test('⚠️ logger.warn debe llamar console.warn con prefijo', () => {
+    logger.warn('Mensaje warning')
+    expect(consoleWarn).toHaveBeenCalledWith('[KM-EZ ROPA] ⚠️', 'Mensaje warning')
+  })
 
-  debug: (...args) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.debug(`${logPrefix} 🐞`, ...args)
-    }
-  }
-}
+  test('❌ logger.error debe llamar console.error con prefijo', () => {
+    logger.error('Mensaje error')
+    expect(consoleError).toHaveBeenCalledWith('[KM-EZ ROPA] ❌', 'Mensaje error')
+  })
 
-export default logger
+  test('🐞 logger.debug SOLO imprime en modo development', () => {
+    process.env.NODE_ENV = 'development'
+    logger.debug('Mensaje debug')
+    expect(consoleDebug).toHaveBeenCalledWith('[KM-EZ ROPA] 🐞', 'Mensaje debug')
+  })
+
+  test('🚫 logger.debug NO imprime en modo producción', () => {
+    process.env.NODE_ENV = 'production'
+    logger.debug('Mensaje oculto')
+    expect(consoleDebug).not.toHaveBeenCalled()
+  })
+})

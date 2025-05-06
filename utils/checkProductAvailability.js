@@ -11,11 +11,16 @@ export function checkVariantDisponible(variants = [], talla, color, cantidad = 1
     return { ok: false, message: '❌ Lista de variantes no válida.' }
   }
 
-  const keyTalla = talla?.toLowerCase().trim()
-  const keyColor = color?.toLowerCase().trim()
+  const keyTalla = String(talla || '').toLowerCase().trim()
+  const keyColor = String(color || '').toLowerCase().trim()
+  const cant = Number(cantidad)
 
   if (!keyTalla || !keyColor) {
     return { ok: false, message: '⚠️ Talla y color son requeridos.' }
+  }
+
+  if (!Number.isFinite(cant) || cant <= 0) {
+    return { ok: false, message: '⚠️ Cantidad solicitada inválida.' }
   }
 
   const variante = variants.find(
@@ -29,14 +34,14 @@ export function checkVariantDisponible(variants = [], talla, color, cantidad = 1
     }
   }
 
-  if (!variante.activo) {
+  if (variante.activo === false) {
     return {
       ok: false,
       message: `❌ Variante inactiva: ${talla} - ${color}`
     }
   }
 
-  if (typeof variante.stock !== 'number' || variante.stock < cantidad) {
+  if (!Number.isFinite(variante.stock) || variante.stock < cant) {
     return {
       ok: false,
       message: `❌ Stock insuficiente para ${talla} - ${color}`
@@ -48,11 +53,16 @@ export function checkVariantDisponible(variants = [], talla, color, cantidad = 1
 
 /**
  * 🚨 Verifica si un producto está totalmente agotado
- * Si todas las variantes están inactivas o en 0 stock
+ * Si todas las variantes están inactivas o sin stock
  * @param {Array} variants - Lista de variantes del producto
  * @returns {Boolean}
  */
 export function verificarProductoAgotado(variants = []) {
   if (!Array.isArray(variants) || variants.length === 0) return true
-  return variants.every(v => !v.activo || v.stock <= 0)
+
+  return variants.every(v =>
+    v?.activo === false ||
+    !Number.isFinite(v?.stock) ||
+    v.stock <= 0
+  )
 }

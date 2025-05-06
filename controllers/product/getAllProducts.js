@@ -1,8 +1,11 @@
+// 📁 backend/controllers/product/getAllProducts.js
 import Product from '../../models/Product.js';
 import { calcularStockTotal } from '../../utils/calculateStock.js';
 
 /**
  * 📥 Obtener productos con filtros avanzados y stock real
+ * @route   GET /api/products
+ * @access  Público
  */
 const getAllProducts = async (req, res) => {
   try {
@@ -15,77 +18,80 @@ const getAllProducts = async (req, res) => {
       featured,
       pagina = 1,
       limite = 12,
-      conStock // 👈 Nuevo parámetro
+      conStock
     } = req.query;
 
-    // 🧹 Filtro base
-    const filtro = {
-      isActive: true,
-      price: { $exists: true, $gt: 0 }
-    };
+    const filtro = { isActive: true };
 
-    // 🎯 Filtros dinámicos
+    // 🔍 Filtros de texto
     if (nombre.trim()) {
       filtro.name = { $regex: new RegExp(nombre.trim(), 'i') };
     }
-
     if (categoria.trim()) {
       filtro.category = categoria.trim().toLowerCase();
     }
-
     if (subcategoria.trim()) {
       filtro.subcategory = subcategoria.trim().toLowerCase();
     }
 
+    // 🔍 Filtro por destacados
     if (featured === 'true') {
       filtro.featured = true;
     }
 
+    // 💲 Filtro por rango de precios
     const min = parseFloat(precioMin);
     const max = parseFloat(precioMax);
-    if (Number.isFinite(min) || Number.isFinite(max)) {
+    if (!isNaN(min) || !isNaN(max)) {
       filtro.price = {};
-      if (Number.isFinite(min)) filtro.price.$gte = min;
-      if (Number.isFinite(max)) filtro.price.$lte = max;
+      if (!isNaN(min)) filtro.price.$gte = min;
+      if (!isNaN(max)) filtro.price.$lte = max;
     }
 
-    const page = Math.max(parseInt(pagina) || 1, 1);
-    const limit = Math.min(Math.max(parseInt(limite) || 12, 1), 50);
+    // 📄 Paginación segura
+    const page = Math.max(parseInt(pagina, 10) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(limite, 10) || 12, 1), 50);
     const skip = (page - 1) * limit;
 
+    // 🚀 Consulta de productos y conteo total
     const [productosRaw, totalBruto] = await Promise.all([
-      Product.find(filtro).sort({ createdAt: -1 }).lean(),
+      Product.find(filtro).skip(skip).limit(limit).sort({ createdAt: -1 }).lean(),
       Product.countDocuments(filtro)
     ]);
 
-    // 🧠 Calcular stock total para cada producto
-    const productosCalculados = productosRaw.map(p => ({
+    // 📦 Cálculo de stock y filtrado adicional
+    const productos = productosRaw.map(p => ({
       ...p,
       stockTotal: calcularStockTotal(p)
     }));
 
-    // 📦 Filtrar si se pide solo con stock
     const productosFiltrados = conStock === 'true'
-      ? productosCalculados.filter(p => p.stockTotal > 0)
-      : productosCalculados;
+      ? productos.filter(p => p.stockTotal > 0)
+      : productos;
 
-    const total = productosFiltrados.length;
-    const totalPaginas = limit > 0 ? Math.ceil(total / limit) : 1;
-    const productosPaginados = productosFiltrados.slice(skip, skip + limit);
+    const totalVisibles = productosFiltrados.length;
+    const totalPaginas = Math.ceil(totalBruto / limit);
 
-    console.log(`📦 Productos devueltos: ${productosPaginados.length} de ${totalBruto} encontrados (visibles: ${total})`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`📦 Productos devueltos: ${totalVisibles} de ${totalBruto} encontrados`);
+    }
 
     return res.status(200).json({
-      productos: productosPaginados,
-      total,
-      pagina: page,
-      totalPaginas
+      ok: true,
+      data: {
+        productos: productosFiltrados,
+        total: totalVisibles,
+        pagina: page,
+        totalPaginas,
+        totalBruto
+      }
     });
-  } catch (error) {
-    console.error('❌ Error al obtener productos:', error);
+  } catch (err) {
+    console.error('❌ Error al obtener productos:', err);
     return res.status(500).json({
+      ok: false,
       message: '❌ Error interno al obtener productos',
-      error: error.message
+      ...(process.env.NODE_ENV !== 'production' && { error: err.message })
     });
   }
 };

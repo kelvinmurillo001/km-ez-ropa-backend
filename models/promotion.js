@@ -1,7 +1,7 @@
 // 📁 backend/models/Promotion.js
 import mongoose from 'mongoose'
 
-// 🌐 Páginas válidas para mostrar una promoción
+// 🌐 Páginas válidas donde se puede mostrar una promoción
 const allowedPages = ['home', 'categorias', 'productos', 'detalle', 'carrito', 'checkout']
 
 // 🏷️ Esquema de promoción publicitaria
@@ -51,7 +51,7 @@ const promotionSchema = new mongoose.Schema(
       type: [String],
       default: [],
       validate: {
-        validator: (arr) => arr.every((p) => allowedPages.includes(p)),
+        validator: (arr) => arr.every(p => allowedPages.includes(p)),
         message: '⚠️ Una o más páginas no son válidas para promociones'
       }
     },
@@ -78,24 +78,25 @@ const promotionSchema = new mongoose.Schema(
   }
 )
 
-// 🔍 Índice para facilitar búsqueda de promociones activas
+// 🔍 Índices útiles
 promotionSchema.index({ active: 1, startDate: 1, endDate: 1 })
+promotionSchema.index({ slug: 1 }, { unique: false }) // Recomendación: si decides hacer único, cambia a `unique: true`
 
-// 🔁 Hook para crear slug automáticamente
+// 🔁 Pre-save: Generar slug automáticamente
 promotionSchema.pre('save', function (next) {
   if (!this.slug && this.message) {
     this.slug = this.message
       .toLowerCase()
       .trim()
-      .normalize('NFD') // Mejor aún: normalizar acentos
-      .replace(/[\u0300-\u036f]/g, '') // Eliminar tildes
-      .replace(/\s+/g, '-') // Espacios a guiones
-      .replace(/[^\w-]/g, '') // Eliminar símbolos especiales
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // quitar tildes
+      .replace(/ñ/g, 'n')
+      .replace(/\s+/g, '-')
+      .replace(/[^\w-]/g, '')
       .substring(0, 100)
   }
   next()
 })
 
-// 🚀 Exportar el modelo
+// 🚀 Exportar modelo
 const Promotion = mongoose.model('Promotion', promotionSchema)
 export default Promotion

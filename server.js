@@ -18,6 +18,7 @@ import xssClean from 'xss-clean'
 import hpp from 'hpp'
 import session from 'express-session'
 import passport from 'passport'
+import MongoStore from 'connect-mongo'
 import { fileURLToPath } from 'url'
 
 // 📍 Corrección para __dirname en ESModules
@@ -32,8 +33,8 @@ import errorHandler from './middleware/errorHandler.js'
 import './config/passport.js'
 
 // 🔗 Rutas API
-import authRoutes from './routes/authRoutes.js' // login admin tradicional
-import googleAuthRoutes from './routes/auth.js' // login con Google
+import authRoutes from './routes/authRoutes.js'
+import googleAuthRoutes from './routes/auth.js'
 import productRoutes from './routes/productRoutes.js'
 import categoryRoutes from './routes/categoryRoutes.js'
 import promoRoutes from './routes/promoRoutes.js'
@@ -96,9 +97,14 @@ app.use(express.json({ limit: '5mb' }))
 /* 🔐 Configurar sesiones + Passport                                          */
 /* -------------------------------------------------------------------------- */
 app.use(session({
-  secret: 'claveSuperSecretaCambiala',
+  secret: config.sessionSecret,
   resave: false,
   saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: config.mongoUri,
+    collectionName: 'sessions',
+    ttl: config.sessionTTL || 14 * 24 * 60 * 60
+  }),
   cookie: {
     secure: config.env === 'production',
     httpOnly: true,
@@ -126,8 +132,8 @@ app.use('/assets', express.static(path.join(__dirname, 'frontend', 'assets')))
 /* -------------------------------------------------------------------------- */
 /* 📚 Rutas API                                                                */
 /* -------------------------------------------------------------------------- */
-app.use('/api/auth', authRoutes)        // login admin manual
-app.use('/auth', googleAuthRoutes)      // login con Google
+app.use('/api/auth', authRoutes)
+app.use('/auth', googleAuthRoutes)
 app.use('/api/products', productRoutes)
 app.use('/api/categories', categoryRoutes)
 app.use('/api/promos', promoRoutes)
@@ -138,14 +144,19 @@ app.use('/api/uploads', uploadRoutes)
 app.use('/api/paypal', paypalRoutes)
 
 /* -------------------------------------------------------------------------- */
-/* ✅ Healthcheck y raíz                                                      */
+/* ✅ Healthcheck y raíz mejorado                                             */
 /* -------------------------------------------------------------------------- */
 app.get('/', (req, res) => {
   res.send('🧠 Backend KM-EZ-ROPA funcionando correctamente 🚀')
 })
 
-app.get('/health', (req, res) => {
-  res.send('✅ OK')
+app.get('/health', async (req, res) => {
+  const dbStatus = mongoose.connection.readyState === 1 ? '🟢 OK' : '🔴 ERROR'
+  res.status(200).json({
+    status: '✅ Backend activo',
+    db: dbStatus,
+    timestamp: new Date().toISOString()
+  })
 })
 
 /* -------------------------------------------------------------------------- */

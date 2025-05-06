@@ -14,7 +14,9 @@ import { cleanOrphanedImages } from '../controllers/uploads/cleanOrphanedImages.
 const router = express.Router()
 const CLOUDINARY_FOLDER = 'productos_kmezropa'
 
-// 🎒 Configuración de multer: almacenamiento en memoria
+/* ───────────────────────────────────────────── */
+/* 🎒 MULTER: Subida en memoria y validación     */
+/* ───────────────────────────────────────────── */
 const storage = multer.memoryStorage()
 const upload = multer({
   storage,
@@ -28,12 +30,13 @@ const upload = multer({
   }
 })
 
-/* -------------------------------------------------------------------------- */
-/* 📤 SUBIR, LISTAR Y ELIMINAR IMÁGENES EN CLOUDINARY                         */
-/* -------------------------------------------------------------------------- */
+/* ───────────────────────────────────────────── */
+/* 📤 SUBIDA / LISTADO / ELIMINACIÓN IMÁGENES    */
+/* ───────────────────────────────────────────── */
 
 /**
- * 📥 Subir imagen a Cloudinary
+ * 📤 Subir imagen a Cloudinary
+ * POST /api/uploads
  */
 router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
   try {
@@ -45,7 +48,7 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
       { folder: CLOUDINARY_FOLDER, resource_type: 'image' },
       (error, result) => {
         if (error) {
-          console.error('❌ Error al subir a Cloudinary:', error)
+          console.error('❌ Error al subir imagen:', error)
           return res.status(500).json({ message: '❌ Fallo al subir la imagen.' })
         }
 
@@ -66,6 +69,7 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
 
 /**
  * 🗑️ Eliminar imagen por publicId (URL param)
+ * DELETE /api/uploads/:publicId
  */
 router.delete('/:publicId', authMiddleware, async (req, res) => {
   try {
@@ -81,7 +85,7 @@ router.delete('/:publicId', authMiddleware, async (req, res) => {
       return res.status(500).json({ message: '❌ No se pudo eliminar la imagen.' })
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       message: '✅ Imagen eliminada correctamente.',
       publicId,
       result
@@ -94,6 +98,7 @@ router.delete('/:publicId', authMiddleware, async (req, res) => {
 
 /**
  * 🗑️ Eliminar imagen por cloudinaryId (body)
+ * POST /api/uploads/delete
  */
 router.post('/delete', authMiddleware, async (req, res) => {
   try {
@@ -109,7 +114,7 @@ router.post('/delete', authMiddleware, async (req, res) => {
       return res.status(500).json({ message: '❌ No se pudo eliminar la imagen.' })
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       message: '✅ Imagen eliminada correctamente.',
       cloudinaryId,
       result
@@ -121,7 +126,8 @@ router.post('/delete', authMiddleware, async (req, res) => {
 })
 
 /**
- * 📃 Listar últimas imágenes en carpeta
+ * 📃 Listar imágenes en carpeta
+ * GET /api/uploads/list
  */
 router.get('/list', authMiddleware, async (req, res) => {
   try {
@@ -138,7 +144,7 @@ router.get('/list', authMiddleware, async (req, res) => {
       bytes: img.bytes
     }))
 
-    res.status(200).json({
+    return res.status(200).json({
       total: images.length,
       images
     })
@@ -149,9 +155,9 @@ router.get('/list', authMiddleware, async (req, res) => {
 })
 
 /**
- * 🧹 Limpiar imágenes huérfanas de Cloudinary
+ * 🧹 Eliminar imágenes huérfanas (solo admin)
+ * GET /api/uploads/limpiar-huerfanas
  */
 router.get('/limpiar-huerfanas', authMiddleware, adminOnly, cleanOrphanedImages)
 
-// 🚀 Exportar router
 export default router

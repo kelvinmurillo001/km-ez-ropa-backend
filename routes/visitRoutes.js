@@ -21,11 +21,14 @@ const router = express.Router()
 router.post(
   '/registrar',
   (req, res, next) => {
-    const userAgent = req.headers['user-agent'] || ''
+    const userAgent = String(req.headers['user-agent'] || '').toLowerCase()
 
-    // Bloquear bots o herramientas automatizadas comunes
-    if (/curl|postman|bot|crawler|axios/i.test(userAgent)) {
-      return res.status(403).json({ ok: false, message: '🚫 Acceso automatizado denegado' })
+    const bloqueados = ['curl', 'postman', 'bot', 'crawler', 'axios', 'python-requests']
+    if (bloqueados.some(b => userAgent.includes(b))) {
+      return res.status(403).json({
+        ok: false,
+        message: '🚫 Acceso automatizado denegado. Agente no permitido.'
+      })
     }
 
     next()

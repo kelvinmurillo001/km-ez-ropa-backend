@@ -5,20 +5,24 @@ import express from 'express'
 import authMiddleware from '../middleware/authMiddleware.js'
 import adminOnly from '../middleware/adminOnly.js'
 
-// 📈 Controladores
+// 📊 Controladores
 import { getResumenEstadisticas } from '../controllers/statsController.js'
 
 const router = express.Router()
 
-/* -------------------------------------------------------------------------- */
-/* 📈 RUTAS DE ESTADÍSTICAS (SOLO ADMIN)                                      */
-/* -------------------------------------------------------------------------- */
+/* ───────────────────────────────────────────── */
+/* 📊 RUTAS DE ESTADÍSTICAS (SOLO ADMIN)        */
+/* ───────────────────────────────────────────── */
 
 /**
- * 📊 Obtener resumen de estadísticas para el panel administrativo
  * GET /api/stats/resumen
+ * ➤ Obtener resumen de estadísticas para el panel administrativo
  */
-router.get('/resumen', authMiddleware, adminOnly, getResumenEstadisticas)
+router.get(
+  '/resumen',
+  authMiddleware,
+  adminOnly,
+  getResumenEstadisticas
+)
 
-// 🚀 Exportar router
 export default router
