@@ -1,3 +1,4 @@
+// 📁 backend/routes/promoRoutes.js
 import express from 'express'
 import { param } from 'express-validator'
 
@@ -19,69 +20,60 @@ import validarErrores from '../middleware/validarErrores.js'
 const router = express.Router()
 
 /* ───────────────────────────────────────────── */
-/* 📄 RUTAS DE PROMOCIONES                       */
+/* 📢 RUTAS PÚBLICAS                             */
 /* ───────────────────────────────────────────── */
 
-/* 🔓 Públicas */
-
 /**
- * 📢 GET /api/promos
- * ➤ Obtener promociones activas y vigentes
+ * @route   GET /api/promos
+ * @desc    Obtener promociones activas y vigentes
+ * @access  Público
  */
 router.get('/', getPromotion)
 
-/* 🔐 Rutas solo para administrador */
+/* ───────────────────────────────────────────── */
+/* 🔐 RUTAS ADMINISTRADOR                        */
+/* ───────────────────────────────────────────── */
+router.use(authMiddleware, adminOnly)
 
 /**
- * 📋 GET /api/promos/admin
- * ➤ Obtener todas las promociones
+ * @route   GET /api/promos/admin
+ * @desc    Obtener todas las promociones (admin)
+ * @access  Privado - Admin
  */
-router.get(
-  '/admin',
-  authMiddleware,
-  adminOnly,
-  getAllPromotions
-)
+router.get('/admin', getAllPromotions)
 
 /**
- * ✏️ PUT /api/promos
- * ➤ Crear o actualizar promoción
+ * @route   PUT /api/promos
+ * @desc    Crear o actualizar promoción
+ * @access  Privado - Admin
  */
 router.put(
   '/',
-  authMiddleware,
-  adminOnly,
   validatePromotion,
   validarErrores,
   updatePromotion
 )
 
 /**
- * 🔁 PATCH /api/promos/:id/estado
- * ➤ Activar o desactivar una promoción
+ * @route   PATCH /api/promos/:id/estado
+ * @desc    Alternar estado activo/inactivo
+ * @access  Privado - Admin
  */
 router.patch(
   '/:id/estado',
-  authMiddleware,
-  adminOnly,
-  param('id')
-    .isMongoId()
-    .withMessage('⚠️ ID de promoción inválido'),
+  param('id').isMongoId().withMessage('⚠️ ID de promoción inválido'),
   validarErrores,
   togglePromoActive
 )
 
 /**
- * 🗑️ DELETE /api/promos/:id
- * ➤ Eliminar promoción por ID
+ * @route   DELETE /api/promos/:id
+ * @desc    Eliminar una promoción
+ * @access  Privado - Admin
  */
 router.delete(
   '/:id',
-  authMiddleware,
-  adminOnly,
-  param('id')
-    .isMongoId()
-    .withMessage('⚠️ ID inválido para eliminar promoción'),
+  param('id').isMongoId().withMessage('⚠️ ID inválido para eliminar promoción'),
   validarErrores,
   deletePromotion
 )

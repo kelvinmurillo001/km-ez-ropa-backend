@@ -4,37 +4,54 @@ import Promotion from '../models/promotion.js'
 import config from '../config/configuracionesito.js'
 import { validationResult, body } from 'express-validator'
 
-/**
- * ✅ Validaciones para crear o actualizar promociones
- */
+/* ───────────────────────────────────────────── */
+/* ✅ VALIDACIONES PARA CREAR / EDITAR PROMOS    */
+/* ───────────────────────────────────────────── */
 export const validatePromotion = [
   body('message')
     .exists().withMessage('⚠️ El mensaje es requerido.')
     .isString().withMessage('⚠️ El mensaje debe ser texto.').bail()
-    .isLength({ min: 3 }).withMessage('⚠️ Mínimo 3 caracteres.'),
+    .isLength({ min: 3 }).withMessage('⚠️ Mínimo 3 caracteres.')
+    .trim(),
+
   body('active')
     .optional().isBoolean().withMessage('⚠️ "active" debe ser booleano.'),
+
   body('theme')
-    .optional().isString().withMessage('⚠️ "theme" debe ser texto.'),
+    .optional().isString().trim().withMessage('⚠️ "theme" debe ser texto.'),
+
   body('startDate')
     .optional().isISO8601().toDate().withMessage('⚠️ Fecha de inicio inválida.'),
+
   body('endDate')
     .optional().isISO8601().toDate().withMessage('⚠️ Fecha de fin inválida.'),
+
+  body().custom(({ startDate, endDate }) => {
+    if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+      throw new Error('⚠️ La fecha de inicio no puede ser posterior a la fecha de fin.')
+    }
+    return true
+  }),
+
   body('mediaUrl')
     .optional().isURL().withMessage('⚠️ mediaUrl debe ser una URL válida.'),
+
   body('mediaType')
     .optional().isIn(['image', 'video']).withMessage("⚠️ mediaType debe ser 'image' o 'video'."),
+
   body('pages')
     .optional().isArray().withMessage('⚠️ pages debe ser un arreglo.'),
+
   body('pages.*')
     .optional().isString().withMessage('⚠️ Cada página debe ser texto.'),
+
   body('position')
     .optional().isIn(['top', 'bottom', 'side']).withMessage('⚠️ position inválido.')
 ]
 
-/**
- * 📥 Obtener promociones activas y vigentes
- */
+/* ───────────────────────────────────────────── */
+/* 📥 OBTENER PROMOCIONES ACTIVAS Y VIGENTES     */
+/* ───────────────────────────────────────────── */
 export const getPromotion = async (_req, res) => {
   try {
     const now = new Date()
@@ -78,9 +95,9 @@ export const getPromotion = async (_req, res) => {
   }
 }
 
-/**
- * 📋 Obtener todas las promociones (admin)
- */
+/* ───────────────────────────────────────────── */
+/* 📋 ADMIN: OBTENER TODAS LAS PROMOCIONES       */
+/* ───────────────────────────────────────────── */
 export const getAllPromotions = async (_req, res) => {
   try {
     const promos = await Promotion.find().select('-__v').sort({ createdAt: -1 }).lean()
@@ -95,9 +112,9 @@ export const getAllPromotions = async (_req, res) => {
   }
 }
 
-/**
- * 💾 Crear o actualizar promoción
- */
+/* ───────────────────────────────────────────── */
+/* 💾 CREAR O ACTUALIZAR UNA PROMOCIÓN           */
+/* ───────────────────────────────────────────── */
 export const updatePromotion = async (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
@@ -120,6 +137,10 @@ export const updatePromotion = async (req, res) => {
       position = 'top'
     } = req.body
 
+    if (active) {
+      await Promotion.updateMany({ active: true }, { active: false })
+    }
+
     const promo = new Promotion({
       message: message.trim(),
       active: Boolean(active),
@@ -134,7 +155,19 @@ export const updatePromotion = async (req, res) => {
     })
 
     await promo.save()
-    return res.status(201).json({ ok: true, data: promo })
+
+    console.log(`📢 Nueva promoción creada por ${promo.createdBy}`)
+
+    return res.status(201).json({
+      ok: true,
+      data: {
+        id: promo._id,
+        message: promo.message,
+        active: promo.active,
+        startDate: promo.startDate,
+        endDate: promo.endDate
+      }
+    })
   } catch (err) {
     console.error('❌ Error updatePromotion:', err)
     return res.status(500).json({
@@ -145,9 +178,9 @@ export const updatePromotion = async (req, res) => {
   }
 }
 
-/**
- * 🗑️ Eliminar promoción
- */
+/* ───────────────────────────────────────────── */
+/* 🗑️ ELIMINAR PROMOCIÓN                         */
+/* ───────────────────────────────────────────── */
 export const deletePromotion = async (req, res) => {
   try {
     const id = String(req.params.id || '').trim()
@@ -172,9 +205,9 @@ export const deletePromotion = async (req, res) => {
   }
 }
 
-/**
- * 🔁 Activar/desactivar promoción
- */
+/* ───────────────────────────────────────────── */
+/* 🔁 ALTERNAR ESTADO DE ACTIVACIÓN              */
+/* ───────────────────────────────────────────── */
 export const togglePromoActive = async (req, res) => {
   try {
     const id = req.params.id
@@ -193,7 +226,10 @@ export const togglePromoActive = async (req, res) => {
     return res.status(200).json({
       ok: true,
       message: `✅ Promoción ${promo.active ? 'activada' : 'desactivada'}.`,
-      data: promo
+      data: {
+        id: promo._id,
+        active: promo.active
+      }
     })
   } catch (err) {
     console.error('❌ Error togglePromoActive:', err)
