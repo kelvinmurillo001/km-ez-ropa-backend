@@ -87,12 +87,37 @@ app.use(cors({
 }))
 
 /* -------------------------------------------------------------------------- */
-/* 📦 Middlewares comunes                                                     */
+/* 🛡️ Helmet + Cabeceras HTTP Avanzadas                                       */
 /* -------------------------------------------------------------------------- */
 app.use(helmet({ crossOriginResourcePolicy: false }))
+
+// 🔐 Cabeceras CSP y seguridad
+app.use((req, res, next) => {
+  res.setHeader("Content-Security-Policy",
+    "default-src 'self'; " +
+    "script-src 'self' https://accounts.google.com https://apis.google.com 'unsafe-inline'; " +
+    "style-src 'self' 'unsafe-inline'; " +
+    "font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com; " +
+    "img-src 'self' data: https://*.googleusercontent.com; " +
+    "frame-src https://accounts.google.com; " +
+    "connect-src 'self' https://api.kmezropacatalogo.com; " +
+    "object-src 'none'; base-uri 'self'; frame-ancestors 'none';"
+  )
+
+  res.setHeader("X-Frame-Options", "DENY")
+  res.setHeader("X-Content-Type-Options", "nosniff")
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin")
+  res.setHeader("Permissions-Policy", "geolocation=(), microphone=()")
+
+  next()
+})
+
+/* -------------------------------------------------------------------------- */
+/* 📦 Middlewares comunes                                                     */
+/* -------------------------------------------------------------------------- */
 app.use(morgan(config.env === 'production' ? 'tiny' : 'dev'))
 app.use(express.json({ limit: '5mb' }))
-app.use(express.urlencoded({ extended: true })) // 🆕 para compatibilidad con formularios
+app.use(express.urlencoded({ extended: true }))
 
 /* -------------------------------------------------------------------------- */
 /* 🔐 Sesiones y Passport                                                     */
