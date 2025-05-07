@@ -21,7 +21,7 @@ import passport from 'passport'
 import MongoStore from 'connect-mongo'
 import { fileURLToPath } from 'url'
 
-// 📍 Corrección para __dirname en ESModules
+// 📍 __dirname fix for ESModules
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
@@ -29,7 +29,7 @@ const __dirname = path.dirname(__filename)
 import config from './config/configuracionesito.js'
 import errorHandler from './middleware/errorHandler.js'
 
-// 🔐 Passport config
+// 🔐 Configurar passport
 import './config/passport.js'
 
 // 🔗 Rutas API
@@ -48,7 +48,7 @@ import paypalRoutes from './routes/paypalRoutes.js'
 const app = express()
 
 /* -------------------------------------------------------------------------- */
-/* 🔒 Protección contra abusos                                                */
+/* 🔒 Protección contra abuso                                                 */
 /* -------------------------------------------------------------------------- */
 app.use(rateLimit({
   windowMs: config.rateLimitWindow * 60 * 1000,
@@ -65,7 +65,7 @@ app.use(slowDown({
 }))
 
 /* -------------------------------------------------------------------------- */
-/* 🛡️ Sanitización de seguridad                                               */
+/* 🛡️ Seguridad y sanitización                                                */
 /* -------------------------------------------------------------------------- */
 if (config.enableMongoSanitize) app.use(mongoSanitize())
 if (config.enableXSSProtection) app.use(xssClean())
@@ -87,14 +87,15 @@ app.use(cors({
 }))
 
 /* -------------------------------------------------------------------------- */
-/* 🧱 Middlewares comunes                                                      */
+/* 📦 Middlewares comunes                                                     */
 /* -------------------------------------------------------------------------- */
 app.use(helmet({ crossOriginResourcePolicy: false }))
 app.use(morgan(config.env === 'production' ? 'tiny' : 'dev'))
 app.use(express.json({ limit: '5mb' }))
+app.use(express.urlencoded({ extended: true })) // 🆕 para compatibilidad con formularios
 
 /* -------------------------------------------------------------------------- */
-/* 🔐 Configurar sesiones + Passport                                          */
+/* 🔐 Sesiones y Passport                                                     */
 /* -------------------------------------------------------------------------- */
 app.use(session({
   secret: config.sessionSecret,
@@ -125,12 +126,12 @@ app.use(compression({
 }))
 
 /* -------------------------------------------------------------------------- */
-/* 📂 Archivos estáticos                                                       */
+/* 📂 Archivos estáticos                                                      */
 /* -------------------------------------------------------------------------- */
 app.use('/assets', express.static(path.join(__dirname, 'frontend', 'assets')))
 
 /* -------------------------------------------------------------------------- */
-/* 📚 Rutas API                                                                */
+/* 📚 Montaje de rutas                                                        */
 /* -------------------------------------------------------------------------- */
 app.use('/api/auth', authRoutes)
 app.use('/auth', googleAuthRoutes)
@@ -144,7 +145,7 @@ app.use('/api/uploads', uploadRoutes)
 app.use('/api/paypal', paypalRoutes)
 
 /* -------------------------------------------------------------------------- */
-/* ✅ Healthcheck y raíz mejorado                                             */
+/* ✅ Raíz y /health                                                          */
 /* -------------------------------------------------------------------------- */
 app.get('/', (req, res) => {
   res.send('🧠 Backend KM-EZ-ROPA funcionando correctamente 🚀')
@@ -152,6 +153,7 @@ app.get('/', (req, res) => {
 
 app.get('/health', async (req, res) => {
   const dbStatus = mongoose.connection.readyState === 1 ? '🟢 OK' : '🔴 ERROR'
+  if (dbStatus !== '🟢 OK') console.warn('⚠️ MongoDB no está disponible.')
   res.status(200).json({
     status: '✅ Backend activo',
     db: dbStatus,
@@ -160,23 +162,24 @@ app.get('/health', async (req, res) => {
 })
 
 /* -------------------------------------------------------------------------- */
-/* ❌ Ruta no encontrada (404)                                                */
+/* ❌ 404 - Ruta no encontrada                                                */
 /* -------------------------------------------------------------------------- */
 app.use('*', (req, res) => {
   res.status(404).json({ message: '❌ Ruta no encontrada' })
 })
 
 /* -------------------------------------------------------------------------- */
-/* 🧯 Manejador global de errores                                              */
+/* 🧯 Manejador de errores global                                             */
 /* -------------------------------------------------------------------------- */
 app.use(errorHandler)
 
 /* -------------------------------------------------------------------------- */
-/* 🚀 Conectar a MongoDB y arrancar servidor                                  */
+/* 🚀 Iniciar servidor y conectar a MongoDB                                   */
 /* -------------------------------------------------------------------------- */
 if (process.env.NODE_ENV !== 'test') {
   const startServer = async () => {
     try {
+      if (!config.mongoUri) throw new Error('❌ FALTA config.mongoUri')
       await mongoose.connect(config.mongoUri)
       console.log('✅ Conectado exitosamente a MongoDB Atlas')
 
@@ -186,7 +189,6 @@ if (process.env.NODE_ENV !== 'test') {
       })
     } catch (err) {
       console.error('❌ Error conectando con MongoDB:', err.message)
-      console.error('🔍 Revisa IP autorizada y credenciales de conexión .env')
       process.exit(1)
     }
   }
@@ -194,5 +196,4 @@ if (process.env.NODE_ENV !== 'test') {
   startServer()
 }
 
-// ✅ Exportar app para Supertest
 export default app
