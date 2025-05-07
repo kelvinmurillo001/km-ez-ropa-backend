@@ -1,6 +1,7 @@
 // 📁 backend/services/paypalService.js
 import axios from 'axios'
 import https from 'https'
+import logger from '../utils/logger.js'
 
 // 🔐 Configuración de entorno
 const {
@@ -13,7 +14,7 @@ const {
 const PAYPAL_API = PAYPAL_API_BASE || 'https://api-m.sandbox.paypal.com'
 
 if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
-  console.warn('⚠️ Falta configuración de PayPal: revisa CLIENT_ID y CLIENT_SECRET')
+  logger.warn('⚠️ Falta configuración de PayPal: revisa CLIENT_ID y CLIENT_SECRET')
 }
 
 // 🌐 Axios seguro para entornos de desarrollo
@@ -45,10 +46,10 @@ async function obtenerTokenPayPal() {
     const token = res.data?.access_token
     if (!token) throw new Error('❌ Token de PayPal no recibido')
 
-    console.log('✅ Token de PayPal generado')
+    logger.info('✅ Token de PayPal generado')
     return token
   } catch (err) {
-    console.error('❌ Error autenticando con PayPal:', err.response?.data || err.message)
+    logger.error('❌ Error autenticando con PayPal:', err.response?.data || err.message)
     throw new Error('⚠️ Error al obtener token PayPal. Verifica credenciales y entorno.')
   }
 }
@@ -89,7 +90,7 @@ export async function crearOrden(total) {
 
     return res.data
   } catch (err) {
-    console.error('❌ Error creando orden PayPal:', err.response?.data || err.message)
+    logger.error('❌ Error creando orden PayPal:', err.response?.data || err.message)
     throw new Error('⚠️ No se pudo crear la orden en PayPal')
   }
 }
@@ -120,7 +121,13 @@ export async function capturarOrden(orderId) {
 
     return res.data
   } catch (err) {
-    console.error('❌ Error capturando orden PayPal:', err.response?.data || err.message)
+    logger.error('❌ Error capturando orden PayPal:', err.response?.data || err.message)
     throw new Error('⚠️ No se pudo capturar la orden de PayPal')
   }
+}
+
+// ✅ Export default para pruebas y compatibilidad
+export default {
+  crearOrden,
+  capturarOrden
 }

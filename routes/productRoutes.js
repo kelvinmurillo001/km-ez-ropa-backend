@@ -10,7 +10,7 @@ import {
   createProduct,
   updateProduct,
   deleteProduct
-} from '../controllers/products/index.js'
+} from '../controllers/product/index.js'
 
 // 🛡️ Middlewares
 import authMiddleware from '../middleware/authMiddleware.js'

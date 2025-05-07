@@ -34,8 +34,6 @@ export const validatePromotion = [
 
 /**
  * 📥 Obtener promociones activas y vigentes
- * @route   GET /api/promos/active
- * @access  Público
  */
 export const getPromotion = async (_req, res) => {
   try {
@@ -82,8 +80,6 @@ export const getPromotion = async (_req, res) => {
 
 /**
  * 📋 Obtener todas las promociones (admin)
- * @route   GET /api/promos
- * @access  Admin
  */
 export const getAllPromotions = async (_req, res) => {
   try {
@@ -101,8 +97,6 @@ export const getAllPromotions = async (_req, res) => {
 
 /**
  * 💾 Crear o actualizar promoción
- * @route   PUT /api/promos
- * @access  Admin
  */
 export const updatePromotion = async (req, res) => {
   const errors = validationResult(req)
@@ -153,8 +147,6 @@ export const updatePromotion = async (req, res) => {
 
 /**
  * 🗑️ Eliminar promoción
- * @route   DELETE /api/promos/:id
- * @access  Admin
  */
 export const deletePromotion = async (req, res) => {
   try {
@@ -175,6 +167,39 @@ export const deletePromotion = async (req, res) => {
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al eliminar promoción.',
+      ...(config.env !== 'production' && { error: err.message })
+    })
+  }
+}
+
+/**
+ * 🔁 Activar/desactivar promoción
+ */
+export const togglePromoActive = async (req, res) => {
+  try {
+    const id = req.params.id
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ ok: false, message: '⚠️ ID inválido.' })
+    }
+
+    const promo = await Promotion.findById(id)
+    if (!promo) {
+      return res.status(404).json({ ok: false, message: '❌ Promoción no encontrada.' })
+    }
+
+    promo.active = !promo.active
+    await promo.save()
+
+    return res.status(200).json({
+      ok: true,
+      message: `✅ Promoción ${promo.active ? 'activada' : 'desactivada'}.`,
+      data: promo
+    })
+  } catch (err) {
+    console.error('❌ Error togglePromoActive:', err)
+    return res.status(500).json({
+      ok: false,
+      message: '❌ Error al alternar estado de promoción.',
       ...(config.env !== 'production' && { error: err.message })
     })
   }

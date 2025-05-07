@@ -10,7 +10,7 @@ const router = express.Router()
 
 /**
  * 🎯 Iniciar login con Google
- * Redirige a la pantalla de consentimiento de Google.
+ * ➤ Redirige al consentimiento de Google
  */
 router.get(
   '/google',
@@ -20,8 +20,8 @@ router.get(
 )
 
 /**
- * ✅ Callback después de la autenticación con Google
- * Redirige según el rol del usuario autenticado.
+ * ✅ Callback de Google
+ * ➤ Si el login es exitoso, redirige según rol
  */
 router.get(
   '/google/callback',
@@ -31,6 +31,8 @@ router.get(
   }),
   (req, res) => {
     const role = req.user?.role || 'client'
+
+    // Redirección dinámica o por defecto
     const redirectUrl =
       role === 'admin'
         ? 'https://kmezropacatalogo.com/admin'
@@ -41,7 +43,8 @@ router.get(
 )
 
 /**
- * 👤 Obtener el usuario autenticado (sesión activa)
+ * 👤 GET /auth/me
+ * ➤ Retorna información del usuario autenticado (si hay sesión activa)
  */
 router.get('/me', (req, res) => {
   if (!req.isAuthenticated?.() || !req.user) {
@@ -51,19 +54,17 @@ router.get('/me', (req, res) => {
     })
   }
 
+  const { _id, name, email, role } = req.user
+
   res.status(200).json({
     ok: true,
-    user: {
-      id: req.user._id,
-      name: req.user.name,
-      email: req.user.email,
-      role: req.user.role
-    }
+    user: { id: _id, name, email, role }
   })
 })
 
 /**
- * 🚪 Cerrar sesión y limpiar cookies
+ * 🚪 GET /auth/logout
+ * ➤ Cierra sesión y limpia cookies
  */
 router.get('/logout', (req, res) => {
   req.logout(err => {

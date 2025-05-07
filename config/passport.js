@@ -3,10 +3,12 @@ import passport from 'passport'
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
 import User from '../models/User.js'
 import config from './configuracionesito.js'
+import logger from '../utils/logger.js'
 
-// Valida la URL de callback; puede definirse en config.google.callbackURL
+// ✅ Callback URL desde entorno o config
 const callbackURL = config.google.callbackURL || '/auth/google/callback'
 
+// 🚀 Google Strategy
 passport.use(
   new GoogleStrategy(
     {
@@ -16,46 +18,50 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        // Obtener y validar email
-        const email = profile.emails?.[0]?.value?.toLowerCase()
-        if (!email) {
-          return done(new Error('No se pudo obtener el email de Google'), null)
+        // Validar email
+        const email = profile?.emails?.[0]?.value?.toLowerCase()
+        if (!email || typeof email !== 'string') {
+          return done(new Error('❌ No se pudo obtener un email válido desde Google'), null)
         }
 
-        // Buscar usuario existente por Google ID o email
+        // Buscar usuario por Google ID
         let user = await User.findOne({ googleId: profile.id })
+
+        // Si no se encontró, buscar por email
         if (!user) {
           user = await User.findOne({ email })
+
+          // Si existe, vincula Google ID
           if (user) {
-            // Vincula Google ID al usuario existente
             user.googleId = profile.id
             await user.save()
           }
         }
 
-        // Si existe, retorna el usuario
-        if (user) {
-          return done(null, user)
-        }
+        // Retornar existente o crear nuevo
+        if (user) return done(null, user)
 
-        // Si no existe, crear nuevo usuario con rol 'client'
+        // Crear nuevo usuario si no existe
         const newUser = await User.create({
           googleId: profile.id,
           email,
-          name: profile.displayName,
+          name: profile.displayName || email.split('@')[0],
           role: 'client'
         })
+
         return done(null, newUser)
       } catch (err) {
-        console.error('❌ Error en estrategia de Google:', err)
+        logger.error('❌ Error en estrategia de Google:', err)
         return done(err, null)
       }
     }
   )
 )
 
-// Serialización y deserialización de sesión
+// 🧠 Serialización de usuario
 passport.serializeUser((user, done) => done(null, user.id))
+
+// 🔄 Deserialización
 passport.deserializeUser((id, done) => {
   User.findById(id)
     .then(user => done(null, user))

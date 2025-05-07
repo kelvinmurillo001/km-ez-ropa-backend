@@ -1,29 +1,15 @@
-// 📁 routes/paypalRoutes.js
-
+// 📁 backend/routes/paypalRoutes.js
 import express from 'express'
 import {
   createOrderController,
-  captureOrderController
+  captureOrderController,
+  validateCreateOrder,
+  validateCaptureOrder
 } from '../controllers/paypalController.js'
 
 const router = express.Router()
 
-/* ───────────────────────────────────────────── */
-/* 💳 RUTAS: Integración con PayPal              */
-/* ───────────────────────────────────────────── */
-
-/**
- * 🛒 POST /api/paypal/create-order
- * ➤ Crea una nueva orden de pago en PayPal
- * @access Público
- */
-router.post('/create-order', createOrderController)
-
-/**
- * ✅ POST /api/paypal/capture-order
- * ➤ Captura una orden aprobada de PayPal
- * @access Público
- */
-router.post('/capture-order', captureOrderController)
+router.post('/create-order', validateCreateOrder, createOrderController)
+router.post('/capture-order', validateCaptureOrder, captureOrderController)
 
 export default router

@@ -1,77 +1,49 @@
-import { sendNotification } from '../utils/notifications.js'
+// 📁 backend/utils/notifications.js
 
-describe('🧪 Notificaciones - Simulación de envío', () => {
-  const consoleLog = jest.spyOn(console, 'log').mockImplementation(() => {})
-  const consoleWarn = jest.spyOn(console, 'warn').mockImplementation(() => {})
-  const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {})
+/**
+ * Simula el envío de notificaciones por WhatsApp y Email.
+ * @param {Object} params
+ * @param {string} params.nombreCliente
+ * @param {string} params.telefono
+ * @param {string} params.email
+ * @param {string} params.estadoActual
+ */
+export async function sendNotification({ nombreCliente, telefono, email, estadoActual }) {
+  try {
+    let mensaje = ''
 
-  afterEach(() => {
-    jest.clearAllMocks()
-  })
+    switch (estadoActual.toLowerCase()) {
+      case 'recibido':
+        mensaje = `📥 Hola ${nombreCliente}, recibimos tu pedido.`
+        break
+      case 'preparando':
+        mensaje = `🛠️ Hola ${nombreCliente}, estamos preparando tu pedido.`
+        break
+      case 'en camino':
+        mensaje = `🚚 Hola ${nombreCliente}, tu pedido está en camino.`
+        break
+      case 'entregado':
+        mensaje = `📦 Hola ${nombreCliente}, tu pedido fue entregado.`
+        break
+      default:
+        mensaje = `📦 Hola ${nombreCliente}, actualización de tu pedido.`
+        break
+    }
 
-  test('✅ Enviar notificación con todos los datos', async () => {
-    await sendNotification({
-      nombreCliente: 'Kelvin',
-      telefono: '0999999999',
-      email: 'kelvin@test.com',
-      estadoActual: 'preparando'
-    })
+    if (telefono) {
+      console.log(`📲 WhatsApp a ${telefono}: ${mensaje}`)
+    } else {
+      console.warn('⚠️ No hay número de teléfono para enviar WhatsApp.')
+    }
 
-    expect(consoleLog).toHaveBeenCalledWith(
-      '📲 WhatsApp a 0999999999: 🛠️ Hola Kelvin, estamos preparando tu pedido.'
-    )
-    expect(consoleLog).toHaveBeenCalledWith(
-      '📧 Email a kelvin@test.com: [Actualización de tu Pedido] 🛠️ Hola Kelvin, estamos preparando tu pedido.'
-    )
-    expect(consoleLog).toHaveBeenCalledWith('✅ Notificaciones enviadas correctamente.')
-  })
+    if (email) {
+      console.log(`📧 Email a ${email}: [Actualización de tu Pedido] ${mensaje}`)
+    } else {
+      console.warn('⚠️ No hay correo para enviar Email.')
+    }
 
-  test('⚠️ Mostrar advertencia si falta teléfono o email', async () => {
-    await sendNotification({
-      nombreCliente: 'Ana',
-      telefono: '',
-      email: '',
-      estadoActual: 'en camino'
-    })
-
-    expect(consoleWarn).toHaveBeenCalledWith('⚠️ No hay número de teléfono para enviar WhatsApp.')
-    expect(consoleWarn).toHaveBeenCalledWith('⚠️ No hay correo para enviar Email.')
-  })
-
-  test('📦 Mensaje genérico si el estado no es reconocido', async () => {
-    await sendNotification({
-      nombreCliente: 'Luis',
-      telefono: '0999999999',
-      email: 'luis@test.com',
-      estadoActual: 'pendiente'
-    })
-
-    expect(consoleLog).toHaveBeenCalledWith(
-      '📲 WhatsApp a 0999999999: 📦 Hola Luis, actualización de tu pedido.'
-    )
-  })
-
-  test('❌ Manejar errores sin crashear', async () => {
-    const errorMock = jest.fn(() => {
-      throw new Error('Fallo simulado')
-    })
-
-    // Sobrescribir temporalmente enviarWhatsapp o enviarEmail
-    const { __RewireAPI__ } = await import('../utils/notifications.js')
-    __RewireAPI__.__Rewire__('enviarWhatsapp', errorMock)
-
-    await sendNotification({
-      nombreCliente: 'Laura',
-      telefono: '1234567890',
-      email: 'laura@test.com',
-      estadoActual: 'recibido'
-    })
-
-    expect(consoleError).toHaveBeenCalledWith(
-      '❌ Error enviando notificaciones:',
-      'Fallo simulado'
-    )
-
-    __RewireAPI__.__ResetDependency__('enviarWhatsapp')
-  })
-})
+    console.log('✅ Notificaciones enviadas correctamente.')
+  } catch (err) {
+    console.error('❌ Error enviando notificaciones:', err.message || err)
+  }
+}
