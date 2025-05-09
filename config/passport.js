@@ -15,41 +15,50 @@ passport.use(
       clientID: config.google.clientId,
       clientSecret: config.google.clientSecret,
       callbackURL,
-      passReqToCallback: false // ✅ No necesitas `req` en esta estrategia
+      passReqToCallback: false
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        const email = profile?.emails?.[0]?.value?.toLowerCase()
+        console.log("📥 Google profile:", JSON.stringify(profile, null, 2))
+
+        const emailObj = Array.isArray(profile.emails) ? profile.emails.find(e => !!e?.value) : null
+        const email = emailObj?.value?.toLowerCase()
 
         if (!email || typeof email !== 'string') {
-          return done(new Error('❌ No se pudo obtener un email válido desde Google'), null)
+          logger.error("❌ No se pudo obtener un email válido desde Google:", profile.emails)
+          return done(new Error('❌ Email inválido desde Google'), null)
         }
 
-        // 🔍 Buscar usuario por Google ID
         let user = await User.findOne({ googleId: profile.id })
 
         if (!user) {
-          // Si no se encontró, buscar por email
           user = await User.findOne({ email })
 
-          // Si existe, vincula Google ID
           if (user) {
             user.googleId = profile.id
             await user.save()
+            logger.info(`🔗 Vinculado Google ID con usuario existente: ${email}`)
           }
         }
 
-        // ✅ Usuario encontrado o creado
-        if (user) return done(null, user)
+        if (user) {
+          logger.info(`✅ Usuario autenticado con Google: ${user.email}`)
+          return done(null, user)
+        }
 
-        // ✨ Crear nuevo usuario
+        const displayName = (profile.displayName || email.split('@')[0] || '').trim()
+        if (displayName.length < 2) {
+          return done(new Error('❌ Nombre muy corto para crear cuenta'), null)
+        }
+
         const newUser = await User.create({
           googleId: profile.id,
           email,
-          name: profile.displayName || email.split('@')[0],
+          name: displayName,
           role: 'client'
         })
 
+        logger.info(`✨ Usuario creado con Google: ${newUser.email}`)
         return done(null, newUser)
       } catch (error) {
         logger.error('❌ Error en estrategia de Google:', error)
@@ -64,7 +73,7 @@ passport.serializeUser((user, done) => {
   done(null, user.id)
 })
 
-// 🔄 Recuperar usuario de sesión
+// 🔄 Recuperar usuario desde sesión
 passport.deserializeUser(async (id, done) => {
   try {
     const user = await User.findById(id).exec()
