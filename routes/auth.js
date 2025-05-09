@@ -9,20 +9,20 @@ const router = express.Router()
 /* -------------------------------------------------------------------------- */
 
 /**
- * 🎯 Iniciar login con Google
- * ➤ Redirige al consentimiento de Google
+ * 🎯 GET /auth/google
+ * ➤ Redirige a Google para iniciar sesión
  */
 router.get(
   '/google',
   passport.authenticate('google', {
     scope: ['profile', 'email'],
-    prompt: 'select_account' // Fuerza selección de cuenta
+    prompt: 'select_account'
   })
 )
 
 /**
- * ✅ Callback de Google
- * ➤ Si el login es exitoso, redirige según rol
+ * ✅ GET /auth/google/callback
+ * ➤ Callback de Google tras login exitoso
  */
 router.get(
   '/google/callback',
@@ -35,7 +35,7 @@ router.get(
     try {
       const role = req.user?.role || 'client'
 
-      // Redirección dinámica
+      // ✅ Puedes cambiar estas URLs según entorno
       const redirectUrl =
         role === 'admin'
           ? 'https://kmezropacatalogo.com/admin'
@@ -51,7 +51,7 @@ router.get(
 
 /**
  * 👤 GET /auth/me
- * ➤ Retorna información del usuario autenticado (si hay sesión activa)
+ * ➤ Retorna datos del usuario autenticado
  */
 router.get('/me', (req, res) => {
   if (!req.isAuthenticated?.() || !req.user) {
@@ -62,7 +62,6 @@ router.get('/me', (req, res) => {
   }
 
   const { _id, name, email, role } = req.user
-
   return res.status(200).json({
     ok: true,
     user: { id: _id, name, email, role }
@@ -71,18 +70,24 @@ router.get('/me', (req, res) => {
 
 /**
  * 🚪 GET /auth/logout
- * ➤ Cierra sesión y limpia cookies
+ * ➤ Finaliza sesión y limpia cookies
  */
 router.get('/logout', (req, res) => {
   req.logout(err => {
     if (err) {
       console.error('❌ Error al cerrar sesión:', err)
-      return res.status(500).json({ ok: false, message: '❌ Error al cerrar sesión' })
+      return res.status(500).json({
+        ok: false,
+        message: '❌ Error al cerrar sesión'
+      })
     }
 
     req.session?.destroy(() => {
       res.clearCookie('connect.sid', { path: '/' })
-      return res.status(200).json({ ok: true, message: '✅ Sesión cerrada correctamente' })
+      return res.status(200).json({
+        ok: true,
+        message: '✅ Sesión cerrada correctamente'
+      })
     })
   })
 })
