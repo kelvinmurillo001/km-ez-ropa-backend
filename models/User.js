@@ -48,16 +48,20 @@ const userSchema = new mongoose.Schema(
   {
     timestamps: true,
     toJSON: {
+      virtuals: true,
       transform: (_, ret) => {
         delete ret.password
         delete ret.refreshToken
+        delete ret.__v
         return ret
       }
     },
     toObject: {
+      virtuals: true,
       transform: (_, ret) => {
         delete ret.password
         delete ret.refreshToken
+        delete ret.__v
         return ret
       }
     }
@@ -65,8 +69,7 @@ const userSchema = new mongoose.Schema(
 )
 
 /**
- * ✅ Validación condicional:
- * Si no se usa Google (googleId), se requiere password
+ * 🔍 Validar que si no es Google, debe tener password
  */
 userSchema.pre('validate', function (next) {
   if (!this.googleId && !this.password) {
@@ -91,7 +94,7 @@ userSchema.pre('save', async function (next) {
 })
 
 /**
- * 🔑 Método para comparar contraseñas
+ * 🔑 Compara la contraseña ingresada con la guardada
  */
 userSchema.methods.matchPassword = async function (inputPassword) {
   if (!this.password) return false

@@ -5,15 +5,13 @@ import config from '../config/configuracionesito.js'
 import logger from '../utils/logger.js'
 
 /**
- * 🔄 Renovar Access Token usando Refresh Token desde cookie
- * @route   POST /api/auth/refresh-token
- * @access  Público
+ * 🔄 POST /api/auth/refresh-token
+ * ➤ Renovar Access Token usando Refresh Token (desde cookie HTTP-only)
  */
 export const refreshTokenController = async (req, res) => {
   try {
     const token = req.cookies?.refreshToken
 
-    // 🔐 Validar existencia del token
     if (!token) {
       logger.warn('🛑 Refresh token no proporcionado.')
       return res.status(401).json({
@@ -24,7 +22,6 @@ export const refreshTokenController = async (req, res) => {
 
     let payload
     try {
-      // 🔍 Verificar integridad del token
       payload = jwt.verify(token, config.jwtRefreshSecret)
     } catch (err) {
       logger.warn(`⛔ Refresh token inválido o expirado: ${err.message}`)
@@ -35,35 +32,35 @@ export const refreshTokenController = async (req, res) => {
       })
     }
 
-    // 🔎 Validar existencia de usuario y token coincidente
     const user = await User.findById(payload.id).select('+refreshToken')
+
     if (!user || user.refreshToken !== token) {
-      logger.warn(`⚠️ Token revocado o usuario no válido. ID: ${payload.id}`)
+      logger.warn(`⚠️ Token revocado o no coincide con la base. Usuario ID: ${payload.id}`)
       return res.status(403).json({
         ok: false,
         message: '⚠️ Token inválido o sesión no autorizada.'
       })
     }
 
-    // ✅ Generar nuevo Access Token seguro
-    const accessToken = jwt.sign(
+    // ✅ Generar nuevo access token
+    const newAccessToken = jwt.sign(
       { id: user._id, role: user.role },
       config.jwtSecret,
       { expiresIn: '15m' }
     )
 
-    logger.info(`🔁 Nuevo access token generado para usuario ${user.email || user._id}`)
+    logger.info(`🔁 Access token renovado para: ${user.email || user._id}`)
 
     return res.status(200).json({
       ok: true,
-      message: '✅ Access token renovado correctamente.',
-      data: { accessToken }
+      message: '✅ Nuevo access token generado correctamente.',
+      accessToken: newAccessToken
     })
   } catch (err) {
-    logger.error('❌ Error interno en refreshTokenController:', err)
+    logger.error('❌ Error crítico al renovar token:', err)
     return res.status(500).json({
       ok: false,
-      message: '❌ No se pudo renovar el token. Intenta iniciar sesión nuevamente.',
+      message: '❌ No se pudo renovar el token. Inicia sesión nuevamente.',
       ...(config.env !== 'production' && { error: err.message })
     })
   }
