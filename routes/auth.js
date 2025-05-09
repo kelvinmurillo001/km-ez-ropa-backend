@@ -15,7 +15,8 @@ const router = express.Router()
 router.get(
   '/google',
   passport.authenticate('google', {
-    scope: ['profile', 'email']
+    scope: ['profile', 'email'],
+    prompt: 'select_account' // Fuerza selección de cuenta
   })
 )
 
@@ -27,18 +28,24 @@ router.get(
   '/google/callback',
   passport.authenticate('google', {
     failureRedirect: '/',
-    failureMessage: true
+    failureMessage: true,
+    session: true
   }),
   (req, res) => {
-    const role = req.user?.role || 'client'
+    try {
+      const role = req.user?.role || 'client'
 
-    // Redirección dinámica o por defecto
-    const redirectUrl =
-      role === 'admin'
-        ? 'https://kmezropacatalogo.com/admin'
-        : 'https://kmezropacatalogo.com/cliente'
+      // Redirección dinámica
+      const redirectUrl =
+        role === 'admin'
+          ? 'https://kmezropacatalogo.com/admin'
+          : 'https://kmezropacatalogo.com/cliente'
 
-    return res.redirect(redirectUrl)
+      return res.redirect(redirectUrl)
+    } catch (error) {
+      console.error('❌ Error en redirección post-login:', error)
+      return res.redirect('/')
+    }
   }
 )
 
@@ -56,7 +63,7 @@ router.get('/me', (req, res) => {
 
   const { _id, name, email, role } = req.user
 
-  res.status(200).json({
+  return res.status(200).json({
     ok: true,
     user: { id: _id, name, email, role }
   })

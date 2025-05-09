@@ -13,7 +13,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
       minlength: [3, '⚠️ Mínimo 3 caracteres']
-      // ✅ Puedes validar existencia si no es OAuth
     },
     name: {
       type: String,
@@ -66,6 +65,17 @@ const userSchema = new mongoose.Schema(
 )
 
 /**
+ * ✅ Validación condicional:
+ * Si no se usa Google (googleId), se requiere password
+ */
+userSchema.pre('validate', function (next) {
+  if (!this.googleId && !this.password) {
+    this.invalidate('password', '⚠️ Se requiere contraseña si no usas Google')
+  }
+  next()
+})
+
+/**
  * 🔒 Hashear contraseña automáticamente si fue modificada
  */
 userSchema.pre('save', async function (next) {
@@ -82,8 +92,6 @@ userSchema.pre('save', async function (next) {
 
 /**
  * 🔑 Método para comparar contraseñas
- * @param {string} inputPassword - Contraseña a verificar
- * @returns {Promise<boolean>}
  */
 userSchema.methods.matchPassword = async function (inputPassword) {
   if (!this.password) return false

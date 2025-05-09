@@ -1,6 +1,5 @@
 // 📁 backend/server.js
 
-// 🌐 Dependencias principales
 import dotenv from 'dotenv'
 dotenv.config()
 
@@ -21,15 +20,11 @@ import passport from 'passport'
 import MongoStore from 'connect-mongo'
 import { fileURLToPath } from 'url'
 
-// 📍 __dirname fix for ESModules
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-// ⚙️ Configuración
 import config from './config/configuracionesito.js'
 import errorHandler from './middleware/errorHandler.js'
-
-// 🔐 Configurar passport
 import './config/passport.js'
 
 // 🔗 Rutas API
@@ -44,12 +39,10 @@ import statsRoutes from './routes/statsRoutes.js'
 import uploadRoutes from './routes/uploadRoutes.js'
 import paypalRoutes from './routes/paypalRoutes.js'
 
-// ✅ Crear app
 const app = express()
 
-/* -------------------------------------------------------------------------- */
-/* 🔒 Protección contra abuso                                                 */
-/* -------------------------------------------------------------------------- */
+/* ──────────────────────────────── PROTECCIÓN ─────────────────────────────── */
+
 app.use(rateLimit({
   windowMs: config.rateLimitWindow * 60 * 1000,
   max: config.rateLimitMax,
@@ -64,16 +57,12 @@ app.use(slowDown({
   delayMs: () => 500
 }))
 
-/* -------------------------------------------------------------------------- */
-/* 🛡️ Seguridad y sanitización                                                */
-/* -------------------------------------------------------------------------- */
 if (config.enableMongoSanitize) app.use(mongoSanitize())
 if (config.enableXSSProtection) app.use(xssClean())
 if (config.enableHPP) app.use(hpp())
 
-/* -------------------------------------------------------------------------- */
-/* 🌐 CORS dinámico                                                            */
-/* -------------------------------------------------------------------------- */
+/* ──────────────────────────────── CORS Y HEADERS ─────────────────────────── */
+
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || config.allowedOrigins.includes(origin.replace(/\/$/, ''))) {
@@ -86,20 +75,16 @@ app.use(cors({
   credentials: true
 }))
 
-/* -------------------------------------------------------------------------- */
-/* 🛡️ Helmet + Cabeceras HTTP Avanzadas                                       */
-/* -------------------------------------------------------------------------- */
 app.use(helmet({ crossOriginResourcePolicy: false }))
 
-// 🔐 Cabeceras CSP y seguridad
 app.use((req, res, next) => {
   res.setHeader("Content-Security-Policy",
     "default-src 'self'; " +
     "script-src 'self' https://accounts.google.com https://apis.google.com 'unsafe-inline'; " +
     "style-src 'self' 'unsafe-inline'; " +
     "font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com; " +
-    "img-src 'self' data: https://*.googleusercontent.com; " +
-    "frame-src https://accounts.google.com; " +
+    "img-src 'self' data: https://*.googleusercontent.com https://lh3.googleusercontent.com; " +
+    "frame-src https://accounts.google.com https://*.google.com; " +
     "connect-src 'self' https://api.kmezropacatalogo.com; " +
     "object-src 'none'; base-uri 'self'; frame-ancestors 'none';"
   )
@@ -112,16 +97,14 @@ app.use((req, res, next) => {
   next()
 })
 
-/* -------------------------------------------------------------------------- */
-/* 📦 Middlewares comunes                                                     */
-/* -------------------------------------------------------------------------- */
+/* ──────────────────────────────── MIDDLEWARES ────────────────────────────── */
+
 app.use(morgan(config.env === 'production' ? 'tiny' : 'dev'))
 app.use(express.json({ limit: '5mb' }))
 app.use(express.urlencoded({ extended: true }))
 
-/* -------------------------------------------------------------------------- */
-/* 🔐 Sesiones y Passport                                                     */
-/* -------------------------------------------------------------------------- */
+/* ────────────────────────────── SESIONES Y PASSPORT ──────────────────────── */
+
 app.use(session({
   secret: config.sessionSecret,
   resave: false,
@@ -135,29 +118,25 @@ app.use(session({
     secure: config.env === 'production',
     httpOnly: true,
     sameSite: 'lax'
+    // Para dominios cruzados usa: sameSite: 'none', secure: true
   }
 }))
 
 app.use(passport.initialize())
 app.use(passport.session())
 
-/* -------------------------------------------------------------------------- */
-/* 💨 Compresión HTTP                                                         */
-/* -------------------------------------------------------------------------- */
+/* ────────────────────────────── COMPRESIÓN Y ESTÁTICOS ───────────────────── */
+
 app.use(compression({
   level: 6,
   filter: (req, res) =>
     req.headers['x-no-compression'] ? false : compression.filter(req, res)
 }))
 
-/* -------------------------------------------------------------------------- */
-/* 📂 Archivos estáticos                                                      */
-/* -------------------------------------------------------------------------- */
 app.use('/assets', express.static(path.join(__dirname, 'frontend', 'assets')))
 
-/* -------------------------------------------------------------------------- */
-/* 📚 Montaje de rutas                                                        */
-/* -------------------------------------------------------------------------- */
+/* ─────────────────────────────── RUTAS PRINCIPALES ───────────────────────── */
+
 app.use('/api/auth', authRoutes)
 app.use('/auth', googleAuthRoutes)
 app.use('/api/products', productRoutes)
@@ -169,9 +148,8 @@ app.use('/api/stats', statsRoutes)
 app.use('/api/uploads', uploadRoutes)
 app.use('/api/paypal', paypalRoutes)
 
-/* -------------------------------------------------------------------------- */
-/* ✅ Raíz y /health                                                          */
-/* -------------------------------------------------------------------------- */
+/* ──────────────────────────────── SALUD Y ROOT ───────────────────────────── */
+
 app.get('/', (req, res) => {
   res.send('🧠 Backend KM-EZ-ROPA funcionando correctamente 🚀')
 })
@@ -186,21 +164,18 @@ app.get('/health', async (req, res) => {
   })
 })
 
-/* -------------------------------------------------------------------------- */
-/* ❌ 404 - Ruta no encontrada                                                */
-/* -------------------------------------------------------------------------- */
+/* ─────────────────────────────── RUTA NO ENCONTRADA ──────────────────────── */
+
 app.use('*', (req, res) => {
   res.status(404).json({ message: '❌ Ruta no encontrada' })
 })
 
-/* -------------------------------------------------------------------------- */
-/* 🧯 Manejador de errores global                                             */
-/* -------------------------------------------------------------------------- */
+/* ─────────────────────────────── MANEJO DE ERRORES ───────────────────────── */
+
 app.use(errorHandler)
 
-/* -------------------------------------------------------------------------- */
-/* 🚀 Iniciar servidor y conectar a MongoDB                                   */
-/* -------------------------------------------------------------------------- */
+/* ────────────────────────────── CONEXIÓN A MONGODB ───────────────────────── */
+
 if (process.env.NODE_ENV !== 'test') {
   const startServer = async () => {
     try {

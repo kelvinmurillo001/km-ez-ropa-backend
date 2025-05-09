@@ -14,27 +14,30 @@ dotenv.config({ path: path.resolve(__dirname, '..', '.env') })
 
 // 🧩 Variables requeridas
 const requiredVars = [
-  'PORT', 'MONGO_URI', 'JWT_SECRET', 'JWT_REFRESH_SECRET',
-  'ADMIN_USER', 'ADMIN_PASS', 'SESSION_SECRET',
+  'PORT', 'MONGO_URI',
+  'JWT_SECRET', 'JWT_REFRESH_SECRET',
+  'ADMIN_USER', 'ADMIN_PASS',
+  'SESSION_SECRET',
   'CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET',
-  'ALLOWED_ORIGINS', 'RATE_LIMIT_WINDOW', 'RATE_LIMIT_MAX',
+  'ALLOWED_ORIGINS',
+  'RATE_LIMIT_WINDOW', 'RATE_LIMIT_MAX',
   'PAYPAL_CLIENT_ID', 'PAYPAL_CLIENT_SECRET', 'PAYPAL_API_BASE',
-  'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET',
+  'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_CALLBACK_URL',
   'EMAIL_FROM', 'EMAIL_PASSWORD'
 ]
 
 // 🚨 Validar existencia
-const missing = requiredVars.filter(k => !process.env[k])
+const missing = requiredVars.filter(key => !process.env[key])
 if (missing.length > 0) {
-  console.error(`❌ Faltan variables en .env: ${missing.join(', ')}`)
+  console.error(`❌ Faltan variables requeridas en .env: ${missing.join(', ')}`)
   process.exit(1)
 }
 
-// 🌐 Orígenes permitidos (cors)
+// 🌐 Lista de dominios permitidos por CORS
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   .split(',')
-  .map(origin => origin.trim().replace(/\/$/, ''))
-  .filter(origin => /^https?:\/\/.+/.test(origin))
+  .map(o => o.trim().replace(/\/$/, ''))
+  .filter(o => /^https?:\/\//.test(o))
 
 // 🛠️ Configuración final
 const config = {
@@ -43,7 +46,7 @@ const config = {
   mongoUri: process.env.MONGO_URI,
 
   sessionSecret: process.env.SESSION_SECRET,
-  sessionTTL: Number.parseInt(process.env.SESSION_TTL, 10) || 14 * 24 * 60 * 60, // segundos
+  sessionTTL: Number.parseInt(process.env.SESSION_TTL, 10) || 14 * 24 * 60 * 60, // en segundos
 
   jwtSecret: process.env.JWT_SECRET,
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET,
@@ -65,7 +68,8 @@ const config = {
 
   google: {
     clientId: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: process.env.GOOGLE_CALLBACK_URL
   },
 
   email: {
@@ -93,7 +97,7 @@ if (config.env !== 'production') {
     SESSION: !!config.sessionSecret,
     CLOUDINARY: !!config.cloudinary.cloud_name,
     PAYPAL: !!config.paypal.clientId,
-    GOOGLE: !!config.google.clientId,
+    GOOGLE: !!config.google.clientId && !!config.google.callbackURL,
     EMAIL: !!config.email.from
   })
 }
