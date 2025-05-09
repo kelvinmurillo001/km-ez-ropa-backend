@@ -1,25 +1,26 @@
 // 📁 backend/models/User.js
-import mongoose from 'mongoose'
-import bcrypt from 'bcryptjs'
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
-// 🧩 Esquema de usuarios
 const userSchema = new mongoose.Schema(
   {
     googleId: {
       type: String,
-      default: null
+      default: null,
     },
     username: {
       type: String,
+      unique: true, // ✅ importante
       trim: true,
-      minlength: [3, '⚠️ Mínimo 3 caracteres']
+      minlength: [3, '⚠️ Mínimo 3 caracteres'],
+      sparse: true // ✅ evita error si es opcional y no está presente
     },
     name: {
       type: String,
       required: [true, '⚠️ El nombre es obligatorio'],
       trim: true,
       minlength: [2, '⚠️ Mínimo 2 caracteres'],
-      maxlength: [100, '⚠️ Máximo 100 caracteres']
+      maxlength: [100, '⚠️ Máximo 100 caracteres'],
     },
     email: {
       type: String,
@@ -27,80 +28,73 @@ const userSchema = new mongoose.Schema(
       unique: true,
       trim: true,
       lowercase: true,
-      match: [/^\S+@\S+\.\S+$/, '⚠️ Formato de email inválido']
+      match: [/^\S+@\S+\.\S+$/, '⚠️ Formato de email inválido'],
     },
     password: {
       type: String,
       minlength: [6, '⚠️ Debe tener al menos 6 caracteres'],
-      select: false
+      select: false,
     },
     role: {
       type: String,
       enum: ['admin', 'user', 'client'],
-      default: 'client'
+      default: 'client',
     },
     refreshToken: {
       type: String,
       default: null,
-      select: false
-    }
+      select: false,
+    },
   },
   {
     timestamps: true,
     toJSON: {
       virtuals: true,
       transform: (_, ret) => {
-        delete ret.password
-        delete ret.refreshToken
-        delete ret.__v
-        return ret
-      }
+        delete ret.password;
+        delete ret.refreshToken;
+        delete ret.__v;
+        return ret;
+      },
     },
     toObject: {
       virtuals: true,
       transform: (_, ret) => {
-        delete ret.password
-        delete ret.refreshToken
-        delete ret.__v
-        return ret
-      }
-    }
+        delete ret.password;
+        delete ret.refreshToken;
+        delete ret.__v;
+        return ret;
+      },
+    },
   }
-)
+);
 
-/**
- * 🔍 Validar que si no es Google, debe tener password
- */
+// ✅ Validación condicional para password
 userSchema.pre('validate', function (next) {
   if (!this.googleId && !this.password) {
-    this.invalidate('password', '⚠️ Se requiere contraseña si no usas Google')
+    this.invalidate('password', '⚠️ Se requiere contraseña si no usas Google');
   }
-  next()
-})
+  next();
+});
 
-/**
- * 🔒 Hashear contraseña automáticamente si fue modificada
- */
+// 🔒 Hash automático
 userSchema.pre('save', async function (next) {
-  if (!this.isModified('password') || !this.password) return next()
+  if (!this.isModified('password') || !this.password) return next();
   try {
-    const salt = await bcrypt.genSalt(12)
-    this.password = await bcrypt.hash(this.password, salt)
-    next()
+    const salt = await bcrypt.genSalt(12);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
   } catch (err) {
-    console.error('❌ Error al hashear contraseña:', err)
-    next(err)
+    console.error('❌ Error al hashear contraseña:', err);
+    next(err);
   }
-})
+});
 
-/**
- * 🔑 Compara la contraseña ingresada con la guardada
- */
+// 🔑 Comparar contraseña
 userSchema.methods.matchPassword = async function (inputPassword) {
-  if (!this.password) return false
-  return await bcrypt.compare(inputPassword, this.password)
-}
+  if (!this.password) return false;
+  return await bcrypt.compare(inputPassword, this.password);
+};
 
-// 🚀 Exportar modelo
-const User = mongoose.model('User', userSchema)
-export default User
+const User = mongoose.model('User', userSchema);
+export default User;
