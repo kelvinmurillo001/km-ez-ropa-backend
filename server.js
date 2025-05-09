@@ -41,7 +41,7 @@ import paypalRoutes from './routes/paypalRoutes.js';
 
 const app = express();
 
-/* ────────────── PROTECCIÓN ────────────── */
+/* ─────────────── PROTECCIÓN ─────────────── */
 
 app.use(rateLimit({
   windowMs: config.rateLimitWindow * 60 * 1000,
@@ -61,7 +61,7 @@ if (config.enableMongoSanitize) app.use(mongoSanitize());
 if (config.enableXSSProtection) app.use(xssClean());
 if (config.enableHPP) app.use(hpp());
 
-/* ────────────── CORS + CSP ────────────── */
+/* ─────────────── CORS + HEADERS ─────────────── */
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -95,13 +95,13 @@ app.use((req, res, next) => {
   next();
 });
 
-/* ────────────── MIDDLEWARES ────────────── */
+/* ─────────────── MIDDLEWARES ─────────────── */
 
 app.use(morgan(config.env === 'production' ? 'tiny' : 'dev'));
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-/* ────────────── SESIONES & PASSPORT ────────────── */
+/* ─────────────── SESIONES Y PASSPORT ─────────────── */
 
 app.use(session({
   secret: config.sessionSecret,
@@ -122,19 +122,7 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-/* ────────────── COMPRESIÓN & ESTÁTICOS ────────────── */
-
-app.use(compression({
-  level: 6,
-  filter: (req, res) =>
-    req.headers['x-no-compression'] ? false : compression.filter(req, res)
-}));
-
-app.use('/assets', express.static(path.join(__dirname, 'frontend', 'assets')));
-app.use('/css', express.static(path.join(__dirname, 'frontend', 'css')));
-app.use('/js', express.static(path.join(__dirname, 'frontend', 'js')));
-
-/* ────────────── RUTAS BACKEND ────────────── */
+/* ─────────────── RUTAS API (solo backend) ─────────────── */
 
 app.use('/api/auth', authRoutes);
 app.use('/auth', googleAuthRoutes);
@@ -147,21 +135,7 @@ app.use('/api/stats', statsRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/paypal', paypalRoutes);
 
-/* ────────────── RUTAS FRONTEND ────────────── */
-
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'frontend', 'views', 'index.html'));
-});
-
-app.get('/cliente.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'frontend', 'views', 'cliente.html'));
-});
-
-app.get('/detalle-pedido.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'frontend', 'views', 'detalle-pedido.html'));
-});
-
-/* ────────────── SALUD Y CATCH-ALL ────────────── */
+/* ─────────────── HEALTHCHECK ─────────────── */
 
 app.get('/health', async (req, res) => {
   const dbStatus = mongoose.connection.readyState === 1 ? '🟢 OK' : '🔴 ERROR';
@@ -173,15 +147,17 @@ app.get('/health', async (req, res) => {
   });
 });
 
+/* ─────────────── RUTA 404 ─────────────── */
+
 app.use('*', (req, res) => {
   res.status(404).json({ message: '❌ Ruta no encontrada' });
 });
 
-/* ────────────── MANEJO DE ERRORES ────────────── */
+/* ─────────────── ERRORES ─────────────── */
 
 app.use(errorHandler);
 
-/* ────────────── INICIAR CONEXIÓN ────────────── */
+/* ─────────────── CONEXIÓN A MONGODB ─────────────── */
 
 if (process.env.NODE_ENV !== 'test') {
   const startServer = async () => {
