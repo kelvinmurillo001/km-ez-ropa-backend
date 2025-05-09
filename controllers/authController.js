@@ -58,7 +58,7 @@ export const loginAdmin = async (req, res) => {
     user.refreshToken = refreshToken
     await user.save()
 
-    // Cookies seguras
+    // Cookie HTTP-only con el refresh token
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: config.env === 'production',
@@ -68,14 +68,12 @@ export const loginAdmin = async (req, res) => {
 
     return res.status(200).json({
       ok: true,
-      data: {
-        user: {
-          id: user._id,
-          username: user.username,
-          name: user.name,
-          role: user.role
-        },
-        accessToken
+      accessToken,
+      user: {
+        id: user._id,
+        username: user.username,
+        name: user.name,
+        role: user.role
       }
     })
   } catch (err) {
@@ -107,7 +105,10 @@ export const refreshToken = async (req, res) => {
     }
 
     const newAccessToken = generateAccessToken(user)
-    return res.status(200).json({ ok: true, data: { accessToken: newAccessToken } })
+    return res.status(200).json({
+      ok: true,
+      accessToken: newAccessToken
+    })
   } catch (err) {
     console.error('❌ Error al renovar token:', err)
     return res.status(403).json({

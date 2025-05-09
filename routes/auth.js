@@ -16,18 +16,18 @@ router.get(
   '/google',
   passport.authenticate('google', {
     scope: ['profile', 'email'],
-    prompt: 'select_account'
+    prompt: 'select_account' // Fuerza selector de cuenta
   })
 )
 
 /**
  * ✅ GET /auth/google/callback
- * ➤ Callback de Google tras login exitoso
+ * ➤ Callback desde Google tras login exitoso
  */
 router.get(
   '/google/callback',
   passport.authenticate('google', {
-    failureRedirect: '/',
+    failureRedirect: '/login.html',
     failureMessage: true,
     session: true
   }),
@@ -35,7 +35,7 @@ router.get(
     try {
       const role = req.user?.role || 'client'
 
-      // ✅ Puedes cambiar estas URLs según entorno
+      // 🔁 Redirección dinámica según rol
       const redirectUrl =
         role === 'admin'
           ? 'https://kmezropacatalogo.com/admin'
@@ -44,7 +44,7 @@ router.get(
       return res.redirect(redirectUrl)
     } catch (error) {
       console.error('❌ Error en redirección post-login:', error)
-      return res.redirect('/')
+      return res.redirect('/login.html')
     }
   }
 )
