@@ -13,7 +13,7 @@ export const refreshTokenController = async (req, res) => {
     const token = req.cookies?.refreshToken
 
     if (!token) {
-      logger.warn('🛑 Refresh token no proporcionado.')
+      logger.warn('🛑 Refresh token no proporcionado en la cookie.')
       return res.status(401).json({
         ok: false,
         message: '❌ Debes iniciar sesión para continuar.'
@@ -24,10 +24,10 @@ export const refreshTokenController = async (req, res) => {
     try {
       payload = jwt.verify(token, config.jwtRefreshSecret)
     } catch (err) {
-      logger.warn(`⛔ Refresh token inválido o expirado: ${err.message}`)
+      logger.warn(`⛔ Token de refresco inválido o expirado: ${err.message}`)
       return res.status(403).json({
         ok: false,
-        message: '⛔ Token expirado o inválido. Inicia sesión nuevamente.',
+        message: '⛔ Tu sesión ha expirado. Inicia sesión nuevamente.',
         ...(config.env !== 'production' && { error: err.message })
       })
     }
@@ -35,29 +35,28 @@ export const refreshTokenController = async (req, res) => {
     const user = await User.findById(payload.id).select('+refreshToken')
 
     if (!user || user.refreshToken !== token) {
-      logger.warn(`⚠️ Token revocado o no coincide con la base. Usuario ID: ${payload.id}`)
+      logger.warn(`⚠️ Refresh token no coincide o fue revocado. ID: ${payload.id}`)
       return res.status(403).json({
         ok: false,
-        message: '⚠️ Token inválido o sesión no autorizada.'
+        message: '⚠️ Sesión inválida. Por favor inicia sesión de nuevo.'
       })
     }
 
-    // ✅ Generar nuevo access token
     const newAccessToken = jwt.sign(
       { id: user._id, role: user.role },
       config.jwtSecret,
       { expiresIn: '15m' }
     )
 
-    logger.info(`🔁 Access token renovado para: ${user.email || user._id}`)
+    logger.info(`🔁 Nuevo access token emitido para usuario: ${user.email || user._id}`)
 
     return res.status(200).json({
       ok: true,
-      message: '✅ Nuevo access token generado correctamente.',
-      accessToken: newAccessToken
+      accessToken: newAccessToken,
+      message: '✅ Nuevo access token generado correctamente.'
     })
   } catch (err) {
-    logger.error('❌ Error crítico al renovar token:', err)
+    logger.error('❌ Error interno al renovar token:', err)
     return res.status(500).json({
       ok: false,
       message: '❌ No se pudo renovar el token. Inicia sesión nuevamente.',
