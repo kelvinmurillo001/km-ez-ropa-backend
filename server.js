@@ -1,5 +1,3 @@
-// 📁 backend/server.js
-
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -42,7 +40,6 @@ import paypalRoutes from './routes/paypalRoutes.js';
 const app = express();
 
 /* ─────────────── PROTECCIÓN ─────────────── */
-
 app.use(rateLimit({
   windowMs: config.rateLimitWindow * 60 * 1000,
   max: config.rateLimitMax,
@@ -62,7 +59,6 @@ if (config.enableXSSProtection) app.use(xssClean());
 if (config.enableHPP) app.use(hpp());
 
 /* ─────────────── CORS + HEADERS ─────────────── */
-
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || config.allowedOrigins.includes(origin.replace(/\/$/, ''))) {
@@ -96,13 +92,11 @@ app.use((req, res, next) => {
 });
 
 /* ─────────────── MIDDLEWARES ─────────────── */
-
 app.use(morgan(config.env === 'production' ? 'tiny' : 'dev'));
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 /* ─────────────── SESIONES Y PASSPORT ─────────────── */
-
 app.use(session({
   secret: config.sessionSecret,
   resave: false,
@@ -113,17 +107,16 @@ app.use(session({
     ttl: config.sessionTTL || 14 * 24 * 60 * 60
   }),
   cookie: {
-    secure: config.env === 'production',
+    secure: true,         // 🔒 Obligatorio para HTTPS
     httpOnly: true,
-    sameSite: 'lax'
+    sameSite: 'none'      // ✅ Permite cookies entre dominios
   }
 }));
 
 app.use(passport.initialize());
 app.use(passport.session());
 
-/* ─────────────── RUTAS API (solo backend) ─────────────── */
-
+/* ─────────────── RUTAS API ─────────────── */
 app.use('/api/auth', authRoutes);
 app.use('/auth', googleAuthRoutes);
 app.use('/api/products', productRoutes);
@@ -135,8 +128,7 @@ app.use('/api/stats', statsRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/paypal', paypalRoutes);
 
-/* ─────────────── HEALTHCHECK ─────────────── */
-
+/* ─────────────── SALUD ─────────────── */
 app.get('/health', async (req, res) => {
   const dbStatus = mongoose.connection.readyState === 1 ? '🟢 OK' : '🔴 ERROR';
   if (dbStatus !== '🟢 OK') console.warn('⚠️ MongoDB no está disponible.');
@@ -147,18 +139,15 @@ app.get('/health', async (req, res) => {
   });
 });
 
-/* ─────────────── RUTA 404 ─────────────── */
-
+/* ─────────────── CATCH-ALL ─────────────── */
 app.use('*', (req, res) => {
   res.status(404).json({ message: '❌ Ruta no encontrada' });
 });
 
-/* ─────────────── ERRORES ─────────────── */
-
+/* ─────────────── MANEJO DE ERRORES ─────────────── */
 app.use(errorHandler);
 
 /* ─────────────── CONEXIÓN A MONGODB ─────────────── */
-
 if (process.env.NODE_ENV !== 'test') {
   const startServer = async () => {
     try {
