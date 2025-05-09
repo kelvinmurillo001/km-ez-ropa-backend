@@ -1,47 +1,47 @@
 // 📁 backend/server.js
 
-import dotenv from 'dotenv'
-dotenv.config()
+import dotenv from 'dotenv';
+dotenv.config();
 
-import express from 'express'
-import mongoose from 'mongoose'
-import cors from 'cors'
-import helmet from 'helmet'
-import morgan from 'morgan'
-import compression from 'compression'
-import path from 'path'
-import rateLimit from 'express-rate-limit'
-import slowDown from 'express-slow-down'
-import mongoSanitize from 'express-mongo-sanitize'
-import xssClean from 'xss-clean'
-import hpp from 'hpp'
-import session from 'express-session'
-import passport from 'passport'
-import MongoStore from 'connect-mongo'
-import { fileURLToPath } from 'url'
+import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import compression from 'compression';
+import path from 'path';
+import rateLimit from 'express-rate-limit';
+import slowDown from 'express-slow-down';
+import mongoSanitize from 'express-mongo-sanitize';
+import xssClean from 'xss-clean';
+import hpp from 'hpp';
+import session from 'express-session';
+import passport from 'passport';
+import MongoStore from 'connect-mongo';
+import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-import config from './config/configuracionesito.js'
-import errorHandler from './middleware/errorHandler.js'
-import './config/passport.js'
+import config from './config/configuracionesito.js';
+import errorHandler from './middleware/errorHandler.js';
+import './config/passport.js';
 
 // 🔗 Rutas API
-import authRoutes from './routes/authRoutes.js'
-import googleAuthRoutes from './routes/auth.js'
-import productRoutes from './routes/productRoutes.js'
-import categoryRoutes from './routes/categoryRoutes.js'
-import promoRoutes from './routes/promoRoutes.js'
-import orderRoutes from './routes/orderRoutes.js'
-import visitRoutes from './routes/visitRoutes.js'
-import statsRoutes from './routes/statsRoutes.js'
-import uploadRoutes from './routes/uploadRoutes.js'
-import paypalRoutes from './routes/paypalRoutes.js'
+import authRoutes from './routes/authRoutes.js';
+import googleAuthRoutes from './routes/auth.js';
+import productRoutes from './routes/productRoutes.js';
+import categoryRoutes from './routes/categoryRoutes.js';
+import promoRoutes from './routes/promoRoutes.js';
+import orderRoutes from './routes/orderRoutes.js';
+import visitRoutes from './routes/visitRoutes.js';
+import statsRoutes from './routes/statsRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js';
+import paypalRoutes from './routes/paypalRoutes.js';
 
-const app = express()
+const app = express();
 
-/* ──────────────────────────────── PROTECCIÓN ─────────────────────────────── */
+/* ────────────── PROTECCIÓN ────────────── */
 
 app.use(rateLimit({
   windowMs: config.rateLimitWindow * 60 * 1000,
@@ -49,33 +49,33 @@ app.use(rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: '⚠️ Demasiadas solicitudes. Intenta más tarde.'
-}))
+}));
 
 app.use(slowDown({
   windowMs: config.rateLimitWindow * 60 * 1000,
   delayAfter: 20,
   delayMs: () => 500
-}))
+}));
 
-if (config.enableMongoSanitize) app.use(mongoSanitize())
-if (config.enableXSSProtection) app.use(xssClean())
-if (config.enableHPP) app.use(hpp())
+if (config.enableMongoSanitize) app.use(mongoSanitize());
+if (config.enableXSSProtection) app.use(xssClean());
+if (config.enableHPP) app.use(hpp());
 
-/* ──────────────────────────────── CORS Y HEADERS ─────────────────────────── */
+/* ────────────── CORS + CSP ────────────── */
 
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || config.allowedOrigins.includes(origin.replace(/\/$/, ''))) {
-      callback(null, true)
+      callback(null, true);
     } else {
-      console.error(`❌ CORS no permitido: ${origin}`)
-      callback(new Error('❌ CORS no permitido'))
+      console.error(`❌ CORS no permitido: ${origin}`);
+      callback(new Error('❌ CORS no permitido'));
     }
   },
   credentials: true
-}))
+}));
 
-app.use(helmet({ crossOriginResourcePolicy: false }))
+app.use(helmet({ crossOriginResourcePolicy: false }));
 
 app.use((req, res, next) => {
   res.setHeader("Content-Security-Policy",
@@ -87,23 +87,21 @@ app.use((req, res, next) => {
     "frame-src https://accounts.google.com https://*.google.com; " +
     "connect-src 'self' https://api.kmezropacatalogo.com; " +
     "object-src 'none'; base-uri 'self'; frame-ancestors 'none';"
-  )
+  );
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("Permissions-Policy", "geolocation=(), microphone=()");
+  next();
+});
 
-  res.setHeader("X-Frame-Options", "DENY")
-  res.setHeader("X-Content-Type-Options", "nosniff")
-  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin")
-  res.setHeader("Permissions-Policy", "geolocation=(), microphone=()")
+/* ────────────── MIDDLEWARES ────────────── */
 
-  next()
-})
+app.use(morgan(config.env === 'production' ? 'tiny' : 'dev'));
+app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ extended: true }));
 
-/* ──────────────────────────────── MIDDLEWARES ────────────────────────────── */
-
-app.use(morgan(config.env === 'production' ? 'tiny' : 'dev'))
-app.use(express.json({ limit: '5mb' }))
-app.use(express.urlencoded({ extended: true }))
-
-/* ────────────────────────────── SESIONES Y PASSPORT ──────────────────────── */
+/* ────────────── SESIONES & PASSPORT ────────────── */
 
 app.use(session({
   secret: config.sessionSecret,
@@ -118,82 +116,91 @@ app.use(session({
     secure: config.env === 'production',
     httpOnly: true,
     sameSite: 'lax'
-    // Para dominios cruzados usa: sameSite: 'none', secure: true
   }
-}))
+}));
 
-app.use(passport.initialize())
-app.use(passport.session())
+app.use(passport.initialize());
+app.use(passport.session());
 
-/* ────────────────────────────── COMPRESIÓN Y ESTÁTICOS ───────────────────── */
+/* ────────────── COMPRESIÓN & ESTÁTICOS ────────────── */
 
 app.use(compression({
   level: 6,
   filter: (req, res) =>
     req.headers['x-no-compression'] ? false : compression.filter(req, res)
-}))
+}));
 
-app.use('/assets', express.static(path.join(__dirname, 'frontend', 'assets')))
+app.use('/assets', express.static(path.join(__dirname, 'frontend', 'assets')));
+app.use('/css', express.static(path.join(__dirname, 'frontend', 'css')));
+app.use('/js', express.static(path.join(__dirname, 'frontend', 'js')));
 
-/* ─────────────────────────────── RUTAS PRINCIPALES ───────────────────────── */
+/* ────────────── RUTAS BACKEND ────────────── */
 
-app.use('/api/auth', authRoutes)
-app.use('/auth', googleAuthRoutes)
-app.use('/api/products', productRoutes)
-app.use('/api/categories', categoryRoutes)
-app.use('/api/promos', promoRoutes)
-app.use('/api/orders', orderRoutes)
-app.use('/api/visitas', visitRoutes)
-app.use('/api/stats', statsRoutes)
-app.use('/api/uploads', uploadRoutes)
-app.use('/api/paypal', paypalRoutes)
+app.use('/api/auth', authRoutes);
+app.use('/auth', googleAuthRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/promos', promoRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/visitas', visitRoutes);
+app.use('/api/stats', statsRoutes);
+app.use('/api/uploads', uploadRoutes);
+app.use('/api/paypal', paypalRoutes);
 
-/* ──────────────────────────────── SALUD Y ROOT ───────────────────────────── */
+/* ────────────── RUTAS FRONTEND ────────────── */
 
 app.get('/', (req, res) => {
-  res.send('🧠 Backend KM-EZ-ROPA funcionando correctamente 🚀')
-})
+  res.sendFile(path.join(__dirname, 'frontend', 'views', 'index.html'));
+});
+
+app.get('/cliente.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'frontend', 'views', 'cliente.html'));
+});
+
+app.get('/detalle-pedido.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'frontend', 'views', 'detalle-pedido.html'));
+});
+
+/* ────────────── SALUD Y CATCH-ALL ────────────── */
 
 app.get('/health', async (req, res) => {
-  const dbStatus = mongoose.connection.readyState === 1 ? '🟢 OK' : '🔴 ERROR'
-  if (dbStatus !== '🟢 OK') console.warn('⚠️ MongoDB no está disponible.')
+  const dbStatus = mongoose.connection.readyState === 1 ? '🟢 OK' : '🔴 ERROR';
+  if (dbStatus !== '🟢 OK') console.warn('⚠️ MongoDB no está disponible.');
   res.status(200).json({
     status: '✅ Backend activo',
     db: dbStatus,
     timestamp: new Date().toISOString()
-  })
-})
-
-/* ─────────────────────────────── RUTA NO ENCONTRADA ──────────────────────── */
+  });
+});
 
 app.use('*', (req, res) => {
-  res.status(404).json({ message: '❌ Ruta no encontrada' })
-})
+  res.status(404).json({ message: '❌ Ruta no encontrada' });
+});
 
-/* ─────────────────────────────── MANEJO DE ERRORES ───────────────────────── */
+/* ────────────── MANEJO DE ERRORES ────────────── */
 
-app.use(errorHandler)
+app.use(errorHandler);
 
-/* ────────────────────────────── CONEXIÓN A MONGODB ───────────────────────── */
+/* ────────────── INICIAR CONEXIÓN ────────────── */
 
 if (process.env.NODE_ENV !== 'test') {
   const startServer = async () => {
     try {
-      if (!config.mongoUri) throw new Error('❌ FALTA config.mongoUri')
-      await mongoose.connect(config.mongoUri)
-      console.log('✅ Conectado exitosamente a MongoDB Atlas')
+      if (!config.mongoUri) throw new Error('❌ FALTA config.mongoUri');
+      await mongoose.connect(config.mongoUri);
+      console.log('✅ Conectado exitosamente a MongoDB Atlas');
 
       app.listen(config.port, () => {
-        console.log(`🚀 Servidor escuchando en: http://localhost:${config.port}`)
-        console.log(`🌍 Modo: ${config.env}`)
-      })
+        console.log(`🚀 Servidor escuchando en: http://localhost:${config.port}`);
+        console.log(`🌍 Modo: ${config.env}`);
+      });
     } catch (err) {
-      console.error('❌ Error conectando con MongoDB:', err.message)
-      process.exit(1)
+      console.error('❌ Error conectando con MongoDB:', err.message);
+      process.exit(1);
     }
-  }
+  };
 
-  startServer()
+  startServer();
 }
 
-export default app
+export default app;

@@ -55,15 +55,16 @@ export const loginAdmin = async (req, res) => {
     // Tokens
     const accessToken = generateAccessToken(user)
     const refreshToken = generateRefreshToken(user)
+
     user.refreshToken = refreshToken
     await user.save()
 
-    // Cookie HTTP-only con el refresh token
+    // Establecer cookie segura
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: config.env === 'production',
       sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 días
     })
 
     return res.status(200).json({
@@ -93,15 +94,24 @@ export const loginAdmin = async (req, res) => {
 export const refreshToken = async (req, res) => {
   try {
     const token = req.cookies?.refreshToken
+
     if (!token) {
       return res.status(401).json({ ok: false, message: '❌ Refresh token no proporcionado.' })
     }
 
-    const payload = jwt.verify(token, config.jwtRefreshSecret)
+    // 🔍 Verificar token
+    let payload
+    try {
+      payload = jwt.verify(token, config.jwtRefreshSecret)
+    } catch (err) {
+      return res.status(403).json({ ok: false, message: '❌ Refresh token inválido o expirado.' })
+    }
+
+    // 🧠 Buscar usuario
     const user = await User.findById(payload.id).select('+refreshToken')
 
-    if (!user || user.refreshToken !== token) {
-      return res.status(403).json({ ok: false, message: '❌ Token inválido o revocado.' })
+    if (!user || !user.refreshToken || user.refreshToken !== token) {
+      return res.status(403).json({ ok: false, message: '❌ Token no válido o revocado.' })
     }
 
     const newAccessToken = generateAccessToken(user)
@@ -111,9 +121,9 @@ export const refreshToken = async (req, res) => {
     })
   } catch (err) {
     console.error('❌ Error al renovar token:', err)
-    return res.status(403).json({
+    return res.status(500).json({
       ok: false,
-      message: '❌ Refresh token inválido o expirado.',
+      message: '❌ Error al renovar token.',
       ...(config.env !== 'production' && { error: err.message })
     })
   }
