@@ -1,6 +1,6 @@
 // 📁 backend/routes/orderRoutes.js
-import express from 'express'
-import { param } from 'express-validator'
+import express from 'express';
+import { param } from 'express-validator';
 
 // 🎯 Controladores
 import {
@@ -9,20 +9,21 @@ import {
   actualizarEstadoPedido,
   getOrderStats,
   trackOrder,
-  deleteOrder
-} from '../controllers/orderController.js'
+  deleteOrder,
+  getMyOrders
+} from '../controllers/orderController.js';
 
 // 🛡️ Middlewares
-import authMiddleware from '../middleware/authMiddleware.js'
-import adminOnly from '../middleware/adminOnly.js'
+import authMiddleware from '../middleware/authMiddleware.js';
+import adminOnly from '../middleware/adminOnly.js';
 
 // ✅ Validaciones
 import {
   createOrderValidation,
   updateOrderStatusValidation
-} from '../validators/orderValidator.js'
+} from '../validators/orderValidator.js';
 
-const router = express.Router()
+const router = express.Router();
 
 /* ───────────────────────────────────────────── */
 /* 🛒 RUTAS: Gestión de Pedidos                  */
@@ -36,7 +37,7 @@ router.post(
   '/',
   createOrderValidation,
   createOrder
-)
+);
 
 /**
  * 📋 GET /
@@ -47,7 +48,17 @@ router.get(
   authMiddleware,
   adminOnly,
   getOrders
-)
+);
+
+/**
+ * ✅ GET /mis-pedidos
+ * ➤ Pedidos del cliente autenticado (USUARIO REGISTRADO)
+ */
+router.get(
+  '/mis-pedidos',
+  authMiddleware,
+  getMyOrders
+);
 
 /**
  * 🔄 PUT /:id/estado
@@ -59,7 +70,7 @@ router.put(
   adminOnly,
   updateOrderStatusValidation,
   actualizarEstadoPedido
-)
+);
 
 /**
  * 🗑️ DELETE /:id
@@ -75,7 +86,7 @@ router.delete(
       .withMessage('⚠️ ID de pedido inválido')
   ],
   deleteOrder
-)
+);
 
 /**
  * 📊 GET /resumen
@@ -86,7 +97,7 @@ router.get(
   authMiddleware,
   adminOnly,
   getOrderStats
-)
+);
 
 /**
  * 📊 GET /stats/ventas
@@ -97,7 +108,7 @@ router.get(
   authMiddleware,
   adminOnly,
   getOrderStats
-)
+);
 
 /**
  * 🔎 GET /track/:codigo
@@ -111,6 +122,6 @@ router.get(
       .withMessage('⚠️ El código de seguimiento es obligatorio')
   ],
   trackOrder
-)
+);
 
-export default router
+export default router;
