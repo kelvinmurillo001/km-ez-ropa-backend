@@ -12,8 +12,6 @@ import { validationResult } from 'express-validator'
 
 /**
  * 🛒 Crear nuevo pedido (público)
- * @route   POST /api/orders
- * @access  Público
  */
 export const createOrder = async (req, res) => {
   const errors = validationResult(req)
@@ -225,5 +223,33 @@ export const deleteOrder = async (req, res) => {
   } catch (err) {
     console.error('❌ Error eliminando pedido:', err)
     return res.status(500).json({ ok: false, message: '❌ Error interno al eliminar pedido', ...(config.env !== 'production' && { error: err.message }) })
+  }
+}
+
+/**
+ * 📦 Obtener pedidos del usuario autenticado
+ * @route   GET /api/orders/mis-pedidos
+ * @access  Cliente autenticado
+ */
+export const getUserOrders = async (req, res) => {
+  try {
+    const userEmail = req.user?.email;
+    if (!userEmail) {
+      return res.status(401).json({
+        ok: false,
+        message: '🔒 No autorizado: falta email de sesión.'
+      });
+    }
+
+    const pedidos = await Order.find({ email: userEmail }).sort({ createdAt: -1 }).lean();
+
+    return res.status(200).json({ ok: true, pedidos });
+  } catch (err) {
+    console.error('❌ Error al obtener pedidos del usuario:', err);
+    return res.status(500).json({
+      ok: false,
+      message: '❌ Error interno al obtener tus pedidos.',
+      ...(config.env !== 'production' && { error: err.message })
+    });
   }
 }
