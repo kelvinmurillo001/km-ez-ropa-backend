@@ -16,6 +16,7 @@ import {
 // 🛡️ Middlewares
 import authMiddleware from '../middleware/authMiddleware.js';
 import adminOnly from '../middleware/adminOnly.js';
+import clientOnly from '../middleware/clientOnly.js'; // 🆕 Middleware para clientes
 
 // ✅ Validaciones
 import {
@@ -52,11 +53,12 @@ router.get(
 
 /**
  * ✅ GET /mis-pedidos
- * ➤ Pedidos del cliente autenticado (USUARIO REGISTRADO)
+ * ➤ Pedidos del cliente autenticado (SOLO CLIENTE)
  */
 router.get(
   '/mis-pedidos',
   authMiddleware,
+  clientOnly, // ✅ Protección adicional
   getMyOrders
 );
 
