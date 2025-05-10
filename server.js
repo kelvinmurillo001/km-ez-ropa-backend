@@ -80,12 +80,12 @@ app.use(helmet());
 app.use((req, res, next) => {
   res.setHeader("Content-Security-Policy",
     "default-src 'self'; " +
-    "script-src 'self' https://accounts.google.com https://apis.google.com https://www.googletagmanager.com https://www.google-analytics.com 'unsafe-inline'; " +
-    "style-src 'self' 'unsafe-inline'; " +
+    "script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com https://www.googletagmanager.com https://www.google-analytics.com; " +
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
     "font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com; " +
-    "img-src 'self' data: https://*.googleusercontent.com https://lh3.googleusercontent.com; " +
+    "img-src 'self' data: https://*.googleusercontent.com https://lh3.googleusercontent.com https://www.google-analytics.com; " +
     "frame-src https://accounts.google.com https://*.google.com; " +
-    "connect-src 'self' https://api.kmezropacatalogo.com; " +
+    "connect-src 'self' https://api.kmezropacatalogo.com https://www.google-analytics.com; " +
     "object-src 'none'; base-uri 'self'; frame-ancestors 'none';"
   );
   res.setHeader("X-Frame-Options", "DENY");
@@ -112,7 +112,7 @@ app.use(session({
     ttl: config.sessionTTL || 14 * 24 * 60 * 60
   }),
   cookie: {
-    secure: config.env === 'production', // 🔐 solo https en producción
+    secure: config.env === 'production',
     httpOnly: true,
     sameSite: config.env === 'production' ? 'none' : 'lax'
   }
