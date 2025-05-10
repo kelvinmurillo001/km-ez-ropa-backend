@@ -1,4 +1,4 @@
-//backend\controllers\authController.js
+// 📁 backend/controllers/authController.js
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import config from '../config/configuracionesito.js';
@@ -26,8 +26,12 @@ const generateRefreshToken = (user) =>
  * Login exclusivo para administradores
  */
 export const loginAdmin = async (req, res) => {
+  // 🔍 Log del body recibido
+  console.log('🧪 BODY RECIBIDO:', req.body);
+
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    console.log('❌ Errores de validación:', errors.array());
     return enviarError(res, '❌ Datos inválidos en el formulario.', 400);
   }
 
@@ -38,6 +42,7 @@ export const loginAdmin = async (req, res) => {
     console.log('🧪 Intento de login con usuario:', username);
 
     if (!username || !password) {
+      console.log('⚠️ Usuario o contraseña vacíos');
       return enviarError(res, '⚠️ Usuario y contraseña requeridos.', 400);
     }
 
