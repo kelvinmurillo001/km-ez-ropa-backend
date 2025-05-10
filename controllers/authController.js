@@ -26,7 +26,6 @@ const generateRefreshToken = (user) =>
  * Login exclusivo para administradores
  */
 export const loginAdmin = async (req, res) => {
-  // 🔍 Log del body recibido
   console.log('🧪 BODY RECIBIDO:', req.body);
 
   const errors = validationResult(req);
