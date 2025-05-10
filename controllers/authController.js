@@ -34,16 +34,23 @@ export const loginAdmin = async (req, res) => {
     const username = String(req.body.username || '').trim().toLowerCase();
     const password = String(req.body.password || '');
 
+    console.log('🧪 Intento de login con usuario:', username);
+
     if (!username || !password) {
       return enviarError(res, '⚠️ Usuario y contraseña requeridos.', 400);
     }
 
     const user = await User.findOne({ username }).select('+password +refreshToken');
+    console.log('🧪 Usuario encontrado en DB:', user ? user.username : '❌ No encontrado');
+
     if (!user || user.role !== 'admin') {
+      console.log('❌ Usuario no es admin o no existe');
       return enviarError(res, '❌ Credenciales inválidas o sin permisos.', 401);
     }
 
     const isMatch = await user.matchPassword(password);
+    console.log('🔐 ¿Contraseña coincide?:', isMatch);
+
     if (!isMatch) {
       return enviarError(res, '❌ Contraseña incorrecta.', 401);
     }
