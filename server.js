@@ -1,3 +1,5 @@
+// 📁 backend/server.js
+
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -76,7 +78,7 @@ app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use((req, res, next) => {
   res.setHeader("Content-Security-Policy",
     "default-src 'self'; " +
-    "script-src 'self' https://accounts.google.com https://apis.google.com 'unsafe-inline'; " +
+    "script-src 'self' https://accounts.google.com https://apis.google.com https://www.googletagmanager.com https://www.google-analytics.com 'unsafe-inline'; " +
     "style-src 'self' 'unsafe-inline'; " +
     "font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com; " +
     "img-src 'self' data: https://*.googleusercontent.com https://lh3.googleusercontent.com; " +
