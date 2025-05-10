@@ -1,67 +1,70 @@
 // 📁 backend/middleware/authMiddleware.js
-import jwt from 'jsonwebtoken'
-import User from '../models/User.js'
-import config from '../config/configuracionesito.js'
-import logger from '../utils/logger.js'
+import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
+import config from '../config/configuracionesito.js';
+import logger from '../utils/logger.js';
 
 /**
- * 🔐 Middleware híbrido: permite acceso con JWT o sesión activa (Google)
+ * 🔐 Middleware híbrido:
+ * Verifica autenticación por JWT (Bearer) o por sesión activa (Passport - Google)
  */
 const authMiddleware = async (req, res, next) => {
   try {
-    const authHeader = String(req.headers.authorization || '')
+    const authHeader = String(req.headers.authorization || '').trim();
 
-    // ✅ Si tiene JWT Bearer
-    if (authHeader.startsWith('Bearer ')) {
-      const token = authHeader.split(' ')[1]
-      if (!token || token.length < 20) {
-        logger.warn('⛔ Token sospechosamente corto')
-        return res.status(401).json({ ok: false, message: '⛔ Token inválido o no proporcionado.' })
+    // ✅ Si llega un token JWT en el encabezado
+    if (authHeader.toLowerCase().startsWith('bearer ')) {
+      const token = authHeader.split(' ')[1];
+
+      if (!token || token.length < 30) {
+        logger.warn('⛔ Token JWT sospechosamente corto');
+        return res.status(401).json({ ok: false, message: '⛔ Token inválido o ausente.' });
       }
 
-      let decoded
+      let decoded;
       try {
-        decoded = jwt.verify(token, config.jwtSecret)
+        decoded = jwt.verify(token, config.jwtSecret);
       } catch (err) {
-        logger.warn(`⛔ JWT inválido o expirado: ${err.message}`)
-        return res.status(401).json({ ok: false, message: '⛔ Token expirado o inválido.' })
+        logger.warn(`⛔ JWT inválido: ${err.message}`);
+        return res.status(401).json({ ok: false, message: '⛔ Token expirado o inválido.' });
       }
 
-      const user = await User.findById(decoded.id).select('-password -refreshToken').lean()
-      if (!user) {
-        logger.warn(`🚫 Usuario no encontrado con JWT: ${decoded.id}`)
-        return res.status(401).json({ ok: false, message: '🚫 Usuario no autorizado.' })
+      const user = await User.findById(decoded.id).select('-password -refreshToken').lean();
+      if (!user || user.banned || user.deleted) {
+        logger.warn(`🚫 Usuario inválido o eliminado: ${decoded.id}`);
+        return res.status(403).json({ ok: false, message: '🚫 Acceso denegado.' });
       }
 
-      req.user = user
-      return next()
+      req.user = user;
+      return next();
     }
 
-    // ✅ Si tiene sesión activa con Passport (Google)
+    // ✅ Si tiene sesión activa por Google/Passport
     if (req.isAuthenticated?.() && req.user) {
       req.user = {
         id: req.user._id,
         name: req.user.name,
         email: req.user.email,
         role: req.user.role
-      }
-      return next()
+      };
+      return next();
     }
 
-    // ❌ No autenticado
-    logger.warn('🔐 Acceso no autenticado (ni token ni sesión)')
+    // ❌ No autenticado de ninguna forma
+    logger.warn('🔒 Acceso no autenticado (sin token ni sesión)');
     return res.status(401).json({
       ok: false,
       message: '🔒 Debes iniciar sesión para acceder.'
-    })
+    });
+
   } catch (err) {
-    logger.error('❌ Error en authMiddleware:', err)
+    logger.error('❌ authMiddleware error:', err);
     return res.status(500).json({
       ok: false,
-      message: '❌ Error al verificar autenticación.',
+      message: '❌ Error interno de autenticación.',
       ...(config.env !== 'production' && { error: err.message })
-    })
+    });
   }
-}
+};
 
-export default authMiddleware
+export default authMiddleware;

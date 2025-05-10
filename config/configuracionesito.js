@@ -9,10 +9,10 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// 💡 Render.com: asegúrate de definir todas las variables de entorno en el panel de Deploy -> Environment
+// ✅ Cargar .env desde raíz del backend
 dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
 
-// 🧩 Variables requeridas
+// 🔒 Variables requeridas (mínimo indispensable)
 const requiredVars = [
   'PORT', 'MONGO_URI',
   'JWT_SECRET', 'JWT_REFRESH_SECRET',
@@ -26,29 +26,40 @@ const requiredVars = [
   'EMAIL_FROM', 'EMAIL_PASSWORD'
 ];
 
-// 🚨 Validar existencia
+// 🚨 Verificar presencia de todas las variables
 const missing = requiredVars.filter(key => !process.env[key]);
 if (missing.length > 0) {
-  console.error(`❌ Faltan variables requeridas en .env: ${missing.join(', ')}`);
-  console.error('🛠️ Verifica que el archivo ".env" contenga todas las variables requeridas.');
+  console.error(`❌ Faltan variables en .env: ${missing.join(', ')}`);
+  console.error('🛠️ Verifica que tu archivo .env esté completo.');
   process.exit(1);
 }
 
-// 🌐 Lista de dominios permitidos por CORS
+// ✅ Función para validar URLs seguras
+const isValidURL = (url) => {
+  try {
+    const u = new URL(url);
+    return ['http:', 'https:'].includes(u.protocol);
+  } catch {
+    return false;
+  }
+};
+
+// 🌐 Dominios permitidos para CORS
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   .split(',')
   .map(o => o.trim().replace(/\/$/, ''))
   .map(o => o.startsWith('http') ? o : `https://${o}`)
-  .filter(o => /^https?:\/\//.test(o));
+  .filter(isValidURL);
 
-// 🛠️ Configuración final
+// 🛠️ Configuración general exportada
 const config = {
   env: (process.env.NODE_ENV || 'development').toLowerCase(),
-  port: Number.isInteger(Number(process.env.PORT)) ? Number(process.env.PORT) : 5000,
+  port: parseInt(process.env.PORT, 10) || 5000,
+
   mongoUri: process.env.MONGO_URI,
 
   sessionSecret: process.env.SESSION_SECRET,
-  sessionTTL: Number.parseInt(process.env.SESSION_TTL, 10) || 14 * 24 * 60 * 60, // en segundos
+  sessionTTL: parseInt(process.env.SESSION_TTL, 10) || 14 * 24 * 60 * 60,
 
   jwtSecret: process.env.JWT_SECRET,
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET,
@@ -81,25 +92,26 @@ const config = {
 
   allowedOrigins,
 
-  rateLimitWindow: Number.parseInt(process.env.RATE_LIMIT_WINDOW, 10) || 15,
-  rateLimitMax: Number.parseInt(process.env.RATE_LIMIT_MAX, 10) || 100,
+  rateLimitWindow: parseInt(process.env.RATE_LIMIT_WINDOW, 10) || 15,
+  rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX, 10) || 100,
 
+  // 🛡️ Seguridad general
   enableXSSProtection: true,
   enableMongoSanitize: true,
   enableHPP: true
 };
 
-// 🧪 Solo en modo desarrollo: mostrar configuración crítica
+// 🧪 Debug solo si es desarrollo
 if (config.env !== 'production') {
-  console.log('🧪 Modo DEV activo - Configuración resumida:');
-  console.log('🌐 ALLOWED_ORIGINS:', config.allowedOrigins);
-  console.log('🔒 Claves cargadas correctamente:', {
+  console.log('🧪 Entorno de desarrollo activo');
+  console.log('🌍 ALLOWED_ORIGINS:', config.allowedOrigins);
+  console.log('🔐 Claves cargadas correctamente:', {
     JWT: !!config.jwtSecret,
     REFRESH: !!config.jwtRefreshSecret,
     SESSION: !!config.sessionSecret,
     CLOUDINARY: !!config.cloudinary.cloud_name,
     PAYPAL: !!config.paypal.clientId,
-    GOOGLE: !!config.google.clientId && !!config.google.callbackURL,
+    GOOGLE: !!config.google.clientId,
     EMAIL: !!config.email.from
   });
 }

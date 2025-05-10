@@ -1,5 +1,4 @@
 // 📁 backend/server.js
-
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -41,7 +40,9 @@ import paypalRoutes from './routes/paypalRoutes.js';
 
 const app = express();
 
-/* ─────────────── PROTECCIÓN ─────────────── */
+/* ─────────────── SEGURIDAD GENERAL ─────────────── */
+app.disable('x-powered-by');
+
 app.use(rateLimit({
   windowMs: config.rateLimitWindow * 60 * 1000,
   max: config.rateLimitMax,
@@ -60,20 +61,21 @@ if (config.enableMongoSanitize) app.use(mongoSanitize());
 if (config.enableXSSProtection) app.use(xssClean());
 if (config.enableHPP) app.use(hpp());
 
-/* ─────────────── CORS + HEADERS ─────────────── */
+/* ─────────────── CORS SEGURO ─────────────── */
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || config.allowedOrigins.includes(origin.replace(/\/$/, ''))) {
       callback(null, true);
     } else {
-      console.error(`❌ CORS no permitido: ${origin}`);
-      callback(new Error('❌ CORS no permitido'));
+      console.warn(`❌ CORS rechazado: ${origin}`);
+      callback(new Error('CORS no permitido'));
     }
   },
   credentials: true
 }));
 
-app.use(helmet({ crossOriginResourcePolicy: false }));
+/* ─────────────── HEADERS SEGUROS ─────────────── */
+app.use(helmet());
 
 app.use((req, res, next) => {
   res.setHeader("Content-Security-Policy",
@@ -93,12 +95,13 @@ app.use((req, res, next) => {
   next();
 });
 
-/* ─────────────── MIDDLEWARES ─────────────── */
+/* ─────────────── LOGS Y PARSERS ─────────────── */
 app.use(morgan(config.env === 'production' ? 'tiny' : 'dev'));
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use(compression());
 
-/* ─────────────── SESIONES Y PASSPORT ─────────────── */
+/* ─────────────── SESIONES SEGURAS ─────────────── */
 app.use(session({
   secret: config.sessionSecret,
   resave: false,
@@ -109,9 +112,9 @@ app.use(session({
     ttl: config.sessionTTL || 14 * 24 * 60 * 60
   }),
   cookie: {
-    secure: true,
+    secure: config.env === 'production', // 🔐 solo https en producción
     httpOnly: true,
-    sameSite: 'none'
+    sameSite: config.env === 'production' ? 'none' : 'lax'
   }
 }));
 
@@ -130,7 +133,7 @@ app.use('/api/stats', statsRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/paypal', paypalRoutes);
 
-/* ─────────────── NUEVA RUTA DE DIAGNÓSTICO PARA EL FRONTEND ─────────────── */
+/* ─────────────── RUTA ABIERTA PARA TEST ─────────────── */
 app.get('/api/status', (req, res) => {
   res.status(200).json({
     status: 'ok',
@@ -138,7 +141,7 @@ app.get('/api/status', (req, res) => {
   });
 });
 
-/* ─────────────── RUTA DE SALUD DETALLADA ─────────────── */
+/* ─────────────── SALUD DETALLADA ─────────────── */
 app.get('/health', async (req, res) => {
   const dbStatus = mongoose.connection.readyState === 1 ? '🟢 OK' : '🔴 ERROR';
   if (dbStatus !== '🟢 OK') console.warn('⚠️ MongoDB no está disponible.');
@@ -149,7 +152,7 @@ app.get('/health', async (req, res) => {
   });
 });
 
-/* ─────────────── CATCH-ALL ─────────────── */
+/* ─────────────── CATCH ALL ─────────────── */
 app.use('*', (req, res) => {
   res.status(404).json({ message: '❌ Ruta no encontrada' });
 });
@@ -157,20 +160,20 @@ app.use('*', (req, res) => {
 /* ─────────────── MANEJO DE ERRORES ─────────────── */
 app.use(errorHandler);
 
-/* ─────────────── CONEXIÓN A MONGODB ─────────────── */
+/* ─────────────── CONEXIÓN Y ARRANQUE ─────────────── */
 if (process.env.NODE_ENV !== 'test') {
   const startServer = async () => {
     try {
       if (!config.mongoUri) throw new Error('❌ FALTA config.mongoUri');
       await mongoose.connect(config.mongoUri);
-      console.log('✅ Conectado exitosamente a MongoDB Atlas');
+      console.log('✅ Conectado a MongoDB Atlas');
 
       app.listen(config.port, () => {
         console.log(`🚀 Servidor escuchando en: http://localhost:${config.port}`);
         console.log(`🌍 Modo: ${config.env}`);
       });
     } catch (err) {
-      console.error('❌ Error conectando con MongoDB:', err.message);
+      console.error('❌ Error al conectar con MongoDB:', err.message);
       process.exit(1);
     }
   };
