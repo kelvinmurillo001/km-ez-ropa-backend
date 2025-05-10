@@ -1,6 +1,8 @@
 // 📁 backend/middleware/clientOnly.js
+
 import logger from '../utils/logger.js';
 import config from '../config/configuracionesito.js';
+import { enviarError } from '../utils/admin-auth-utils.js';
 
 /**
  * 🔐 Middleware: Solo usuarios con rol "client"
@@ -9,30 +11,29 @@ const clientOnly = (req, res, next) => {
   try {
     const user = req.user;
 
-    if (!user) {
-      logger.warn('❌ Usuario no autenticado (cliente requerido)');
-      return res.status(401).json({
-        ok: false,
-        message: '🔒 Debes iniciar sesión como cliente.'
-      });
+    // 🛑 No autenticado
+    if (!user || typeof user !== 'object') {
+      logger.warn(`❌ Usuario no autenticado (se requiere cliente) - IP: ${req.ip}`);
+      return enviarError(res, '🔒 Debes iniciar sesión como cliente.', 401);
     }
 
-    if ((user.role || '').toLowerCase() !== 'client') {
-      logger.warn(`⛔ Rol incorrecto (${user.role}) para ruta de cliente`);
-      return res.status(403).json({
-        ok: false,
-        message: '⛔ Solo los clientes pueden acceder a esta ruta.'
-      });
+    const role = String(user.role || '').trim().toLowerCase();
+
+    if (role !== 'client') {
+      logger.warn(`⛔ Acceso denegado. Usuario: ${user._id || '¿sin ID?'} con rol: ${role} - IP: ${req.ip}`);
+      return enviarError(res, '⛔ Solo los clientes pueden acceder a esta ruta.', 403);
     }
 
-    return next();
+    // ✅ Autorizado
+    next();
   } catch (err) {
-    logger.error('❌ Error en middleware clientOnly:', err);
-    return res.status(500).json({
-      ok: false,
-      message: '❌ Error interno al validar acceso de cliente.',
-      ...(config.env !== 'production' && { error: err.message })
-    });
+    logger.error('❌ Error en clientOnly middleware:', err);
+    return enviarError(
+      res,
+      '❌ Error interno al validar acceso de cliente.',
+      500,
+      config.env !== 'production' ? err.message : undefined
+    );
   }
 };
 

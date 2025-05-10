@@ -1,45 +1,42 @@
 // 📁 backend/middleware/authMiddleware.js
+
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import config from '../config/configuracionesito.js';
 import logger from '../utils/logger.js';
+import {
+  obtenerTokenDesdeHeader,
+  enviarError
+} from '../utils/admin-auth-utils.js';
 
 /**
  * 🔐 Middleware híbrido:
- * Verifica autenticación por JWT (Bearer) o por sesión activa (Passport - Google)
+ * Verifica autenticación por JWT (Bearer) o sesión activa (Passport)
  */
 const authMiddleware = async (req, res, next) => {
   try {
-    const authHeader = String(req.headers.authorization || '').trim();
+    // 🧾 1. Intentar con token JWT
+    const token = obtenerTokenDesdeHeader(req);
 
-    // ✅ Si llega un token JWT en el encabezado
-    if (authHeader.toLowerCase().startsWith('bearer ')) {
-      const token = authHeader.split(' ')[1];
-
-      if (!token || token.length < 30) {
-        logger.warn('⛔ Token JWT sospechosamente corto');
-        return res.status(401).json({ ok: false, message: '⛔ Token inválido o ausente.' });
-      }
-
-      let decoded;
+    if (token) {
       try {
-        decoded = jwt.verify(token, config.jwtSecret);
+        const decoded = jwt.verify(token, config.jwtSecret);
+        const user = await User.findById(decoded.id).select('-password -refreshToken').lean();
+
+        if (!user || user.banned || user.deleted) {
+          logger.warn(`🚫 Usuario inválido o bloqueado: ${decoded.id}`);
+          return enviarError(res, '🚫 Usuario no autorizado o eliminado.', 403);
+        }
+
+        req.user = user;
+        return next();
       } catch (err) {
-        logger.warn(`⛔ JWT inválido: ${err.message}`);
-        return res.status(401).json({ ok: false, message: '⛔ Token expirado o inválido.' });
+        logger.warn(`⛔ Token JWT inválido: ${err.message}`);
+        return enviarError(res, '⛔ Token inválido o expirado.', 401, err.message);
       }
-
-      const user = await User.findById(decoded.id).select('-password -refreshToken').lean();
-      if (!user || user.banned || user.deleted) {
-        logger.warn(`🚫 Usuario inválido o eliminado: ${decoded.id}`);
-        return res.status(403).json({ ok: false, message: '🚫 Acceso denegado.' });
-      }
-
-      req.user = user;
-      return next();
     }
 
-    // ✅ Si tiene sesión activa por Google/Passport
+    // 🧪 2. Intentar con sesión activa (Passport)
     if (req.isAuthenticated?.() && req.user) {
       req.user = {
         id: req.user._id,
@@ -50,20 +47,17 @@ const authMiddleware = async (req, res, next) => {
       return next();
     }
 
-    // ❌ No autenticado de ninguna forma
-    logger.warn('🔒 Acceso no autenticado (sin token ni sesión)');
-    return res.status(401).json({
-      ok: false,
-      message: '🔒 Debes iniciar sesión para acceder.'
-    });
-
+    // ❌ 3. No autenticado
+    logger.warn('🔒 Requiere autenticación (sin token ni sesión)');
+    return enviarError(res, '🔒 Debes iniciar sesión para continuar.', 401);
   } catch (err) {
-    logger.error('❌ authMiddleware error:', err);
-    return res.status(500).json({
-      ok: false,
-      message: '❌ Error interno de autenticación.',
-      ...(config.env !== 'production' && { error: err.message })
-    });
+    logger.error('❌ Error inesperado en authMiddleware:', err);
+    return enviarError(
+      res,
+      '❌ Error interno de autenticación.',
+      500,
+      config.env !== 'production' ? err.message : null
+    );
   }
 };
 
