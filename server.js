@@ -109,9 +109,9 @@ app.use(session({
     ttl: config.sessionTTL || 14 * 24 * 60 * 60
   }),
   cookie: {
-    secure: true,         // 🔒 Obligatorio para HTTPS
+    secure: true,
     httpOnly: true,
-    sameSite: 'none'      // ✅ Permite cookies entre dominios
+    sameSite: 'none'
   }
 }));
 
@@ -130,7 +130,15 @@ app.use('/api/stats', statsRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/paypal', paypalRoutes);
 
-/* ─────────────── SALUD ─────────────── */
+/* ─────────────── NUEVA RUTA DE DIAGNÓSTICO PARA EL FRONTEND ─────────────── */
+app.get('/api/status', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString()
+  });
+});
+
+/* ─────────────── RUTA DE SALUD DETALLADA ─────────────── */
 app.get('/health', async (req, res) => {
   const dbStatus = mongoose.connection.readyState === 1 ? '🟢 OK' : '🔴 ERROR';
   if (dbStatus !== '🟢 OK') console.warn('⚠️ MongoDB no está disponible.');
