@@ -1,38 +1,19 @@
 // 📁 backend/routes/authRoutes.js
 import express from 'express';
-
-// 🎯 Controladores
-import { loginAdmin } from '../controllers/authController.js';
-import { refreshTokenController } from '../controllers/refreshTokenController.js';
-
-// ✅ Validaciones
-import { loginValidation } from '../validators/authValidator.js';
-import validarErrores from '../middleware/validarErrores.js';
+import { body } from 'express-validator';
+import { loginAdmin, refreshToken } from '../controllers/authController.js';
 
 const router = express.Router();
 
-/* ───────────────────────────────────────────── */
-/* 🔐 RUTAS DE AUTENTICACIÓN (SOLO ADMIN)        */
-/* ───────────────────────────────────────────── */
-
-/**
- * 🎫 POST /api/auth/login
- * ➤ Iniciar sesión de administrador
- */
 router.post(
   '/login',
-  loginValidation,
-  validarErrores,
+  [
+    body('username').isString().trim().isLength({ min: 3 }),
+    body('password').isString().trim().isLength({ min: 6 })
+  ],
   loginAdmin
 );
 
-/**
- * 🔄 POST /api/auth/refresh
- * ➤ Renovar accessToken usando refreshToken (via cookie HTTP-only)
- */
-router.post(
-  '/refresh',
-  refreshTokenController
-);
+router.post('/refresh', refreshToken);
 
 export default router;
