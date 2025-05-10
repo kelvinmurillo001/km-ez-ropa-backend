@@ -16,7 +16,7 @@ import {
 // 🛡️ Middlewares
 import authMiddleware from '../middleware/authMiddleware.js';
 import adminOnly from '../middleware/adminOnly.js';
-import clientOnly from '../middleware/clientOnly.js'; // 🆕 Middleware para clientes
+import clientOnly from '../middleware/clientOnly.js';
 
 // ✅ Validaciones
 import {
@@ -30,20 +30,14 @@ const router = express.Router();
 /* 🛒 RUTAS: Gestión de Pedidos                  */
 /* ───────────────────────────────────────────── */
 
-/**
- * 🛍️ POST /
- * ➤ Crear nuevo pedido (PÚBLICO)
- */
+// 🛍️ Crear nuevo pedido (PÚBLICO)
 router.post(
   '/',
   createOrderValidation,
   createOrder
 );
 
-/**
- * 📋 GET /
- * ➤ Obtener todos los pedidos (SOLO ADMIN)
- */
+// 📋 Obtener todos los pedidos (SOLO ADMIN)
 router.get(
   '/',
   authMiddleware,
@@ -51,21 +45,15 @@ router.get(
   getOrders
 );
 
-/**
- * ✅ GET /mis-pedidos
- * ➤ Pedidos del cliente autenticado (SOLO CLIENTE)
- */
+// ✅ Obtener pedidos del cliente autenticado
 router.get(
   '/mis-pedidos',
   authMiddleware,
-  clientOnly, // ✅ Protección adicional
+  clientOnly,
   getMyOrders
 );
 
-/**
- * 🔄 PUT /:id/estado
- * ➤ Actualizar estado de un pedido (SOLO ADMIN)
- */
+// 🔄 Actualizar estado de un pedido
 router.put(
   '/:id/estado',
   authMiddleware,
@@ -74,10 +62,7 @@ router.put(
   actualizarEstadoPedido
 );
 
-/**
- * 🗑️ DELETE /:id
- * ➤ Eliminar pedido por ID (SOLO ADMIN)
- */
+// 🗑️ Eliminar pedido por ID
 router.delete(
   '/:id',
   authMiddleware,
@@ -90,10 +75,7 @@ router.delete(
   deleteOrder
 );
 
-/**
- * 📊 GET /resumen
- * ➤ Obtener resumen de estadísticas de pedidos (SOLO ADMIN)
- */
+// 📊 Obtener resumen de estadísticas de pedidos
 router.get(
   '/resumen',
   authMiddleware,
@@ -101,10 +83,7 @@ router.get(
   getOrderStats
 );
 
-/**
- * 📊 GET /stats/ventas
- * ➤ Alias para obtener resumen de ventas (SOLO ADMIN)
- */
+// 📊 Alias para resumen de ventas
 router.get(
   '/stats/ventas',
   authMiddleware,
@@ -112,10 +91,7 @@ router.get(
   getOrderStats
 );
 
-/**
- * 🔎 GET /track/:codigo
- * ➤ Seguimiento de pedido por código de seguimiento (PÚBLICO)
- */
+// 🔎 Seguimiento de pedido por código
 router.get(
   '/track/:codigo',
   [

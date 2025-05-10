@@ -1,39 +1,38 @@
 // 📁 backend/routes/authRoutes.js
-import express from 'express'
+import express from 'express';
 
 // 🎯 Controladores
-import { loginAdmin } from '../controllers/authController.js'
-import { refreshTokenController } from '../controllers/refreshTokenController.js'
+import { loginAdmin } from '../controllers/authController.js';
+import { refreshTokenController } from '../controllers/refreshTokenController.js';
 
 // ✅ Validaciones
-import { loginValidation } from '../validators/authValidator.js'
-import validarErrores from '../middleware/validarErrores.js'
+import { loginValidation } from '../validators/authValidator.js';
+import validarErrores from '../middleware/validarErrores.js';
 
-// 🚀 Router de Express
-const router = express.Router()
+const router = express.Router();
 
 /* ───────────────────────────────────────────── */
-/* 🔐 RUTAS DE AUTENTICACIÓN SOLO PARA ADMIN     */
+/* 🔐 RUTAS DE AUTENTICACIÓN (SOLO ADMIN)        */
 /* ───────────────────────────────────────────── */
 
 /**
  * 🎫 POST /api/auth/login
- * ➤ Iniciar sesión (solo admins)
+ * ➤ Iniciar sesión de administrador
  */
 router.post(
   '/login',
   loginValidation,
   validarErrores,
   loginAdmin
-)
+);
 
 /**
  * 🔄 POST /api/auth/refresh
- * ➤ Renovar accessToken usando refreshToken (cookie HTTP-only)
+ * ➤ Renovar accessToken usando refreshToken (via cookie HTTP-only)
  */
 router.post(
   '/refresh',
   refreshTokenController
-)
+);
 
-export default router
+export default router;

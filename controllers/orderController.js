@@ -10,9 +10,7 @@ import {
 import config from '../config/configuracionesito.js';
 import { validationResult } from 'express-validator';
 
-/**
- * 🛒 Crear nuevo pedido (público)
- */
+/* 🛒 CREAR PEDIDO (PÚBLICO) */
 export const createOrder = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -32,6 +30,7 @@ export const createOrder = async (req, res) => {
       factura = {}
     } = req.body;
 
+    // 🧪 Validaciones básicas
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ ok: false, message: '⚠️ El pedido debe contener al menos un producto.' });
     }
@@ -45,7 +44,8 @@ export const createOrder = async (req, res) => {
       return res.status(400).json({ ok: false, message: '⚠️ Total inválido.' });
     }
 
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    const correoValido = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+    if (!correoValido.test(email)) {
       return res.status(400).json({ ok: false, message: '⚠️ Email inválido.' });
     }
 
@@ -53,11 +53,13 @@ export const createOrder = async (req, res) => {
       return res.status(400).json({ ok: false, message: '⚠️ Teléfono inválido.' });
     }
 
+    // 🔍 Verificar stock de cada item
     for (const item of items) {
       const { productId, talla, color, cantidad } = item;
       if (!mongoose.Types.ObjectId.isValid(productId)) {
         return res.status(400).json({ ok: false, message: `⚠️ ID de producto inválido: ${productId}` });
       }
+
       const producto = await Product.findById(productId).select('variants').lean();
       if (!producto) {
         return res.status(404).json({ ok: false, message: `❌ Producto no encontrado: ${productId}` });
@@ -82,25 +84,23 @@ export const createOrder = async (req, res) => {
       estado: metodoPago.toLowerCase() === 'transferencia' ? 'pendiente' : 'pagado'
     });
 
-    await Promise.all(
-      items.map(async ({ productId, talla, color, cantidad }) => {
-        const updated = await Product.findOneAndUpdate(
-          { _id: productId, 'variants.talla': talla.toLowerCase(), 'variants.color': color.toLowerCase() },
-          { $inc: { 'variants.$.stock': -cantidad } },
-          { new: true }
-        );
+    // ⬇️ Actualizar stock por item
+    await Promise.all(items.map(async ({ productId, talla, color, cantidad }) => {
+      const updated = await Product.findOneAndUpdate(
+        { _id: productId, 'variants.talla': talla.toLowerCase(), 'variants.color': color.toLowerCase() },
+        { $inc: { 'variants.$.stock': -cantidad } },
+        { new: true }
+      );
 
-        if (updated) {
-          const variant = updated.variants.find(
-            v => v.talla === talla.toLowerCase() && v.color === color.toLowerCase()
-          );
-          if (variant && variant.stock <= 0) variant.activo = false;
-          updated.isActive = !verificarProductoAgotado(updated.variants);
-          await updated.save();
-        }
-      })
-    );
+      if (updated) {
+        const variant = updated.variants.find(v => v.talla === talla.toLowerCase() && v.color === color.toLowerCase());
+        if (variant && variant.stock <= 0) variant.activo = false;
+        updated.isActive = !verificarProductoAgotado(updated.variants);
+        await updated.save();
+      }
+    }));
 
+    // ✉️ Notificar
     await sendNotification({
       nombreCliente: newOrder.nombreCliente,
       telefono: newOrder.telefono,
@@ -120,9 +120,7 @@ export const createOrder = async (req, res) => {
   }
 };
 
-/**
- * 📋 Obtener todos los pedidos (admin)
- */
+/* 📋 LISTADO GENERAL DE PEDIDOS */
 export const getOrders = async (_req, res) => {
   try {
     const orders = await Order.find().sort({ createdAt: -1 }).lean();
@@ -137,19 +135,15 @@ export const getOrders = async (_req, res) => {
   }
 };
 
-/**
- * 🧾 Obtener pedidos del usuario autenticado (cliente)
- */
+/* 📦 PEDIDOS DEL CLIENTE ACTUAL */
 export const getMyOrders = async (req, res) => {
   try {
     const userEmail = req.user?.email?.toLowerCase();
-
     if (!userEmail) {
       return res.status(401).json({ ok: false, message: '❌ Usuario no autenticado correctamente.' });
     }
 
     const pedidos = await Order.find({ email: userEmail }).sort({ createdAt: -1 }).lean();
-
     return res.status(200).json({ ok: true, pedidos });
   } catch (err) {
     console.error('❌ Error obteniendo pedidos del usuario:', err);
@@ -161,9 +155,7 @@ export const getMyOrders = async (req, res) => {
   }
 };
 
-/**
- * 🔄 Actualizar estado de un pedido (admin)
- */
+/* 🔄 CAMBIAR ESTADO DE PEDIDO */
 export const actualizarEstadoPedido = async (req, res) => {
   try {
     const id = String(req.params.id || '').trim();
@@ -205,14 +197,14 @@ export const actualizarEstadoPedido = async (req, res) => {
   }
 };
 
-/**
- * 📈 Obtener estadísticas de pedidos
- */
+/* 📊 RESUMEN DE PEDIDOS */
 export const getOrderStats = async (_req, res) => {
   try {
     const orders = await Order.find().lean();
     const today = new Date().setHours(0, 0, 0, 0);
-    const summary = { total: 0, pendiente: 0, en_proceso: 0, enviado: 0, cancelado: 0, hoy: 0, ventasTotales: 0 };
+    const summary = {
+      total: 0, pendiente: 0, en_proceso: 0, enviado: 0, cancelado: 0, hoy: 0, ventasTotales: 0
+    };
 
     orders.forEach(o => {
       summary.total++;
@@ -223,7 +215,6 @@ export const getOrderStats = async (_req, res) => {
     });
 
     summary.ventasTotales = Number(summary.ventasTotales.toFixed(2));
-
     return res.status(200).json({ ok: true, data: summary });
   } catch (err) {
     console.error('❌ Error generando estadísticas:', err);
@@ -235,9 +226,7 @@ export const getOrderStats = async (_req, res) => {
   }
 };
 
-/**
- * 🔎 Seguimiento de pedido (público)
- */
+/* 🔍 SEGUIMIENTO DE PEDIDO */
 export const trackOrder = async (req, res) => {
   try {
     const codigo = String(req.params.codigo || '').trim();
@@ -250,15 +239,16 @@ export const trackOrder = async (req, res) => {
       return res.status(404).json({ ok: false, message: '❌ Pedido no encontrado.' });
     }
 
-    const summary = {
-      nombre: order.nombreCliente,
-      direccion: order.direccion,
-      metodoPago: order.metodoPago,
-      total: order.total,
-      estadoActual: order.estado
-    };
-
-    return res.status(200).json({ ok: true, data: summary });
+    return res.status(200).json({
+      ok: true,
+      data: {
+        nombre: order.nombreCliente,
+        direccion: order.direccion,
+        metodoPago: order.metodoPago,
+        total: order.total,
+        estadoActual: order.estado
+      }
+    });
   } catch (err) {
     console.error('❌ Error en seguimiento:', err);
     return res.status(500).json({
@@ -269,9 +259,7 @@ export const trackOrder = async (req, res) => {
   }
 };
 
-/**
- * 🗑️ Eliminar pedido (admin)
- */
+/* 🗑️ ELIMINAR PEDIDO */
 export const deleteOrder = async (req, res) => {
   try {
     const id = String(req.params.id || '').trim();

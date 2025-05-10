@@ -7,20 +7,21 @@ const userSchema = new mongoose.Schema(
     googleId: {
       type: String,
       default: null,
+      trim: true
     },
     username: {
       type: String,
-      unique: true, // ✅ importante
+      unique: true,
       trim: true,
       minlength: [3, '⚠️ Mínimo 3 caracteres'],
-      sparse: true // ✅ evita error si es opcional y no está presente
+      sparse: true
     },
     name: {
       type: String,
       required: [true, '⚠️ El nombre es obligatorio'],
       trim: true,
       minlength: [2, '⚠️ Mínimo 2 caracteres'],
-      maxlength: [100, '⚠️ Máximo 100 caracteres'],
+      maxlength: [100, '⚠️ Máximo 100 caracteres']
     },
     email: {
       type: String,
@@ -28,23 +29,23 @@ const userSchema = new mongoose.Schema(
       unique: true,
       trim: true,
       lowercase: true,
-      match: [/^\S+@\S+\.\S+$/, '⚠️ Formato de email inválido'],
+      match: [/^\S+@\S+\.\S+$/, '⚠️ Formato de email inválido']
     },
     password: {
       type: String,
       minlength: [6, '⚠️ Debe tener al menos 6 caracteres'],
-      select: false,
+      select: false
     },
     role: {
       type: String,
       enum: ['admin', 'user', 'client'],
-      default: 'client',
+      default: 'client'
     },
     refreshToken: {
       type: String,
       default: null,
-      select: false,
-    },
+      select: false
+    }
   },
   {
     timestamps: true,
@@ -55,7 +56,7 @@ const userSchema = new mongoose.Schema(
         delete ret.refreshToken;
         delete ret.__v;
         return ret;
-      },
+      }
     },
     toObject: {
       virtuals: true,
@@ -64,20 +65,25 @@ const userSchema = new mongoose.Schema(
         delete ret.refreshToken;
         delete ret.__v;
         return ret;
-      },
-    },
+      }
+    }
   }
 );
 
-// ✅ Validación condicional para password
+// ✅ Normalizar datos antes de validar
 userSchema.pre('validate', function (next) {
+  if (this.name) this.name = this.name.trim();
+  if (this.email) this.email = this.email.toLowerCase().trim();
+  if (this.username) this.username = this.username.trim().toLowerCase();
+
   if (!this.googleId && !this.password) {
     this.invalidate('password', '⚠️ Se requiere contraseña si no usas Google');
   }
+
   next();
 });
 
-// 🔒 Hash automático
+// 🔐 Hash automático de contraseña
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password') || !this.password) return next();
   try {
@@ -90,11 +96,16 @@ userSchema.pre('save', async function (next) {
   }
 });
 
-// 🔑 Comparar contraseña
+// 🔑 Comparar contraseña segura
 userSchema.methods.matchPassword = async function (inputPassword) {
-  if (!this.password) return false;
+  if (!this.password || !inputPassword) return false;
   return await bcrypt.compare(inputPassword, this.password);
 };
+
+// 📌 Índices adicionales útiles
+userSchema.index({ email: 1 }, { unique: true });
+userSchema.index({ username: 1 }, { unique: true, sparse: true });
+userSchema.index({ role: 1 });
 
 const User = mongoose.model('User', userSchema);
 export default User;
