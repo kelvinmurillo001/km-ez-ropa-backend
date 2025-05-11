@@ -1,6 +1,6 @@
 // 📁 backend/controllers/product/createProduct.js
-import Product from '../../models/Product.js'
-import { validationResult } from 'express-validator'
+import Product from '../../models/Product.js';
+import { validationResult } from 'express-validator';
 
 /**
  * ✅ Crear nuevo producto (con o sin variantes) + slug único
@@ -8,10 +8,10 @@ import { validationResult } from 'express-validator'
  * @access  Admin
  */
 const createProduct = async (req, res) => {
-  const errors = validationResult(req)
+  const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    console.warn('🛑 Validación fallida al crear producto:', errors.array())
-    return res.status(400).json({ ok: false, errors: errors.array() })
+    console.warn('🛑 Validación fallida al crear producto:', errors.array());
+    return res.status(400).json({ ok: false, errors: errors.array() });
   }
 
   try {
@@ -30,95 +30,99 @@ const createProduct = async (req, res) => {
       sizes = [],
       stock,
       createdBy
-    } = req.body
+    } = req.body;
 
-    name = String(name || '').trim()
-    description = String(description || '').trim()
-    category = String(category || '').trim().toLowerCase()
-    subcategory = String(subcategory || '').trim().toLowerCase()
-    tallaTipo = String(tallaTipo || '').trim().toLowerCase()
-    createdBy = String(createdBy || '').trim()
-    color = String(color || '').trim().toLowerCase()
+    name = String(name || '').trim();
+    description = String(description || '').trim();
+    category = String(category || '').trim().toLowerCase();
+    subcategory = String(subcategory || '').trim().toLowerCase();
+    tallaTipo = String(tallaTipo || '').trim().toLowerCase();
+    createdBy = String(createdBy || '').trim();
+    color = String(color || '').trim().toLowerCase();
 
-    // ⚠️ Validaciones básicas
     if (!name || typeof price !== 'number' || !category || !subcategory || !tallaTipo || !createdBy) {
-      return res.status(400).json({ ok: false, message: '⚠️ Faltan campos obligatorios.' })
+      return res.status(400).json({ ok: false, message: '⚠️ Faltan campos obligatorios.' });
     }
 
     // 📷 Validación de imagen principal
     if (!Array.isArray(images) || images.length < 1) {
-      return res.status(400).json({ ok: false, message: '⚠️ Debe haber al menos una imagen principal.' })
+      return res.status(400).json({ ok: false, message: '⚠️ Debe haber al menos una imagen principal.' });
     }
-    const main = images[0]
+
+    const main = images[0];
     if (!main.url || !main.cloudinaryId || !main.talla || !main.color) {
-      return res.status(400).json({ ok: false, message: '⚠️ Imagen principal incompleta.' })
+      return res.status(400).json({ ok: false, message: '⚠️ Imagen principal incompleta.' });
     }
 
     // 🧬 Validación de variantes o stock
-    let generalStock = 0
+    let generalStock = 0;
     if (Array.isArray(variants) && variants.length > 0) {
       if (variants.length > 4) {
-        return res.status(400).json({ ok: false, message: '⚠️ Máximo 4 variantes permitidas.' })
+        return res.status(400).json({ ok: false, message: '⚠️ Máximo 4 variantes permitidas.' });
       }
 
-      const comboSet = new Set()
+      const comboSet = new Set();
       for (const v of variants) {
-        const vtalla = String(v.talla || '').trim().toLowerCase()
-        const vcolor = String(v.color || '').trim().toLowerCase()
-        const vstock = Number(v.stock)
-        const url = String(v.imageUrl || '').trim()
-        const id = String(v.cloudinaryId || '').trim()
+        const vtalla = String(v.talla || '').trim().toLowerCase();
+        const vcolor = String(v.color || '').trim().toLowerCase();
+        const vstock = Number(v.stock);
+        const url = String(v.imageUrl || '').trim();
+        const id = String(v.cloudinaryId || '').trim();
 
         if (!vtalla || !vcolor || !url || !id || isNaN(vstock)) {
-          return res.status(400).json({ ok: false, message: '⚠️ Cada variante requiere talla, color, imagen, cloudinaryId y stock numérico.' })
+          return res.status(400).json({
+            ok: false,
+            message: '⚠️ Cada variante requiere talla, color, imagen, cloudinaryId y stock numérico.'
+          });
         }
 
-        const key = `${vtalla}-${vcolor}`
+        const key = `${vtalla}-${vcolor}`;
         if (comboSet.has(key)) {
-          return res.status(400).json({ ok: false, message: '⚠️ Variantes duplicadas (talla+color).' })
+          return res.status(400).json({ ok: false, message: '⚠️ Variantes duplicadas (talla+color).' });
         }
-        comboSet.add(key)
+        comboSet.add(key);
       }
     } else {
-      generalStock = Number(stock)
+      generalStock = Number(stock);
       if (isNaN(generalStock) || generalStock < 0) {
-        return res.status(400).json({ ok: false, message: '⚠️ Stock general inválido.' })
+        return res.status(400).json({ ok: false, message: '⚠️ Stock general inválido.' });
       }
     }
 
-    // 🎯 Verificar duplicado por nombre + subcategoría
-    const duplicate = await Product.findOne({ name, subcategory })
+    // 🔍 Verificar duplicado
+    const duplicate = await Product.findOne({ name, subcategory });
     if (duplicate) {
-      return res.status(409).json({ ok: false, message: '⚠️ Ya existe un producto con ese nombre y subcategoría.' })
+      return res.status(409).json({ ok: false, message: '⚠️ Ya existe un producto con ese nombre y subcategoría.' });
     }
 
-    // 🔤 Normalizar tallas
+    // 🔠 Limpieza de tallas
     const cleanedSizes = Array.isArray(sizes)
       ? sizes.filter(s => typeof s === 'string' && s.trim()).map(s => s.trim().toUpperCase())
-      : []
+      : [];
 
-    // 🧪 Generar slug único
+    // 🧪 Slug único
     const slugBase = name
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/ñ/g, 'n')
       .replace(/\s+/g, '-')
       .replace(/[^\w-]/g, '')
-      .toLowerCase()
+      .toLowerCase();
 
-    let slug = slugBase
-    let exists = await Product.findOne({ slug })
-    let attempts = 0
+    let slug = slugBase;
+    let exists = await Product.findOne({ slug });
+    let attempts = 0;
+
     while (exists && attempts < 5) {
-      slug = `${slugBase}-${Math.random().toString(36).substring(2, 6)}`
-      exists = await Product.findOne({ slug })
-      attempts++
+      slug = `${slugBase}-${Math.random().toString(36).substring(2, 6)}`;
+      exists = await Product.findOne({ slug });
+      attempts++;
     }
 
     if (exists) {
-      return res.status(500).json({ ok: false, message: '⚠️ No se pudo generar un slug único.' })
+      return res.status(500).json({ ok: false, message: '⚠️ No se pudo generar un slug único.' });
     }
 
-    // 🛠️ Preparar producto
+    // 📦 Crear producto
     const productData = {
       name,
       description,
@@ -135,23 +139,23 @@ const createProduct = async (req, res) => {
       createdBy,
       isActive: true,
       slug
-    }
+    };
 
-    const newProduct = await Product.create(productData)
+    const newProduct = await Product.create(productData);
 
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`✅ Producto creado: ${newProduct.name} [${newProduct.slug}]`)
+      console.log(`✅ Producto creado: ${newProduct.name} [${newProduct.slug}]`);
     }
 
-    return res.status(201).json({ ok: true, data: newProduct })
+    return res.status(201).json({ ok: true, data: newProduct });
   } catch (err) {
-    console.error('❌ Error interno al crear producto:', err)
+    console.error('❌ Error interno al crear producto:', err);
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al crear producto.',
       ...(process.env.NODE_ENV === 'development' && { error: err.message })
-    })
+    });
   }
-}
+};
 
-export default createProduct
+export default createProduct;

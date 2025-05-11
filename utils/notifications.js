@@ -1,49 +1,65 @@
-// 📁 backend/utils/notifications.js
-
 /**
- * Simula el envío de notificaciones por WhatsApp y Email.
+ * 📢 Simula el envío de notificaciones por WhatsApp y Email.
  * @param {Object} params
- * @param {string} params.nombreCliente
- * @param {string} params.telefono
- * @param {string} params.email
- * @param {string} params.estadoActual
+ * @param {string} params.nombreCliente - Nombre del cliente
+ * @param {string} params.telefono - Número de teléfono (WhatsApp)
+ * @param {string} params.email - Correo electrónico
+ * @param {string} params.estadoActual - Estado del pedido
  */
 export async function sendNotification({ nombreCliente, telefono, email, estadoActual }) {
   try {
-    let mensaje = ''
-
-    switch (estadoActual.toLowerCase()) {
-      case 'recibido':
-        mensaje = `📥 Hola ${nombreCliente}, recibimos tu pedido.`
-        break
-      case 'preparando':
-        mensaje = `🛠️ Hola ${nombreCliente}, estamos preparando tu pedido.`
-        break
-      case 'en camino':
-        mensaje = `🚚 Hola ${nombreCliente}, tu pedido está en camino.`
-        break
-      case 'entregado':
-        mensaje = `📦 Hola ${nombreCliente}, tu pedido fue entregado.`
-        break
-      default:
-        mensaje = `📦 Hola ${nombreCliente}, actualización de tu pedido.`
-        break
+    if (!nombreCliente || typeof nombreCliente !== 'string') {
+      throw new Error('❌ Nombre del cliente no válido');
     }
 
-    if (telefono) {
-      console.log(`📲 WhatsApp a ${telefono}: ${mensaje}`)
+    let mensaje = generarMensaje(nombreCliente, estadoActual);
+
+    if (telefono && validarTelefono(telefono)) {
+      console.log(`📲 WhatsApp a ${telefono}: ${mensaje}`);
     } else {
-      console.warn('⚠️ No hay número de teléfono para enviar WhatsApp.')
+      console.warn('⚠️ Número de teléfono no válido o no proporcionado para WhatsApp.');
     }
 
-    if (email) {
-      console.log(`📧 Email a ${email}: [Actualización de tu Pedido] ${mensaje}`)
+    if (email && validarEmail(email)) {
+      console.log(`📧 Email a ${email}: [Actualización de tu Pedido] ${mensaje}`);
     } else {
-      console.warn('⚠️ No hay correo para enviar Email.')
+      console.warn('⚠️ Email no válido o no proporcionado para enviar correo.');
     }
 
-    console.log('✅ Notificaciones enviadas correctamente.')
+    console.log('✅ Notificaciones simuladas correctamente.');
   } catch (err) {
-    console.error('❌ Error enviando notificaciones:', err.message || err)
+    console.error('❌ Error al enviar notificaciones:', err.message || err);
   }
+}
+
+/**
+ * 🧠 Genera el mensaje según el estado del pedido
+ */
+function generarMensaje(nombre, estado = '') {
+  switch (estado.trim().toLowerCase()) {
+    case 'recibido':
+      return `📥 Hola ${nombre}, hemos recibido tu pedido.`;
+    case 'preparando':
+      return `🛠️ Hola ${nombre}, estamos preparando tu pedido.`;
+    case 'en camino':
+      return `🚚 Hola ${nombre}, tu pedido está en camino.`;
+    case 'entregado':
+      return `📦 Hola ${nombre}, tu pedido fue entregado. ¡Gracias por tu compra!`;
+    default:
+      return `📦 Hola ${nombre}, hay una actualización en tu pedido.`;
+  }
+}
+
+/**
+ * 📞 Validación básica de número de teléfono
+ */
+function validarTelefono(telefono) {
+  return /^[0-9+\-\s]{7,20}$/.test(telefono);
+}
+
+/**
+ * 📧 Validación básica de email
+ */
+function validarEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }

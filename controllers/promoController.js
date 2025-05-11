@@ -1,16 +1,16 @@
 // 📁 backend/controllers/promoController.js
-import mongoose from 'mongoose'
-import Promotion from '../models/promotion.js'
-import config from '../config/configuracionesito.js'
-import { validationResult, body } from 'express-validator'
+import mongoose from 'mongoose';
+import Promotion from '../models/promotion.js';
+import config from '../config/configuracionesito.js';
+import { validationResult, body } from 'express-validator';
 
 /* ───────────────────────────────────────────── */
 /* ✅ VALIDACIONES PARA CREAR / EDITAR PROMOS    */
 /* ───────────────────────────────────────────── */
 export const validatePromotion = [
   body('message')
-    .exists().withMessage('⚠️ El mensaje es requerido.')
-    .isString().withMessage('⚠️ El mensaje debe ser texto.').bail()
+    .exists().withMessage('⚠️ El mensaje es requerido.').bail()
+    .isString().withMessage('⚠️ El mensaje debe ser texto.')
     .isLength({ min: 3 }).withMessage('⚠️ Mínimo 3 caracteres.')
     .trim(),
 
@@ -28,9 +28,9 @@ export const validatePromotion = [
 
   body().custom(({ startDate, endDate }) => {
     if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
-      throw new Error('⚠️ La fecha de inicio no puede ser posterior a la fecha de fin.')
+      throw new Error('⚠️ La fecha de inicio no puede ser posterior a la fecha de fin.');
     }
-    return true
+    return true;
   }),
 
   body('mediaUrl')
@@ -47,15 +47,12 @@ export const validatePromotion = [
 
   body('position')
     .optional().isIn(['top', 'bottom', 'side']).withMessage('⚠️ position inválido.')
-]
+];
 
-/* ───────────────────────────────────────────── */
-/* 📥 OBTENER PROMOCIONES ACTIVAS Y VIGENTES     */
 /* ───────────────────────────────────────────── */
 export const getPromotion = async (_req, res) => {
   try {
-    const now = new Date()
-
+    const now = new Date();
     const promos = await Promotion.find({
       active: true,
       $or: [
@@ -64,7 +61,7 @@ export const getPromotion = async (_req, res) => {
         { startDate: { $lte: now }, endDate: null },
         { startDate: null, endDate: { $gte: now } }
       ]
-    }).select('-__v').sort({ createdAt: -1 }).lean()
+    }).select('-__v').sort({ createdAt: -1 }).lean();
 
     const data = promos.map(p => ({
       id: p._id,
@@ -82,46 +79,40 @@ export const getPromotion = async (_req, res) => {
       position: p.position,
       createdBy: p.createdBy,
       createdAt: p.createdAt.toISOString()
-    }))
+    }));
 
-    return res.status(200).json({ ok: true, data })
+    return res.status(200).json({ ok: true, data });
   } catch (err) {
-    console.error('❌ Error getPromotion:', err)
+    console.error('❌ Error getPromotion:', err.stack || err);
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al obtener promociones activas.',
       ...(config.env !== 'production' && { error: err.message })
-    })
+    });
   }
-}
+};
 
-/* ───────────────────────────────────────────── */
-/* 📋 ADMIN: OBTENER TODAS LAS PROMOCIONES       */
-/* ───────────────────────────────────────────── */
 export const getAllPromotions = async (_req, res) => {
   try {
-    const promos = await Promotion.find().select('-__v').sort({ createdAt: -1 }).lean()
-    return res.status(200).json({ ok: true, data: promos })
+    const promos = await Promotion.find().select('-__v').sort({ createdAt: -1 }).lean();
+    return res.status(200).json({ ok: true, data: promos });
   } catch (err) {
-    console.error('❌ Error getAllPromotions:', err)
+    console.error('❌ Error getAllPromotions:', err.stack || err);
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al cargar promociones.',
       ...(config.env !== 'production' && { error: err.message })
-    })
+    });
   }
-}
+};
 
-/* ───────────────────────────────────────────── */
-/* 💾 CREAR O ACTUALIZAR UNA PROMOCIÓN           */
-/* ───────────────────────────────────────────── */
 export const updatePromotion = async (req, res) => {
-  const errors = validationResult(req)
+  const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({
       ok: false,
       errors: errors.array().map(e => ({ message: e.msg, field: e.param }))
-    })
+    });
   }
 
   try {
@@ -135,10 +126,10 @@ export const updatePromotion = async (req, res) => {
       mediaType = null,
       pages = [],
       position = 'top'
-    } = req.body
+    } = req.body;
 
     if (active) {
-      await Promotion.updateMany({ active: true }, { active: false })
+      await Promotion.updateMany({ active: true }, { active: false });
     }
 
     const promo = new Promotion({
@@ -152,11 +143,11 @@ export const updatePromotion = async (req, res) => {
       pages: pages.map(p => String(p).trim().toLowerCase()),
       position: String(position).trim().toLowerCase(),
       createdBy: req.user?.username || 'admin'
-    })
+    });
 
-    await promo.save()
+    await promo.save();
 
-    console.log(`📢 Nueva promoción creada por ${promo.createdBy}`)
+    console.log(`📢 Promoción creada por: ${promo.createdBy}`);
 
     return res.status(201).json({
       ok: true,
@@ -167,61 +158,55 @@ export const updatePromotion = async (req, res) => {
         startDate: promo.startDate,
         endDate: promo.endDate
       }
-    })
+    });
   } catch (err) {
-    console.error('❌ Error updatePromotion:', err)
+    console.error('❌ Error updatePromotion:', err.stack || err);
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al guardar promoción.',
       ...(config.env !== 'production' && { error: err.message })
-    })
+    });
   }
-}
+};
 
-/* ───────────────────────────────────────────── */
-/* 🗑️ ELIMINAR PROMOCIÓN                         */
-/* ───────────────────────────────────────────── */
 export const deletePromotion = async (req, res) => {
   try {
-    const id = String(req.params.id || '').trim()
+    const id = String(req.params.id || '').trim();
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ ok: false, message: '⚠️ ID de promoción inválido.' })
+      return res.status(400).json({ ok: false, message: '⚠️ ID de promoción inválido.' });
     }
 
-    const result = await Promotion.findByIdAndDelete(id)
+    const result = await Promotion.findByIdAndDelete(id);
     if (!result) {
-      return res.status(404).json({ ok: false, message: '❌ Promoción no encontrada.' })
+      return res.status(404).json({ ok: false, message: '❌ Promoción no encontrada.' });
     }
 
-    return res.status(200).json({ ok: true, data: { deletedId: id } })
+    return res.status(200).json({ ok: true, data: { deletedId: id } });
   } catch (err) {
-    console.error('❌ Error deletePromotion:', err)
+    console.error('❌ Error deletePromotion:', err.stack || err);
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al eliminar promoción.',
       ...(config.env !== 'production' && { error: err.message })
-    })
+    });
   }
-}
+};
 
-/* ───────────────────────────────────────────── */
-/* 🔁 ALTERNAR ESTADO DE ACTIVACIÓN              */
-/* ───────────────────────────────────────────── */
 export const togglePromoActive = async (req, res) => {
   try {
-    const id = req.params.id
+    const id = req.params.id;
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ ok: false, message: '⚠️ ID inválido.' })
+      return res.status(400).json({ ok: false, message: '⚠️ ID inválido.' });
     }
 
-    const promo = await Promotion.findById(id)
+    const promo = await Promotion.findById(id);
     if (!promo) {
-      return res.status(404).json({ ok: false, message: '❌ Promoción no encontrada.' })
+      return res.status(404).json({ ok: false, message: '❌ Promoción no encontrada.' });
     }
 
-    promo.active = !promo.active
-    await promo.save()
+    promo.active = !promo.active;
+    await promo.save();
 
     return res.status(200).json({
       ok: true,
@@ -230,13 +215,13 @@ export const togglePromoActive = async (req, res) => {
         id: promo._id,
         active: promo.active
       }
-    })
+    });
   } catch (err) {
-    console.error('❌ Error togglePromoActive:', err)
+    console.error('❌ Error togglePromoActive:', err.stack || err);
     return res.status(500).json({
       ok: false,
       message: '❌ Error al alternar estado de promoción.',
       ...(config.env !== 'production' && { error: err.message })
-    })
+    });
   }
-}
+};

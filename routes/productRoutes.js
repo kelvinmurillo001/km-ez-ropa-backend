@@ -1,8 +1,8 @@
 // 📁 backend/routes/productRoutes.js
-import express from 'express'
-import { param } from 'express-validator'
+import express from 'express';
+import { param } from 'express-validator';
 
-// 🧠 Controladores
+// 🎯 Controladores
 import {
   getAllProducts,
   getProductById,
@@ -10,21 +10,22 @@ import {
   createProduct,
   updateProduct,
   deleteProduct
-} from '../controllers/product/index.js'
+} from '../controllers/product/index.js';
 
 // 🛡️ Middlewares
-import authMiddleware from '../middleware/authMiddleware.js'
-import adminOnly from '../middleware/adminOnly.js'
-import validarErrores from '../middleware/validarErrores.js'
+import authMiddleware from '../middleware/authMiddleware.js';
+import adminOnly from '../middleware/adminOnly.js';
+import validarErrores from '../middleware/validarErrores.js';
 
 // ✅ Validaciones
 import {
   createProductValidation,
   updateProductValidation
-} from '../validators/productValidator.js'
-import { filtroProductosValidator } from '../validators/filtroProductosValidator.js'
+} from '../validators/productValidator.js';
 
-const router = express.Router()
+import { filtroProductosValidator } from '../validators/filtroProductosValidator.js';
+
+const router = express.Router();
 
 /* ───────────────────────────────────────────── */
 /* 📦 RUTAS DE PRODUCTOS                         */
@@ -34,18 +35,18 @@ const router = express.Router()
 
 /**
  * 📥 GET /api/products
- * ➤ Obtener productos con filtros (catálogo)
+ * ➤ Obtener productos con filtros (catálogo público)
  */
 router.get(
   '/',
   filtroProductosValidator,
   validarErrores,
   getAllProducts
-)
+);
 
 /**
  * 🔍 GET /api/products/slug/:slug
- * ➤ Obtener producto por slug
+ * ➤ Obtener producto por slug (URL amigable)
  */
 router.get(
   '/slug/:slug',
@@ -54,11 +55,11 @@ router.get(
     .withMessage('⚠️ Slug inválido'),
   validarErrores,
   getProductBySlug
-)
+);
 
 /**
  * 🔍 GET /api/products/:id
- * ➤ Obtener producto por ID
+ * ➤ Obtener producto por ID Mongo
  */
 router.get(
   '/:id',
@@ -67,9 +68,9 @@ router.get(
     .withMessage('⚠️ El ID proporcionado no es válido'),
   validarErrores,
   getProductById
-)
+);
 
-/* 🔐 Rutas privadas (Solo Admin) */
+/* 🔐 Rutas privadas (solo admins) */
 
 /**
  * ➕ POST /api/products
@@ -82,7 +83,7 @@ router.post(
   createProductValidation,
   validarErrores,
   createProduct
-)
+);
 
 /**
  * ✏️ PUT /api/products/:id
@@ -98,7 +99,7 @@ router.put(
   ],
   validarErrores,
   updateProduct
-)
+);
 
 /**
  * 🗑️ DELETE /api/products/:id
@@ -113,6 +114,6 @@ router.delete(
     .withMessage('⚠️ ID inválido'),
   validarErrores,
   deleteProduct
-)
+);
 
-export default router
+export default router;

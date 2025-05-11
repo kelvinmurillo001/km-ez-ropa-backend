@@ -1,68 +1,64 @@
 // 📁 backend/controllers/uploads/cleanOrphanedImages.js
-import Product from '../../models/Product.js'
-import { cloudinary } from '../../config/cloudinary.js'
+import Product from '../../models/Product.js';
+import { cloudinary } from '../../config/cloudinary.js';
+import logger from '../../utils/logger.js';
 
 /**
- * 🧹 Limpia imágenes huérfanas de Cloudinary
- * @route   DELETE /api/uploads/clean
- * @access  Admin
+ * 🧹 DELETE /api/uploads/limpiar-huerfanas
+ * ➤ Limpia imágenes en Cloudinary que no están asociadas a productos
+ * @access Admin
  */
 export const cleanOrphanedImages = async (req, res) => {
   try {
-    // 1️⃣ Recolectar todos los IDs usados en DB
-    const productos = await Product.find().select('images.cloudinaryId variants.cloudinaryId').lean()
+    // 1️⃣ Recopilar todos los cloudinaryId usados en productos
+    const productos = await Product.find().select('images.cloudinaryId variants.cloudinaryId').lean();
 
-    const usedIds = new Set()
+    const usedIds = new Set();
     productos.forEach(({ images = [], variants = [] }) => {
-      images.forEach(img => {
-        if (img?.cloudinaryId) usedIds.add(img.cloudinaryId)
-      })
-      variants.forEach(v => {
-        if (v?.cloudinaryId) usedIds.add(v.cloudinaryId)
-      })
-    })
+      images.forEach(img => img?.cloudinaryId && usedIds.add(img.cloudinaryId));
+      variants.forEach(v => v?.cloudinaryId && usedIds.add(v.cloudinaryId));
+    });
 
-    // 2️⃣ Buscar imágenes en Cloudinary
-    const folder = process.env.CLOUDINARY_FOLDER || ''
+    // 2️⃣ Buscar imágenes actuales en Cloudinary
+    const folder = process.env.CLOUDINARY_FOLDER?.trim() || 'productos_kmezropa';
     const result = await cloudinary.search
-      .expression(folder ? `folder:${folder}` : '')
+      .expression(`folder:${folder}`)
+      .sort_by('created_at', 'desc')
       .max_results(500)
-      .execute()
+      .execute();
 
-    const allResources = result.resources || []
+    const allResources = result.resources || [];
 
-    // 3️⃣ Detectar huérfanas
-    const orphaned = allResources.filter(r => !usedIds.has(r.public_id))
-    const deleted = []
-    const failed = []
+    // 3️⃣ Filtrar imágenes huérfanas
+    const orphaned = allResources.filter(r => !usedIds.has(r.public_id));
+    const deleted = [];
+    const failed = [];
 
-    // 4️⃣ Eliminar huérfanas en paralelo
-    await Promise.all(
+    logger.info(`🗃️ Total imágenes en Cloudinary: ${allResources.length}`);
+    logger.info(`🔍 Referencias válidas en DB: ${usedIds.size}`);
+    logger.info(`🧹 Huérfanas detectadas: ${orphaned.length}`);
+
+    // 4️⃣ Intentar eliminar cada imagen huérfana
+    await Promise.allSettled(
       orphaned.map(async r => {
         try {
-          const resp = await cloudinary.uploader.destroy(r.public_id)
+          const resp = await cloudinary.uploader.destroy(r.public_id);
           if (resp.result === 'ok') {
-            deleted.push(r.public_id)
+            deleted.push(r.public_id);
           } else {
-            failed.push({ id: r.public_id, result: resp.result })
+            failed.push({ id: r.public_id, result: resp.result });
           }
         } catch (err) {
-          failed.push({ id: r.public_id, error: err.message })
+          failed.push({ id: r.public_id, error: err.message });
         }
       })
-    )
+    );
 
-    // 5️⃣ Logs útiles en desarrollo
-    if (process.env.NODE_ENV !== 'production') {
-      console.log(`📦 Total en Cloudinary: ${allResources.length}`)
-      console.log(`🧩 Usadas en DB: ${usedIds.size}`)
-      console.log(`🗑️ Huérfanas encontradas: ${orphaned.length}`)
-      console.log(`✅ Eliminadas: ${deleted.length}`)
-    }
+    logger.info(`✅ Eliminadas: ${deleted.length} | ❌ Fallidas: ${failed.length}`);
 
-    // 6️⃣ Respuesta final
     return res.status(200).json({
       ok: true,
+      message: '✅ Limpieza de imágenes huérfanas completada.',
       data: {
         totalCloudinary: allResources.length,
         totalUsedInDB: usedIds.size,
@@ -71,13 +67,13 @@ export const cleanOrphanedImages = async (req, res) => {
         deleted,
         ...(failed.length > 0 && { errors: failed })
       }
-    })
+    });
   } catch (err) {
-    console.error('❌ Error limpiando imágenes huérfanas:', err)
+    logger.error('❌ Error limpiando imágenes huérfanas:', err);
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al limpiar imágenes huérfanas.',
       ...(process.env.NODE_ENV !== 'production' && { error: err.message })
-    })
+    });
   }
-}
+};

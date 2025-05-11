@@ -1,114 +1,92 @@
 // 📁 backend/validators/orderValidator.js
 
-import { body, param } from 'express-validator'
+import { body, param } from 'express-validator';
 
 /* 🧾 Validaciones para crear un pedido */
 export const createOrderValidation = [
+  // 🛒 Items del pedido
   body('items')
-    .isArray({ min: 1 })
-    .withMessage('⚠️ El pedido debe contener al menos un producto.'),
+    .isArray({ min: 1 }).withMessage('⚠️ El pedido debe contener al menos un producto.').bail(),
 
   body('items.*.productId')
-    .isMongoId()
-    .withMessage('⚠️ ID de producto inválido.'),
+    .isMongoId().withMessage('⚠️ ID de producto inválido.'),
 
   body('items.*.name')
-    .isString()
-    .trim()
-    .isLength({ min: 2, max: 100 })
-    .withMessage('⚠️ Nombre del producto inválido.'),
+    .isString().withMessage('⚠️ Nombre de producto faltante.')
+    .trim().isLength({ min: 2, max: 100 }).withMessage('⚠️ Nombre del producto debe tener entre 2 y 100 caracteres.'),
 
   body('items.*.talla')
-    .isString()
-    .trim()
-    .notEmpty()
-    .withMessage('⚠️ Talla del producto requerida.'),
+    .isString().withMessage('⚠️ Talla del producto requerida.')
+    .trim().notEmpty().withMessage('⚠️ La talla no puede estar vacía.'),
 
   body('items.*.color')
     .optional()
-    .isString()
-    .trim(),
+    .isString().trim().withMessage('⚠️ Color inválido.'),
 
   body('items.*.cantidad')
-    .isInt({ min: 1 })
-    .withMessage('⚠️ Cantidad debe ser al menos 1.'),
+    .isInt({ min: 1 }).withMessage('⚠️ Cantidad debe ser al menos 1.'),
 
   body('items.*.precio')
-    .isFloat({ min: 0 })
-    .withMessage('⚠️ Precio inválido.'),
+    .isFloat({ min: 0 }).withMessage('⚠️ Precio del producto inválido.'),
 
+  // 💰 Total
   body('total')
-    .isFloat({ min: 0.01 })
-    .withMessage('⚠️ El total debe ser mayor a 0.'),
+    .isFloat({ min: 0.01 }).withMessage('⚠️ El total debe ser mayor a 0.'),
 
+  // 👤 Datos del cliente
   body('nombreCliente')
-    .isString()
-    .trim()
-    .escape()
-    .isLength({ min: 2, max: 100 })
-    .withMessage('⚠️ El nombre debe tener entre 2 y 100 caracteres.'),
+    .isString().trim().escape()
+    .isLength({ min: 2, max: 100 }).withMessage('⚠️ El nombre debe tener entre 2 y 100 caracteres.'),
 
   body('email')
-    .isEmail()
-    .normalizeEmail()
-    .withMessage('⚠️ Email inválido.'),
+    .isEmail().normalizeEmail().withMessage('⚠️ Email inválido.'),
 
   body('telefono')
-    .isString()
-    .trim()
-    .isLength({ min: 7, max: 20 })
-    .withMessage('⚠️ Teléfono inválido.'),
-
-  body('nota')
-    .optional()
-    .isString()
-    .trim()
-    .escape()
-    .isLength({ max: 300 })
-    .withMessage('⚠️ Nota demasiado larga.'),
+    .isString().trim()
+    .isLength({ min: 7, max: 20 }).withMessage('⚠️ Teléfono inválido (mínimo 7 caracteres).'),
 
   body('direccion')
-    .isString()
-    .trim()
-    .isLength({ min: 5, max: 300 })
-    .withMessage('⚠️ Dirección inválida.'),
+    .isString().trim()
+    .isLength({ min: 5, max: 300 }).withMessage('⚠️ Dirección inválida (mínimo 5 caracteres).'),
+
+  // 📝 Otros campos opcionales
+  body('nota')
+    .optional()
+    .isString().trim().escape()
+    .isLength({ max: 300 }).withMessage('⚠️ Nota demasiado larga (máx. 300 caracteres).'),
 
   body('metodoPago')
-    .isString()
-    .notEmpty()
+    .isString().notEmpty()
     .isIn(['efectivo', 'tarjeta', 'paypal', 'transferencia'])
-    .withMessage('⚠️ Método de pago inválido.'),
+    .withMessage('⚠️ Método de pago inválido. Debe ser: efectivo, tarjeta, paypal o transferencia.'),
 
   body('estado')
     .optional()
     .isIn(['pendiente', 'en_proceso', 'enviado', 'cancelado', 'pagado'])
     .withMessage('⚠️ Estado inválido.'),
 
+  // 🧾 Validación de factura (opcional)
   body('factura')
     .optional()
-    .isObject()
-    .withMessage('⚠️ Datos de factura inválidos.'),
+    .isObject().withMessage('⚠️ Datos de factura inválidos.'),
 
   body('factura.razonSocial')
     .optional()
-    .isString()
-    .trim()
+    .isString().trim()
     .isLength({ min: 2, max: 100 })
-    .withMessage('⚠️ Razón social inválida.'),
+    .withMessage('⚠️ Razón social inválida (mín. 2 caracteres).'),
 
   body('factura.ruc')
     .optional()
-    .isString()
-    .trim()
+    .isString().trim()
     .isLength({ min: 8, max: 20 })
-    .withMessage('⚠️ RUC o cédula inválido.'),
+    .withMessage('⚠️ RUC o cédula inválido (mín. 8 caracteres).'),
 
   body('factura.email')
     .optional()
-    .isEmail()
-    .normalizeEmail()
+    .isEmail().normalizeEmail()
     .withMessage('⚠️ Email de facturación inválido.')
-]
+];
 
 /* 🔄 Validaciones para actualizar estado del pedido */
 export const updateOrderStatusValidation = [
@@ -120,5 +98,5 @@ export const updateOrderStatusValidation = [
     .trim()
     .notEmpty()
     .isIn(['pendiente', 'en_proceso', 'enviado', 'cancelado', 'pagado'])
-    .withMessage('⚠️ Estado no válido.')
-]
+    .withMessage('⚠️ Estado no válido. Elige uno válido: pendiente, en_proceso, enviado, cancelado, pagado.')
+];

@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       unique: true,
       trim: true,
-      minlength: [3, '⚠️ Mínimo 3 caracteres'],
+      minlength: [3, '⚠️ El nombre de usuario debe tener al menos 3 caracteres'],
       sparse: true
     },
     name: {
@@ -33,7 +33,7 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      minlength: [6, '⚠️ Debe tener al menos 6 caracteres'],
+      minlength: [6, '⚠️ La contraseña debe tener al menos 6 caracteres'],
       select: false
     },
     role: {
@@ -45,6 +45,14 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
       select: false
+    },
+    banned: {
+      type: Boolean,
+      default: false
+    },
+    deleted: {
+      type: Boolean,
+      default: false
     }
   },
   {
@@ -70,22 +78,23 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// ✅ Normalizar datos antes de validar
+// ✅ Normalizar entradas
 userSchema.pre('validate', function (next) {
   if (this.name) this.name = this.name.trim();
   if (this.email) this.email = this.email.toLowerCase().trim();
-  if (this.username) this.username = this.username.trim().toLowerCase();
+  if (this.username) this.username = this.username.toLowerCase().trim();
 
   if (!this.googleId && !this.password) {
-    this.invalidate('password', '⚠️ Se requiere contraseña si no usas Google');
+    this.invalidate('password', '⚠️ Se requiere contraseña si no usas autenticación de Google');
   }
 
   next();
 });
 
-// 🔐 Hash automático de contraseña
+// 🔐 Hash automático
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password') || !this.password) return next();
+
   try {
     const salt = await bcrypt.genSalt(12);
     this.password = await bcrypt.hash(this.password, salt);
@@ -96,16 +105,17 @@ userSchema.pre('save', async function (next) {
   }
 });
 
-// 🔑 Comparar contraseña segura
+// 🔑 Comparar password
 userSchema.methods.matchPassword = async function (inputPassword) {
   if (!this.password || !inputPassword) return false;
   return await bcrypt.compare(inputPassword, this.password);
 };
 
-// 📌 Índices adicionales útiles
+// 📌 Índices útiles
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ username: 1 }, { unique: true, sparse: true });
 userSchema.index({ role: 1 });
+userSchema.index({ googleId: 1 }, { sparse: true });
 
 const User = mongoose.model('User', userSchema);
 export default User;

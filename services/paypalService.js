@@ -1,36 +1,35 @@
 // 📁 backend/services/paypalService.js
-import axios from 'axios'
-import https from 'https'
-import logger from '../utils/logger.js'
+import axios from 'axios';
+import https from 'https';
+import logger from '../utils/logger.js';
 
-// 🔐 Configuración de entorno
 const {
   PAYPAL_CLIENT_ID,
   PAYPAL_CLIENT_SECRET,
   PAYPAL_API_BASE,
   NODE_ENV
-} = process.env
+} = process.env;
 
-const PAYPAL_API = PAYPAL_API_BASE || 'https://api-m.sandbox.paypal.com'
+const PAYPAL_API = PAYPAL_API_BASE || 'https://api-m.sandbox.paypal.com';
 
+// 🚨 Verificación de credenciales
 if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
-  logger.warn('⚠️ Falta configuración de PayPal: revisa CLIENT_ID y CLIENT_SECRET')
+  logger.warn('⚠️ Falta configuración de PayPal: CLIENT_ID y/o CLIENT_SECRET no definidos.');
 }
 
-// 🌐 Axios seguro para entornos de desarrollo
+// 🌐 Axios seguro para entorno local
 const axiosClient = NODE_ENV !== 'production'
   ? axios.create({ httpsAgent: new https.Agent({ rejectUnauthorized: false }) })
-  : axios
+  : axios;
 
 /**
- * 🔑 Obtener token de acceso de PayPal
- * @returns {Promise<string>} Token Bearer de PayPal
+ * 🔑 Solicita un token de acceso Bearer a PayPal
  */
 async function obtenerTokenPayPal() {
   try {
     const authHeader = Buffer
       .from(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`)
-      .toString('base64')
+      .toString('base64');
 
     const res = await axiosClient.post(
       `${PAYPAL_API}/v1/oauth2/token`,
@@ -41,44 +40,44 @@ async function obtenerTokenPayPal() {
           'Content-Type': 'application/x-www-form-urlencoded'
         }
       }
-    )
+    );
 
-    const token = res.data?.access_token
-    if (!token) throw new Error('❌ Token de PayPal no recibido')
+    const token = res.data?.access_token;
+    if (!token || typeof token !== 'string') {
+      throw new Error('❌ Token de PayPal no recibido o inválido');
+    }
 
-    logger.info('✅ Token de PayPal generado')
-    return token
+    logger.info('✅ Token PayPal obtenido correctamente');
+    return token;
   } catch (err) {
-    logger.error('❌ Error autenticando con PayPal:', err.response?.data || err.message)
-    throw new Error('⚠️ Error al obtener token PayPal. Verifica credenciales y entorno.')
+    logger.error('❌ Error autenticando con PayPal:', err.response?.data || err.message);
+    throw new Error('⚠️ Error al obtener token de PayPal. Verifica credenciales o red.');
   }
 }
 
 /**
- * 🛒 Crear una orden en PayPal
+ * 🛒 Crea una orden PayPal
  * @param {number} total - Monto total de la compra
- * @returns {Promise<Object>} Objeto con detalles de la orden
  */
 export async function crearOrden(total) {
   if (!total || isNaN(total) || total <= 0) {
-    throw new Error('❌ Monto total inválido para crear orden')
+    throw new Error('❌ Monto total inválido para crear la orden');
   }
 
   try {
-    const token = await obtenerTokenPayPal()
+    logger.info(`💳 Creando orden PayPal por $${total.toFixed(2)}`);
+    const token = await obtenerTokenPayPal();
 
     const res = await axiosClient.post(
       `${PAYPAL_API}/v2/checkout/orders`,
       {
         intent: 'CAPTURE',
-        purchase_units: [
-          {
-            amount: {
-              currency_code: 'USD',
-              value: total.toFixed(2)
-            }
+        purchase_units: [{
+          amount: {
+            currency_code: 'USD',
+            value: total.toFixed(2)
           }
-        ]
+        }]
       },
       {
         headers: {
@@ -86,27 +85,31 @@ export async function crearOrden(total) {
           'Content-Type': 'application/json'
         }
       }
-    )
+    );
 
-    return res.data
+    if (!res.data?.id) {
+      logger.warn('⚠️ Orden PayPal creada sin ID válido:', res.data);
+    }
+
+    return res.data;
   } catch (err) {
-    logger.error('❌ Error creando orden PayPal:', err.response?.data || err.message)
-    throw new Error('⚠️ No se pudo crear la orden en PayPal')
+    logger.error('❌ Error creando orden PayPal:', err.response?.data || err.message);
+    throw new Error('⚠️ Falló la creación de orden PayPal. Intenta más tarde.');
   }
 }
 
 /**
- * 💳 Capturar una orden de PayPal existente
- * @param {string} orderId - ID de orden
- * @returns {Promise<Object>} Resultado de la captura
+ * 💳 Captura una orden PayPal
+ * @param {string} orderId - ID de la orden
  */
 export async function capturarOrden(orderId) {
   if (!orderId || typeof orderId !== 'string' || orderId.length < 5) {
-    throw new Error('❌ orderId inválido para captura')
+    throw new Error('❌ orderId inválido para captura');
   }
 
   try {
-    const token = await obtenerTokenPayPal()
+    logger.info(`💰 Capturando orden PayPal: ${orderId}`);
+    const token = await obtenerTokenPayPal();
 
     const res = await axiosClient.post(
       `${PAYPAL_API}/v2/checkout/orders/${orderId}/capture`,
@@ -117,17 +120,21 @@ export async function capturarOrden(orderId) {
           'Content-Type': 'application/json'
         }
       }
-    )
+    );
 
-    return res.data
+    if (!res.data?.status) {
+      logger.warn('⚠️ Captura sin status en respuesta:', res.data);
+    }
+
+    return res.data;
   } catch (err) {
-    logger.error('❌ Error capturando orden PayPal:', err.response?.data || err.message)
-    throw new Error('⚠️ No se pudo capturar la orden de PayPal')
+    logger.error('❌ Error capturando orden PayPal:', err.response?.data || err.message);
+    throw new Error('⚠️ No se pudo capturar la orden de PayPal. Verifica el ID o intenta más tarde.');
   }
 }
 
-// ✅ Export default para pruebas y compatibilidad
+// ✅ Export default
 export default {
   crearOrden,
   capturarOrden
-}
+};

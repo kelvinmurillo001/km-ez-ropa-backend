@@ -1,73 +1,58 @@
-import { sendNotification } from '../utils/sendNotification.js'
 import nodemailer from 'nodemailer'
+import config from '../config/configuracionesito.js'
 
-jest.mock('nodemailer')
-
-describe('🧪 Envío de notificaciones por correo', () => {
-  const mockSendMail = jest.fn()
-
-  beforeAll(() => {
-    nodemailer.createTransport.mockReturnValue({
-      sendMail: mockSendMail
-    })
-  })
-
-  beforeEach(() => {
-    mockSendMail.mockClear()
-  })
-
-  test('✅ Debería enviar correo de creación de pedido correctamente', async () => {
-    mockSendMail.mockResolvedValueOnce({ accepted: ['cliente@correo.com'] })
-
-    await sendNotification({
-      email: 'cliente@correo.com',
-      nombreCliente: 'Kelvin',
-      estadoActual: 'pendiente',
-      tipo: 'creacion'
-    })
-
-    expect(mockSendMail).toHaveBeenCalledTimes(1)
-    const mail = mockSendMail.mock.calls[0][0]
-    expect(mail.to).toBe('cliente@correo.com')
-    expect(mail.subject).toMatch(/pedido recibido/i)
-    expect(mail.html).toContain('Hemos recibido tu pedido')
-    expect(mail.html).toContain('Kelvin')
-  })
-
-  test('✅ Debería enviar correo de actualización de estado correctamente', async () => {
-    await sendNotification({
-      email: 'cliente@test.com',
-      nombreCliente: 'Ana',
-      estadoActual: 'enviado'
-    })
-
-    expect(mockSendMail).toHaveBeenCalledTimes(1)
-    const mail = mockSendMail.mock.calls[0][0]
-    expect(mail.subject).toMatch(/estado/i)
-    expect(mail.html).toContain('El estado de tu pedido ha sido actualizado')
-    expect(mail.html).toContain('Ana')
-    expect(mail.html).toContain('Enviado')
-  })
-
-  test('❌ No debe enviar si falta email o estadoActual', async () => {
-    await sendNotification({ email: '', estadoActual: 'pendiente' })
-    await sendNotification({ email: 'test@test.com' }) // sin estado
-
-    expect(mockSendMail).not.toHaveBeenCalled()
-  })
-
-  test('❌ Debe registrar error si falla el envío', async () => {
-    const errorMock = new Error('Simulado')
-    mockSendMail.mockRejectedValueOnce(errorMock)
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
-
-    await sendNotification({
-      email: 'fallo@correo.com',
-      nombreCliente: 'Laura',
-      estadoActual: 'cancelado'
-    })
-
-    expect(consoleSpy).toHaveBeenCalledWith('❌ Error al enviar correo:', 'Simulado')
-    consoleSpy.mockRestore()
-  })
+// 🛠️ Transport configurado con variables de entorno
+const transporter = nodemailer.createTransport({
+  host: config.smtpHost,
+  port: config.smtpPort,
+  secure: config.smtpSecure, // true para 465, false para otros
+  auth: {
+    user: config.smtpUser,
+    pass: config.smtpPass
+  }
 })
+
+/**
+ * 📧 Envía una notificación por correo electrónico al cliente
+ * @param {Object} options
+ * @param {string} options.email - Correo del cliente
+ * @param {string} options.nombreCliente - Nombre del cliente
+ * @param {string} options.estadoActual - Estado del pedido
+ * @param {string} [options.tipo='actualizacion'] - Tipo: 'creacion' | 'actualizacion'
+ */
+export async function sendNotification({
+  email,
+  nombreCliente,
+  estadoActual,
+  tipo = 'actualizacion'
+}) {
+  try {
+    if (!email || !estadoActual || !nombreCliente) return
+
+    const asunto =
+      tipo === 'creacion'
+        ? '🛒 Confirmación de tu pedido en KM & EZ ROPA'
+        : '📦 Estado actualizado de tu pedido'
+
+    const mensaje =
+      tipo === 'creacion'
+        ? `<p>Hola <strong>${nombreCliente}</strong>,<br/>Hemos recibido tu pedido correctamente. Nos pondremos en contacto pronto con más detalles.</p>`
+        : `<p>Hola <strong>${nombreCliente}</strong>,<br/>El estado de tu pedido ha sido actualizado a: <strong>${estadoActual.toUpperCase()}</strong>.</p>`
+
+    const html = `
+      <div style="font-family:sans-serif;color:#333">
+        ${mensaje}
+        <p style="margin-top:20px;">Gracias por confiar en <strong>KM & EZ ROPA</strong> 🧵</p>
+      </div>
+    `
+
+    await transporter.sendMail({
+      from: `"KM & EZ ROPA" <${config.smtpFrom || config.smtpUser}>`,
+      to: email,
+      subject: asunto,
+      html
+    })
+  } catch (err) {
+    console.error('❌ Error al enviar correo:', err.message || err)
+  }
+}

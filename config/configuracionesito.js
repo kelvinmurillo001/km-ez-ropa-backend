@@ -30,8 +30,8 @@ const requiredVars = [
 const missing = requiredVars.filter(key => !process.env[key]);
 if (missing.length > 0) {
   console.error(`❌ Faltan variables en .env: ${missing.join(', ')}`);
-  console.error('🛠️ Verifica que tu archivo .env esté completo.');
-  process.exit(1);
+  console.error('📄 Verifica que tu archivo .env tenga todas las claves necesarias.');
+  process.exit(1); // 🛑 Detener la aplicación si faltan claves esenciales
 }
 
 // ✅ Función para validar URLs seguras
@@ -39,7 +39,8 @@ const isValidURL = (url) => {
   try {
     const u = new URL(url);
     return ['http:', 'https:'].includes(u.protocol);
-  } catch {
+  } catch (err) {
+    console.warn(`⚠️ URL inválida detectada en ALLOWED_ORIGINS: ${url}`);
     return false;
   }
 };
@@ -104,7 +105,7 @@ const config = {
 // 🧪 Debug solo si es desarrollo
 if (config.env !== 'production') {
   console.log('🧪 Entorno de desarrollo activo');
-  console.log('🌍 ALLOWED_ORIGINS:', config.allowedOrigins);
+  console.log('🌍 ALLOWED_ORIGINS:', allowedOrigins);
   console.log('🔐 Claves cargadas correctamente:', {
     JWT: !!config.jwtSecret,
     REFRESH: !!config.jwtRefreshSecret,

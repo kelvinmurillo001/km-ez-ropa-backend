@@ -1,33 +1,31 @@
 // 📁 backend/config/cloudinary.js
 // 🎯 Configuración de Cloudinary para gestión de imágenes
 
-import { v2 as cloudinary } from 'cloudinary'
-import config from './configuracionesito.js'
+import { v2 as cloudinary } from 'cloudinary';
+import config from './configuracionesito.js';
 
-// ✅ Extraer credenciales desde config
-const credentials = config.cloudinary || {}
-const cloudName = credentials.cloud_name
-const apiKey = credentials.api_key
-const apiSecret = credentials.api_secret
+// ✅ Extraer credenciales desde configuración central
+const { cloud_name, api_key, api_secret } = config.cloudinary || {};
 
 // 🔐 Validar credenciales necesarias
-if (!cloudName || !apiKey || !apiSecret) {
-  console.error('❌ Error: Credenciales de Cloudinary incompletas. Revisa tu archivo .env o configuraciones.')
-  process.exit(1)
+if (!cloud_name || !api_key || !api_secret) {
+  console.error('❌ Error: Credenciales de Cloudinary incompletas.');
+  console.error('📌 Asegúrate de tener CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY y CLOUDINARY_API_SECRET en tu archivo .env.');
+  process.exit(1); // ⚠️ Detener el servidor si no hay conexión segura con Cloudinary
 }
 
-// ⚙️ Configuración de Cloudinary
+// ⚙️ Aplicar configuración
 cloudinary.config({
-  cloud_name: cloudName,
-  api_key: apiKey,
-  api_secret: apiSecret
-})
+  cloud_name,
+  api_key,
+  api_secret
+});
 
-// 🐞 Información en entorno de desarrollo
+// 🧪 Solo en desarrollo: Mostrar configuración parcial
 if (config.env !== 'production') {
-  console.log('✅ Cloudinary configurado (modo desarrollo)')
-  console.log(`🌩️ Cloud Name: ${cloudName}`)
-  console.log(`🔑 API Key: ${apiKey.substring(0, 4)}****`)
+  console.log('✅ Cloudinary configurado en entorno de desarrollo');
+  console.log(`🌩️ Cloud Name: ${cloud_name}`);
+  console.log(`🔑 API Key (oculta): ${api_key.substring(0, 4)}****`);
 }
 
-export { cloudinary }
+export { cloudinary };

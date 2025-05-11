@@ -12,7 +12,7 @@ const getProductById = async (req, res) => {
   try {
     const id = String(req.params.id || '').trim();
 
-    // Validar ID de MongoDB
+    // ✅ Validar ID de MongoDB
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         ok: false,
@@ -20,7 +20,7 @@ const getProductById = async (req, res) => {
       });
     }
 
-    // Buscar producto
+    // 🔍 Buscar producto por ID
     const productoDoc = await Product.findById(id)
       .select('-__v')
       .lean();
@@ -32,12 +32,13 @@ const getProductById = async (req, res) => {
       });
     }
 
-    // Calcular stock total y preparar respuesta
+    // 📦 Calcular stock total
     const producto = {
       ...productoDoc,
       stockTotal: calcularStockTotal(productoDoc)
     };
 
+    // 🪵 Logging en desarrollo
     if (process.env.NODE_ENV !== 'production') {
       console.log(
         `🔍 Producto obtenido: ${producto.name} (ID: ${id})` +

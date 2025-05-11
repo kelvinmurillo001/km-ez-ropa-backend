@@ -25,7 +25,7 @@ const deleteProduct = async (req, res) => {
     const deletedCloudinaryIds = [];
     const failedDeletions = [];
 
-    // 🔁 Función auxiliar para eliminar imagen de Cloudinary
+    // 🔁 Auxiliar para eliminar imagen
     const deleteFromCloudinary = async (cloudinaryId, tipo) => {
       try {
         const result = await cloudinary.uploader.destroy(cloudinaryId);
@@ -39,7 +39,7 @@ const deleteProduct = async (req, res) => {
       }
     };
 
-    // 📂 Recolectar IDs de imágenes principales y variantes
+    // 📂 Recolectar imágenes a eliminar
     const imagenesAEliminar = [];
 
     if (Array.isArray(product.images)) {
@@ -54,15 +54,15 @@ const deleteProduct = async (req, res) => {
       }
     }
 
-    // 🧹 Eliminar imágenes en paralelo
+    // 🧹 Eliminar todas las imágenes en paralelo
     await Promise.all(
       imagenesAEliminar.map(({ id, tipo }) => deleteFromCloudinary(id, tipo))
     );
 
-    // ❌ Eliminar el producto en MongoDB
+    // ❌ Eliminar producto de MongoDB
     await Product.deleteOne({ _id: id });
 
-    // 📤 Respuesta
+    // ✅ Respuesta
     const response = {
       ok: true,
       message: '✅ Producto eliminado correctamente.',

@@ -1,4 +1,5 @@
-const API_BASE = 'https://api.kmezropacatalogo.com'
+// 📁 backend/services/authService.js
+const API_BASE = 'https://api.kmezropacatalogo.com';
 
 /**
  * 👤 Obtener el usuario actualmente autenticado
@@ -6,23 +7,29 @@ const API_BASE = 'https://api.kmezropacatalogo.com'
  */
 export const getCurrentUser = async () => {
   try {
-    const res = await fetch(`${API_BASE}/auth/me`, {
+    const response = await fetch(`${API_BASE}/auth/me`, {
       method: 'GET',
       credentials: 'include',
       headers: {
         'Accept': 'application/json'
       }
-    })
+    });
 
-    if (!res.ok) {
-      console.warn('⚠️ Usuario no autenticado o sesión expirada')
-      return null
+    if (!response.ok) {
+      const errorInfo = await response.text();
+      console.warn(`⚠️ Usuario no autenticado (${response.status}):`, errorInfo);
+      return null;
     }
 
-    const data = await res.json()
-    return data?.user || null
+    const data = await response.json();
+    if (!data || !data.ok || !data.user) {
+      console.warn('⚠️ Respuesta inesperada al obtener usuario:', data);
+      return null;
+    }
+
+    return data.user;
   } catch (err) {
-    console.error('❌ Error al obtener usuario actual:', err)
-    return null
+    console.error('❌ Error al obtener usuario actual:', err.message || err);
+    return null;
   }
-}
+};

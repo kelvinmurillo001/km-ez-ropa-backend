@@ -1,29 +1,28 @@
-// 📁 backend/models/Product.js
 import mongoose from 'mongoose';
 
-// ✅ Subesquema para variantes
+/* 🧩 Subesquema: Variante de producto (talla + color) */
 const variantSchema = new mongoose.Schema({
   talla: {
     type: String,
-    required: [true, '⚠️ La talla es obligatoria'],
+    required: true,
     trim: true,
     lowercase: true
   },
   color: {
     type: String,
-    required: [true, '⚠️ El color es obligatorio'],
+    required: true,
     trim: true,
     lowercase: true
   },
   imageUrl: {
     type: String,
-    required: [true, '⚠️ Imagen de variante obligatoria'],
+    required: true,
     trim: true,
     match: [/^https:\/\/.+\.(jpg|jpeg|png|webp|gif|svg|avif)$/i, '⚠️ URL de imagen inválida']
   },
   cloudinaryId: {
     type: String,
-    required: [true, '⚠️ cloudinaryId obligatorio'],
+    required: true,
     trim: true
   },
   stock: {
@@ -37,11 +36,11 @@ const variantSchema = new mongoose.Schema({
   }
 }, { _id: false });
 
-// ✅ Esquema principal del producto
+/* 🧾 Esquema del producto */
 const productSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: [true, '⚠️ El nombre del producto es obligatorio'],
+    required: true,
     trim: true,
     minlength: 2,
     maxlength: 100
@@ -53,76 +52,68 @@ const productSchema = new mongoose.Schema({
   },
   price: {
     type: Number,
-    required: [true, '⚠️ El precio es obligatorio'],
+    required: true,
     min: [0, '⚠️ El precio no puede ser negativo']
   },
   category: {
     type: String,
-    required: [true, '⚠️ La categoría es obligatoria'],
+    required: true,
     trim: true,
     lowercase: true
   },
   subcategory: {
     type: String,
-    required: [true, '⚠️ La subcategoría es obligatoria'],
+    required: true,
     trim: true,
     lowercase: true,
     minlength: 2
   },
   tallaTipo: {
     type: String,
-    required: [true, '⚠️ El tipo de talla es obligatorio'],
+    required: true,
     enum: ['adulto', 'joven', 'niño', 'niña', 'bebé'],
     trim: true,
     lowercase: true
   },
-  featured: {
-    type: Boolean,
-    default: false
-  },
-  isActive: {
-    type: Boolean,
-    default: true
-  },
-  isDraft: {
-    type: Boolean,
-    default: false
-  },
+  featured: { type: Boolean, default: false },
+  isActive: { type: Boolean, default: true },
+  isDraft: { type: Boolean, default: false },
+
   images: {
     type: [{
       url: {
         type: String,
-        required: [true, '⚠️ La imagen necesita una URL'],
+        required: true,
         trim: true,
         match: [/^https:\/\/.+\.(jpg|jpeg|png|webp|gif|svg|avif)$/i, '⚠️ URL inválida']
       },
       cloudinaryId: {
         type: String,
-        required: [true, '⚠️ cloudinaryId requerido'],
+        required: true,
         trim: true
       },
       talla: {
         type: String,
-        required: [true, '⚠️ Talla de imagen requerida'],
+        required: true,
         trim: true,
         lowercase: true
       },
       color: {
         type: String,
-        required: [true, '⚠️ Color de imagen requerido'],
+        required: true,
         trim: true,
         lowercase: true
       }
     }],
     validate: [
       {
-        validator: val => Array.isArray(val) && val.length >= 1,
+        validator: imgs => imgs.length >= 1,
         message: '⚠️ Debes proporcionar al menos una imagen'
       },
       {
-        validator: val => {
+        validator: imgs => {
           const seen = new Set();
-          for (const img of val) {
+          for (const img of imgs) {
             const key = `${img.talla}-${img.color}`;
             if (seen.has(key)) return false;
             seen.add(key);
@@ -133,28 +124,30 @@ const productSchema = new mongoose.Schema({
       }
     ]
   },
+
   variants: {
     type: [variantSchema],
     default: [],
     validate: [
       {
-        validator: val => val.length <= 4,
+        validator: v => v.length <= 4,
         message: '⚠️ Máximo 4 variantes por producto'
       },
       {
-        validator: function (val) {
+        validator: v => {
           const seen = new Set();
-          for (const v of val) {
-            const key = `${v.talla}-${v.color}`;
+          for (const item of v) {
+            const key = `${item.talla}-${item.color}`;
             if (seen.has(key)) return false;
             seen.add(key);
           }
           return true;
         },
-        message: '⚠️ No puede haber variantes duplicadas (talla + color)'
+        message: '⚠️ Variantes duplicadas (talla + color)'
       }
     ]
   },
+
   stock: {
     type: Number,
     default: 0,
@@ -185,64 +178,48 @@ const productSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-/* 🧮 Virtual: stockTotal */
+/* 🔢 Virtual: stock total dinámico */
 productSchema.virtual('stockTotal').get(function () {
-  return this.variants?.length > 0
-    ? this.variants.reduce((sum, v) => sum + (v.stock || 0), 0)
-    : (this.stock || 0);
+  return this.variants?.reduce((acc, v) => acc + (v.stock || 0), 0) || 0;
 });
 
-productSchema.set('toJSON', { virtuals: true });
-productSchema.set('toObject', { virtuals: true });
-
-/* 🔧 Hook: Slug + Meta automáticos */
+/* 🧠 Normalización y slug automático */
 productSchema.pre('validate', async function (next) {
-  if (this.name) {
-    this.name = this.name.trim();
-  }
+  this.name = this.name?.trim();
+  this.category = this.category?.trim().toLowerCase();
+  this.subcategory = this.subcategory?.trim().toLowerCase();
 
-  if (this.category) {
-    this.category = this.category.trim().toLowerCase();
-  }
-
-  if (this.subcategory) {
-    this.subcategory = this.subcategory.trim().toLowerCase();
-  }
-
+  // 🏷️ Slug único
   if (!this.slug && this.name) {
-    let slugBase = this.name
-      .toLowerCase()
-      .trim()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/ñ/g, 'n')
-      .replace(/\s+/g, '-')
-      .replace(/[^\w-]/g, '')
-      .substring(0, 100);
+    const base = this.name.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/ñ/g, 'n').replace(/\s+/g, '-')
+      .replace(/[^\w-]/g, '').substring(0, 100);
 
-    let slug = slugBase;
-    let counter = 1;
+    let slug = base;
+    let i = 1;
 
     while (await mongoose.models.Product.exists({ slug })) {
-      slug = `${slugBase}-${counter++}`;
+      slug = `${base}-${i++}`;
     }
 
     this.slug = slug;
   }
 
+  // 📝 Meta por defecto
   if (!this.metaDescription && this.name && this.category) {
-    this.metaDescription = `Compra ${this.name} en nuestra sección de ${this.category}. ¡Calidad garantizada en KM & EZ ROPA!`;
+    this.metaDescription = `Compra ${this.name} en nuestra sección de ${this.category}. Calidad garantizada.`;
   }
 
   next();
 });
 
-/* 🔍 Índices útiles */
+/* 🧭 Índices para búsquedas */
 productSchema.index({ slug: 1 }, { unique: true });
-productSchema.index({ name: 1, category: 1, subcategory: 1 }, { background: true });
+productSchema.index({ name: 1, category: 1, subcategory: 1 });
 productSchema.index({ category: 1, subcategory: 1, tallaTipo: 1 });
 productSchema.index({ isActive: 1 });
 
-/* 🚀 Exportar modelo */
+/* 📦 Exportar modelo */
 const Product = mongoose.model('Product', productSchema);
 export default Product;

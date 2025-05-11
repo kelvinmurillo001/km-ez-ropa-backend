@@ -24,20 +24,27 @@ import {
   updateOrderStatusValidation
 } from '../validators/orderValidator.js';
 
+import validarErrores from '../middleware/validarErrores.js';
+
 const router = express.Router();
 
 /* ───────────────────────────────────────────── */
 /* 🛒 RUTAS: Gestión de Pedidos                  */
 /* ───────────────────────────────────────────── */
 
-// 🛍️ Crear nuevo pedido (PÚBLICO)
+/**
+ * ➕ Crear nuevo pedido (PÚBLICO)
+ */
 router.post(
   '/',
   createOrderValidation,
+  validarErrores,
   createOrder
 );
 
-// 📋 Obtener todos los pedidos (SOLO ADMIN)
+/**
+ * 📋 Obtener todos los pedidos (SOLO ADMIN)
+ */
 router.get(
   '/',
   authMiddleware,
@@ -45,7 +52,9 @@ router.get(
   getOrders
 );
 
-// ✅ Obtener pedidos del cliente autenticado
+/**
+ * 👤 Obtener pedidos del cliente autenticado
+ */
 router.get(
   '/mis-pedidos',
   authMiddleware,
@@ -53,16 +62,21 @@ router.get(
   getMyOrders
 );
 
-// 🔄 Actualizar estado de un pedido
+/**
+ * 🔄 Actualizar estado de un pedido
+ */
 router.put(
   '/:id/estado',
   authMiddleware,
   adminOnly,
   updateOrderStatusValidation,
+  validarErrores,
   actualizarEstadoPedido
 );
 
-// 🗑️ Eliminar pedido por ID
+/**
+ * 🗑️ Eliminar pedido por ID
+ */
 router.delete(
   '/:id',
   authMiddleware,
@@ -72,10 +86,13 @@ router.delete(
       .isMongoId()
       .withMessage('⚠️ ID de pedido inválido')
   ],
+  validarErrores,
   deleteOrder
 );
 
-// 📊 Obtener resumen de estadísticas de pedidos
+/**
+ * 📊 Obtener resumen de estadísticas
+ */
 router.get(
   '/resumen',
   authMiddleware,
@@ -83,7 +100,9 @@ router.get(
   getOrderStats
 );
 
-// 📊 Alias para resumen de ventas
+/**
+ * 📊 Alias adicional para resumen
+ */
 router.get(
   '/stats/ventas',
   authMiddleware,
@@ -91,7 +110,9 @@ router.get(
   getOrderStats
 );
 
-// 🔎 Seguimiento de pedido por código
+/**
+ * 🔍 Seguimiento de pedido por código
+ */
 router.get(
   '/track/:codigo',
   [
@@ -99,6 +120,7 @@ router.get(
       .notEmpty()
       .withMessage('⚠️ El código de seguimiento es obligatorio')
   ],
+  validarErrores,
   trackOrder
 );
 

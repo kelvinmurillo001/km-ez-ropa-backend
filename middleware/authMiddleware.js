@@ -15,28 +15,41 @@ import {
  */
 const authMiddleware = async (req, res, next) => {
   try {
-    // 🧾 1. Intentar con token JWT
-    const token = obtenerTokenDesdeHeader(req);
+    const method = req.method;
+    const path = req.originalUrl;
 
+    // 1️⃣ INTENTAR CON TOKEN JWT
+    const token = obtenerTokenDesdeHeader(req);
     if (token) {
       try {
         const decoded = jwt.verify(token, config.jwtSecret);
         const user = await User.findById(decoded.id).select('-password -refreshToken').lean();
 
-        if (!user || user.banned || user.deleted) {
-          logger.warn(`🚫 Usuario inválido o bloqueado: ${decoded.id}`);
-          return enviarError(res, '🚫 Usuario no autorizado o eliminado.', 403);
+        if (!user) {
+          logger.warn(`🚫 Usuario no encontrado - ID: ${decoded.id}`);
+          return enviarError(res, '🚫 Usuario no válido.', 403);
+        }
+
+        if (user.banned) {
+          logger.warn(`🚫 Usuario bloqueado: ${user._id}`);
+          return enviarError(res, '⛔ Tu cuenta está suspendida.', 403);
+        }
+
+        if (user.deleted) {
+          logger.warn(`🚫 Usuario eliminado: ${user._id}`);
+          return enviarError(res, '⛔ Usuario eliminado.', 403);
         }
 
         req.user = user;
+        logger.info(`✅ Autenticado por token: ${user.email || user.username} - ${method} ${path}`);
         return next();
       } catch (err) {
-        logger.warn(`⛔ Token JWT inválido: ${err.message}`);
-        return enviarError(res, '⛔ Token inválido o expirado.', 401, err.message);
+        logger.warn(`⛔ JWT inválido: ${err.message} - ${method} ${path}`);
+        return enviarError(res, '⛔ Token inválido o expirado.', 401, config.env !== 'production' ? err.message : undefined);
       }
     }
 
-    // 🧪 2. Intentar con sesión activa (Passport)
+    // 2️⃣ INTENTAR CON SESIÓN ACTIVA (PASSPORT)
     if (req.isAuthenticated?.() && req.user) {
       req.user = {
         id: req.user._id,
@@ -44,11 +57,12 @@ const authMiddleware = async (req, res, next) => {
         email: req.user.email,
         role: req.user.role
       };
+      logger.info(`✅ Autenticado por sesión: ${req.user.email || req.user.id} - ${method} ${path}`);
       return next();
     }
 
-    // ❌ 3. No autenticado
-    logger.warn('🔒 Requiere autenticación (sin token ni sesión)');
+    // 3️⃣ NO AUTENTICADO
+    logger.warn(`🔒 Requiere autenticación - ${method} ${path}`);
     return enviarError(res, '🔒 Debes iniciar sesión para continuar.', 401);
   } catch (err) {
     logger.error('❌ Error inesperado en authMiddleware:', err);
@@ -56,7 +70,7 @@ const authMiddleware = async (req, res, next) => {
       res,
       '❌ Error interno de autenticación.',
       500,
-      config.env !== 'production' ? err.message : null
+      config.env !== 'production' ? err.message : undefined
     );
   }
 };

@@ -9,28 +9,28 @@ import { enviarError } from '../utils/admin-auth-utils.js';
  */
 const adminOnly = (req, res, next) => {
   try {
-    const user = req.user;
+    const { user } = req;
 
-    // 🛑 No autenticado o sin estructura válida
-    if (!user || typeof user !== 'object' || !user.role) {
-      logger.warn(`❌ Acceso anónimo o sin usuario válido desde IP: ${req.ip}`);
+    if (!user || typeof user !== 'object') {
+      logger.warn(`❌ Acceso anónimo o sin user object válido - IP: ${req.ip} - ${req.method} ${req.originalUrl}`);
       return enviarError(res, '🚫 Debes iniciar sesión como administrador.', 401);
     }
 
-    const role = String(user.role).trim().toLowerCase();
+    const role = String(user.role || '').trim().toLowerCase();
+    const userId = user._id || user.id || 'sin ID';
 
     if (role !== 'admin') {
-      logger.warn(`⛔ Acceso no autorizado. Usuario: ${user._id || '¿sin ID?'} (rol: ${role}) - IP: ${req.ip}`);
+      logger.warn(`⛔ Acceso no autorizado. Usuario: ${userId} (rol: ${role}) - IP: ${req.ip}`);
       return enviarError(res, '⛔ Acción denegada. Requiere permisos de administrador.', 403);
     }
 
-    // ✅ Usuario autorizado
+    logger.info(`✅ Acceso autorizado para admin: ${user.username || user.email || userId} - ${req.method} ${req.originalUrl}`);
     next();
   } catch (err) {
-    logger.error('❌ Error en adminOnly middleware:', err);
+    logger.error('❌ Error en middleware adminOnly:', err);
     return enviarError(
       res,
-      '❌ Error interno al validar rol de administrador.',
+      '❌ Error interno al validar permisos de administrador.',
       500,
       config.env !== 'production' ? err.message : undefined
     );

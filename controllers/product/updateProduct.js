@@ -43,32 +43,27 @@ const updateProduct = async (req, res) => {
 
     // 🖼️ Imagen principal
     let newImages = product.images
-    if (Array.isArray(images)) {
-      if (images.length > 1) {
-        return res.status(400).json({ ok: false, message: '⚠️ Solo se permite una imagen principal.' })
+    if (Array.isArray(images) && images.length === 1) {
+      const img = images[0]
+      if (!img.url || !img.cloudinaryId) {
+        return res.status(400).json({ ok: false, message: '⚠️ Imagen principal incompleta.' })
       }
-      if (images.length === 1) {
-        const img = images[0]
-        if (!img.url || !img.cloudinaryId) {
-          return res.status(400).json({ ok: false, message: '⚠️ Imagen principal incompleta.' })
-        }
 
-        const url = img.url.trim()
-        if (product.images[0]?.url !== url) {
-          // Eliminar imagen anterior
-          await Promise.all(
-            product.images.map(i =>
-              i.cloudinaryId ? cloudinary.uploader.destroy(i.cloudinaryId) : null
-            )
-          )
-          newImages = [{
-            url,
-            cloudinaryId: img.cloudinaryId.trim(),
-            talla: String(img.talla || '').trim().toLowerCase(),
-            color: String(img.color || '').trim().toLowerCase()
-          }]
-        }
+      const url = img.url.trim()
+      if (product.images[0]?.url !== url) {
+        await Promise.all(product.images.map(i =>
+          i.cloudinaryId ? cloudinary.uploader.destroy(i.cloudinaryId) : null
+        ))
+
+        newImages = [{
+          url,
+          cloudinaryId: img.cloudinaryId.trim(),
+          talla: String(img.talla || '').trim().toLowerCase(),
+          color: String(img.color || '').trim().toLowerCase()
+        }]
       }
+    } else if (images.length > 1) {
+      return res.status(400).json({ ok: false, message: '⚠️ Solo se permite una imagen principal.' })
     }
 
     // 🎨 Variantes
@@ -78,13 +73,11 @@ const updateProduct = async (req, res) => {
         return res.status(400).json({ ok: false, message: '⚠️ Máximo 4 variantes permitidas.' })
       }
 
-      const comboSet = new Set()
-      await Promise.all(
-        product.variants.map(v =>
-          v.cloudinaryId ? cloudinary.uploader.destroy(v.cloudinaryId) : null
-        )
-      )
+      await Promise.all(product.variants.map(v =>
+        v.cloudinaryId ? cloudinary.uploader.destroy(v.cloudinaryId) : null
+      ))
 
+      const comboSet = new Set()
       for (const v of variants) {
         const talla = String(v.talla || '').trim().toLowerCase()
         const col = String(v.color || '').trim().toLowerCase()
@@ -117,7 +110,6 @@ const updateProduct = async (req, res) => {
     if (name && name.trim() !== product.name) {
       product.name = name.trim()
 
-      // Regenerar slug único
       const slugBase = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
         .replace(/ñ/g, 'n').replace(/\s+/g, '-')
         .replace(/[^\w-]/g, '').toLowerCase()
@@ -150,16 +142,14 @@ const updateProduct = async (req, res) => {
     product.variants = newVariants
     product.updatedBy = req.user?.username || 'admin'
 
-    // 📦 Stock
     if (newVariants.length > 0) {
-      product.stock = undefined // stock se calculará desde variantes
+      product.stock = undefined
     } else if (!isNaN(Number(stock))) {
       product.stock = Number(stock)
     }
 
     await product.save()
 
-    // 📤 Respuesta enriquecida
     const result = product.toObject()
     result.stockTotal = calcularStockTotal(result)
 

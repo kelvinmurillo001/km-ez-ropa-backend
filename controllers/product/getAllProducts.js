@@ -23,7 +23,7 @@ const getAllProducts = async (req, res) => {
 
     const filtro = { isActive: true };
 
-    // 🔍 Filtros de texto
+    // 🔍 Filtros por nombre, categoría y subcategoría
     if (nombre.trim()) {
       filtro.name = { $regex: new RegExp(nombre.trim(), 'i') };
     }
@@ -34,12 +34,12 @@ const getAllProducts = async (req, res) => {
       filtro.subcategory = subcategoria.trim().toLowerCase();
     }
 
-    // 🔍 Filtro por destacados
+    // ⭐ Productos destacados
     if (featured === 'true') {
       filtro.featured = true;
     }
 
-    // 💲 Filtro por rango de precios
+    // 💵 Rango de precios
     const min = parseFloat(precioMin);
     const max = parseFloat(precioMax);
     if (!isNaN(min) || !isNaN(max)) {
@@ -53,18 +53,19 @@ const getAllProducts = async (req, res) => {
     const limit = Math.min(Math.max(parseInt(limite, 10) || 12, 1), 50);
     const skip = (page - 1) * limit;
 
-    // 🚀 Consulta de productos y conteo total
+    // 🔍 Consulta base
     const [productosRaw, totalBruto] = await Promise.all([
       Product.find(filtro).skip(skip).limit(limit).sort({ createdAt: -1 }).lean(),
       Product.countDocuments(filtro)
     ]);
 
-    // 📦 Cálculo de stock y filtrado adicional
+    // 📦 Cálculo de stock real
     const productos = productosRaw.map(p => ({
       ...p,
       stockTotal: calcularStockTotal(p)
     }));
 
+    // ✅ Filtro extra: solo productos con stock si se solicita
     const productosFiltrados = conStock === 'true'
       ? productos.filter(p => p.stockTotal > 0)
       : productos;

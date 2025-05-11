@@ -36,7 +36,6 @@ const getActivePromotions = async (req, res) => {
         ? Math.ceil((p.endDate - p.startDate) / (1000 * 60 * 60 * 24))
         : null,
       createdAt: p.createdAt?.toISOString() || null,
-      // Extra opcional si existen en el modelo:
       theme: p.theme || null,
       mediaUrl: p.mediaUrl || null,
       mediaType: p.mediaType || null,

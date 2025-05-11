@@ -1,10 +1,8 @@
-// 📁 backend/models/Promotion.js
-import mongoose from 'mongoose'
+// 📁 backend/models/promotion.js
+import mongoose from 'mongoose';
 
-// 🌐 Páginas válidas donde se puede mostrar una promoción
-const allowedPages = ['home', 'categorias', 'productos', 'detalle', 'carrito', 'checkout']
+const allowedPages = ['home', 'categorias', 'productos', 'detalle', 'carrito', 'checkout'];
 
-// 🏷️ Esquema de promoción publicitaria
 const promotionSchema = new mongoose.Schema(
   {
     message: {
@@ -34,12 +32,12 @@ const promotionSchema = new mongoose.Schema(
     },
     mediaUrl: {
       type: String,
-      default: null,
       trim: true,
+      default: null,
       validate: {
         validator: (url) =>
           !url || /^https?:\/\/.+\.(jpg|jpeg|png|webp|mp4|gif|svg|avif)$/i.test(url),
-        message: '⚠️ URL de multimedia no válida (debe ser imagen o video)'
+        message: '⚠️ URL de imagen/video inválida. Debe terminar en una extensión válida.'
       }
     },
     mediaType: {
@@ -51,8 +49,11 @@ const promotionSchema = new mongoose.Schema(
       type: [String],
       default: [],
       validate: {
-        validator: (arr) => arr.every(p => allowedPages.includes(p)),
-        message: '⚠️ Una o más páginas no son válidas para promociones'
+        validator: function (arr) {
+          if (!Array.isArray(arr)) return false;
+          return arr.every((p) => allowedPages.includes(p));
+        },
+        message: '⚠️ Una o más páginas asignadas no son válidas.'
       }
     },
     position: {
@@ -74,29 +75,31 @@ const promotionSchema = new mongoose.Schema(
     }
   },
   {
-    timestamps: true // 📅 createdAt y updatedAt automáticos
+    timestamps: true
   }
-)
+);
 
-// 🔍 Índices útiles
-promotionSchema.index({ active: 1, startDate: 1, endDate: 1 })
-promotionSchema.index({ slug: 1 }, { unique: false }) // Recomendación: si decides hacer único, cambia a `unique: true`
+// 📌 Índices útiles
+promotionSchema.index({ active: 1, startDate: 1, endDate: 1 });
+promotionSchema.index({ slug: 1 }); // Cambiar a `unique: true` si lo usarás en URLs
 
-// 🔁 Pre-save: Generar slug automáticamente
+// 🧼 Pre-save: genera slug si no existe
 promotionSchema.pre('save', function (next) {
   if (!this.slug && this.message) {
-    this.slug = this.message
+    const base = this.message
       .toLowerCase()
       .trim()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // quitar tildes
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // elimina tildes
       .replace(/ñ/g, 'n')
-      .replace(/\s+/g, '-')
-      .replace(/[^\w-]/g, '')
-      .substring(0, 100)
-  }
-  next()
-})
+      .replace(/[^a-z0-9\s-]/g, '') // elimina caracteres especiales
+      .replace(/\s+/g, '-')         // espacios a guiones
+      .replace(/--+/g, '-')         // quita múltiples guiones
+      .replace(/^-+|-+$/g, '');     // limpia extremos
 
-// 🚀 Exportar modelo
-const Promotion = mongoose.model('Promotion', promotionSchema)
-export default Promotion
+    this.slug = base.substring(0, 100);
+  }
+  next();
+});
+
+const Promotion = mongoose.model('Promotion', promotionSchema);
+export default Promotion;

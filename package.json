@@ -14,7 +14,9 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
-    "fix-slugs": "node corregirSlugs.js"
+    "fix-slugs": "node scripts/corregirSlugsCLI.js",
+    "fix-slugs-dry": "node scripts/corregirSlugsCLI.js --dry-run",
+    "fix-slugs-missing": "node scripts/corregirSlugsCLI.js --solo-faltantes"
   },
   "dependencies": {
     "axios": "^1.9.0",

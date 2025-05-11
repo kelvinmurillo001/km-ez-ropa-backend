@@ -9,25 +9,25 @@ import { enviarError } from '../utils/admin-auth-utils.js';
  */
 const clientOnly = (req, res, next) => {
   try {
-    const user = req.user;
+    const { user } = req;
 
-    // 🛑 No autenticado
     if (!user || typeof user !== 'object') {
-      logger.warn(`❌ Usuario no autenticado (se requiere cliente) - IP: ${req.ip}`);
+      logger.warn(`❌ Acceso anónimo o user object inválido - IP: ${req.ip} - ${req.method} ${req.originalUrl}`);
       return enviarError(res, '🔒 Debes iniciar sesión como cliente.', 401);
     }
 
     const role = String(user.role || '').trim().toLowerCase();
+    const userId = user._id || user.id || 'sin ID';
 
     if (role !== 'client') {
-      logger.warn(`⛔ Acceso denegado. Usuario: ${user._id || '¿sin ID?'} con rol: ${role} - IP: ${req.ip}`);
+      logger.warn(`⛔ Acceso denegado. Usuario: ${userId} (rol: ${role}) - IP: ${req.ip}`);
       return enviarError(res, '⛔ Solo los clientes pueden acceder a esta ruta.', 403);
     }
 
-    // ✅ Autorizado
+    logger.info(`✅ Acceso autorizado para cliente: ${user.username || user.email || userId} - ${req.method} ${req.originalUrl}`);
     next();
   } catch (err) {
-    logger.error('❌ Error en clientOnly middleware:', err);
+    logger.error('❌ Error en middleware clientOnly:', err);
     return enviarError(
       res,
       '❌ Error interno al validar acceso de cliente.',

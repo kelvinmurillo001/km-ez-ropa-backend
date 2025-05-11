@@ -1,4 +1,5 @@
 // 📁 backend/config/passport.js
+
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import User from '../models/User.js';
@@ -19,13 +20,19 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        console.log('📥 Google profile:', JSON.stringify(profile, null, 2));
+        logger.debug('📥 Perfil recibido de Google:', {
+          id: profile.id,
+          emails: profile.emails,
+          displayName: profile.displayName,
+        });
 
-        const emailObj = Array.isArray(profile.emails) ? profile.emails.find(e => !!e?.value) : null;
+        const emailObj = Array.isArray(profile.emails)
+          ? profile.emails.find((e) => !!e?.value)
+          : null;
         const email = emailObj?.value?.toLowerCase();
 
         if (!email || typeof email !== 'string') {
-          logger.error('❌ No se pudo obtener un email válido desde Google:', profile.emails);
+          logger.error('❌ No se pudo obtener un email válido desde Google', profile.emails);
           return done(new Error('❌ Email inválido desde Google'), null);
         }
 
@@ -49,7 +56,7 @@ passport.use(
           return done(null, user);
         }
 
-        // 🆕 Crear nuevo usuario con username único
+        // 🆕 Crear nuevo usuario
         const displayName = (profile.displayName || email.split('@')[0] || '').trim();
         if (displayName.length < 2) {
           return done(new Error('❌ Nombre muy corto para crear cuenta'), null);
@@ -69,7 +76,7 @@ passport.use(
         logger.info(`✨ Usuario creado con Google: ${newUser.email}`);
         return done(null, newUser);
       } catch (error) {
-        logger.error('❌ Error en estrategia de Google:', error);
+        logger.error('❌ Error en estrategia de Google OAuth:', error);
         return done(error, null);
       }
     }
@@ -78,15 +85,22 @@ passport.use(
 
 // 🧠 Guardar usuario en sesión
 passport.serializeUser((user, done) => {
-  done(null, user.id);
+  try {
+    done(null, user.id);
+  } catch (err) {
+    logger.error('❌ Error al serializar usuario:', err);
+    done(err);
+  }
 });
 
 // 🔄 Recuperar usuario desde sesión
 passport.deserializeUser(async (id, done) => {
   try {
     const user = await User.findById(id).exec();
+    if (!user) throw new Error('Usuario no encontrado al deserializar');
     done(null, user);
   } catch (error) {
+    logger.error('❌ Error al deserializar usuario:', error);
     done(error, null);
   }
 });

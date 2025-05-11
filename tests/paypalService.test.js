@@ -1,6 +1,6 @@
 // 📁 backend/tests/paypalService.test.js
 
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'; // SOLO sandbox
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'; // ⚠️ SOLO para entorno sandbox
 
 import dotenv from 'dotenv';
 dotenv.config();
@@ -37,10 +37,11 @@ describe('🧪 PayPalService - Pruebas de integración robustas', () => {
       expect(response).toHaveProperty('id', createdOrderId);
       expect(response.status).toBe('COMPLETED');
     } catch (err) {
-      // PayPal Sandbox puede requerir aprobación manual desde la cuenta de pruebas
       const msg = err.message?.toLowerCase() || '';
+
+      // ⚠️ Error común en entorno sandbox si no fue aprobada manualmente
       if (msg.includes('422') || msg.includes('approval')) {
-        console.warn('⚠️ La orden no fue aprobada aún en sandbox. Captura no realizada.');
+        console.warn('⚠️ La orden aún no fue aprobada en Sandbox. Captura omitida.');
       } else {
         throw err; // Rethrow si es otro error inesperado
       }

@@ -1,3 +1,4 @@
+// 📁 backend/tests/paypal.test.js
 import request from 'supertest'
 import app from '../server.js'
 
@@ -6,7 +7,7 @@ describe('🧪 Pruebas de integración: PayPal API', () => {
   test('❌ No debe permitir crear una orden sin total', async () => {
     const res = await request(app)
       .post('/api/paypal/create-order')
-      .send({}) // total faltante
+      .send({}) // Falta el campo `total`
 
     expect(res.statusCode).toBe(400)
     expect(res.body).toMatchObject({

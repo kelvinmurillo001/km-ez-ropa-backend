@@ -64,7 +64,8 @@ if (config.enableHPP) app.use(hpp());
 /* ─────────────── CORS SEGURO ─────────────── */
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || config.allowedOrigins.includes(origin.replace(/\/$/, ''))) {
+    const cleanOrigin = origin?.replace(/\/$/, '');
+    if (!origin || config.allowedOrigins.includes(cleanOrigin)) {
       callback(null, true);
     } else {
       console.warn(`❌ CORS rechazado: ${origin}`);
@@ -76,7 +77,6 @@ app.use(cors({
 
 /* ─────────────── HEADERS SEGUROS ─────────────── */
 app.use(helmet());
-
 app.use((req, res, next) => {
   res.setHeader("Content-Security-Policy",
     "default-src 'self'; " +
@@ -133,7 +133,7 @@ app.use('/api/stats', statsRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/paypal', paypalRoutes);
 
-/* ─────────────── RUTA ABIERTA PARA TEST ─────────────── */
+/* ─────────────── ESTADO RÁPIDO ─────────────── */
 app.get('/api/status', (req, res) => {
   res.status(200).json({
     status: 'ok',
@@ -142,7 +142,7 @@ app.get('/api/status', (req, res) => {
 });
 
 /* ─────────────── SALUD DETALLADA ─────────────── */
-app.get('/health', async (req, res) => {
+app.get('/health', async (_req, res) => {
   const dbStatus = mongoose.connection.readyState === 1 ? '🟢 OK' : '🔴 ERROR';
   if (dbStatus !== '🟢 OK') console.warn('⚠️ MongoDB no está disponible.');
   res.status(200).json({
@@ -152,15 +152,15 @@ app.get('/health', async (req, res) => {
   });
 });
 
-/* ─────────────── CATCH ALL ─────────────── */
+/* ─────────────── RUTA NO ENCONTRADA ─────────────── */
 app.use('*', (req, res) => {
   res.status(404).json({ message: '❌ Ruta no encontrada' });
 });
 
-/* ─────────────── MANEJO DE ERRORES ─────────────── */
+/* ─────────────── MANEJO GLOBAL DE ERRORES ─────────────── */
 app.use(errorHandler);
 
-/* ─────────────── CONEXIÓN Y ARRANQUE ─────────────── */
+/* ─────────────── INICIAR SERVIDOR ─────────────── */
 if (process.env.NODE_ENV !== 'test') {
   const startServer = async () => {
     try {

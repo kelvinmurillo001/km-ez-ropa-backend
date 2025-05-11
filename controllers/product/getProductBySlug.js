@@ -9,16 +9,17 @@ import { calcularStockTotal } from '../../utils/calculateStock.js';
  */
 const getProductBySlug = async (req, res) => {
   try {
-    // Sanitizar y normalizar slug
+    // 🧼 Sanitizar y normalizar slug
     let slugRaw = String(req.params.slug || '')
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // quitar acentos
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // eliminar acentos
       .trim().toLowerCase();
 
-    // Validar slug (mínimo 3 caracteres, sin caracteres inválidos)
+    // ✅ Validar slug (mínimo 3 caracteres, solo letras, números y guiones)
     if (!/^[a-z0-9-]{3,}$/.test(slugRaw)) {
       return res.status(400).json({ ok: false, message: '⚠️ Slug inválido.' });
     }
 
+    // 🔍 Buscar producto por slug
     const productoDoc = await Product.findOne({ slug: slugRaw })
       .select('-__v')
       .lean();
@@ -27,10 +28,11 @@ const getProductBySlug = async (req, res) => {
       return res.status(404).json({ ok: false, message: '❌ Producto no encontrado.' });
     }
 
-    // Calcular stock total
+    // 📦 Calcular stock total y preparar respuesta
     const stockTotal = calcularStockTotal(productoDoc);
     const producto = { ...productoDoc, stockTotal };
 
+    // 🪵 Log de desarrollo
     if (process.env.NODE_ENV !== 'production') {
       console.log(`🔍 Producto obtenido por slug: ${slugRaw}`);
     }

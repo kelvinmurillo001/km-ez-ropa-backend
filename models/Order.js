@@ -10,32 +10,32 @@ const orderItemSchema = new mongoose.Schema({
   },
   name: {
     type: String,
-    required: [true, '⚠️ Nombre del producto requerido'],
+    required: true,
     trim: true,
-    minlength: [2, '⚠️ Mínimo 2 caracteres'],
-    maxlength: [100, '⚠️ Máximo 100 caracteres']
+    minlength: 2,
+    maxlength: 100
   },
   talla: {
     type: String,
-    required: [true, '⚠️ Talla requerida'],
+    required: true,
     trim: true,
     lowercase: true
   },
   color: {
     type: String,
-    required: [true, '⚠️ Color requerido'],
+    required: true,
     trim: true,
     lowercase: true
   },
   cantidad: {
     type: Number,
-    required: [true, '⚠️ Cantidad requerida'],
-    min: [1, '⚠️ La cantidad mínima es 1']
+    required: true,
+    min: 1
   },
   precio: {
     type: Number,
-    required: [true, '⚠️ Precio requerido'],
-    min: [0, '⚠️ El precio no puede ser negativo']
+    required: true,
+    min: 0
   }
 }, { _id: false })
 
@@ -44,8 +44,8 @@ const facturaSchema = new mongoose.Schema({
   razonSocial: {
     type: String,
     trim: true,
-    minlength: [2, '⚠️ Razón social muy corta'],
-    maxlength: [100, '⚠️ Razón social demasiado larga']
+    minlength: 2,
+    maxlength: 100
   },
   ruc: {
     type: String,
@@ -71,40 +71,40 @@ const orderSchema = new mongoose.Schema({
   },
   total: {
     type: Number,
-    required: [true, '⚠️ Total requerido'],
-    min: [0, '⚠️ El total no puede ser negativo']
+    required: true,
+    min: 0
   },
   nombreCliente: {
     type: String,
-    required: [true, '⚠️ Nombre del cliente requerido'],
+    required: true,
     trim: true,
-    minlength: [2, '⚠️ Mínimo 2 caracteres'],
-    maxlength: [100, '⚠️ Máximo 100 caracteres']
+    minlength: 2,
+    maxlength: 100
   },
   email: {
     type: String,
-    required: [true, '⚠️ Correo electrónico requerido'],
+    required: true,
     trim: true,
     lowercase: true,
     match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, '⚠️ Email inválido']
   },
   telefono: {
     type: String,
-    required: [true, '⚠️ Teléfono requerido'],
+    required: true,
     trim: true,
-    match: [/^[0-9\-+ ]{7,20}$/, '⚠️ Teléfono inválido']
+    match: [/^[0-9+\- ()]{7,20}$/, '⚠️ Teléfono inválido']
   },
   direccion: {
     type: String,
-    required: [true, '⚠️ Dirección requerida'],
+    required: true,
     trim: true,
-    minlength: [5, '⚠️ Dirección muy corta'],
-    maxlength: [300, '⚠️ Dirección demasiado larga']
+    minlength: 5,
+    maxlength: 300
   },
   nota: {
     type: String,
     trim: true,
-    maxlength: [300, '⚠️ Nota demasiado larga'],
+    maxlength: 300,
     default: ''
   },
   estado: {
@@ -145,26 +145,35 @@ const orderSchema = new mongoose.Schema({
       return ret
     }
   },
-  toObject: { virtuals: true, versionKey: false }
+  toObject: {
+    virtuals: true,
+    versionKey: false
+  }
 })
 
-// 🔁 Hook: Generar código de seguimiento único antes de guardar
+// 🔁 Pre-save: Generar código de seguimiento único
 orderSchema.pre('save', async function (next) {
   if (this.codigoSeguimiento) return next()
+
   const generateCode = () => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
     return 'KMZ-' + Array.from({ length: 8 }, () =>
       chars[Math.floor(Math.random() * chars.length)]).join('')
   }
-  let code = generateCode()
-  while (await mongoose.models.Order.exists({ codigoSeguimiento: code })) {
+
+  let code, exists, attempts = 0
+  do {
     code = generateCode()
-  }
+    exists = await mongoose.models.Order.exists({ codigoSeguimiento: code })
+    attempts++
+  } while (exists && attempts < 10)
+
+  if (exists) return next(new Error('⚠️ No se pudo generar un código único. Intenta de nuevo.'))
   this.codigoSeguimiento = code
-  return next()
+  next()
 })
 
-// 🔍 Índice compuesto: estado + fecha
+// 📦 Índices útiles
 orderSchema.index({ estado: 1, createdAt: -1 })
 
 // 🚀 Exportar modelo

@@ -11,15 +11,17 @@ import { enviarError, enviarExito } from '../utils/admin-auth-utils.js';
 export const createOrder = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    console.log('❌ Validaciones fallidas en pedido:', errors.array());
     return enviarError(res, '❌ Validaciones fallidas.', 400);
   }
 
   try {
     const {
       items, total, nombreCliente, nota = '', email, telefono,
-      direccion, metodoPago = 'efectivo', factura = {}
+      direccion = '', metodoPago = 'efectivo', factura = {}
     } = req.body;
 
+    // ✅ Validaciones
     if (!Array.isArray(items) || items.length === 0) {
       return enviarError(res, '⚠️ El pedido debe contener al menos un producto.', 400);
     }
@@ -44,6 +46,7 @@ export const createOrder = async (req, res) => {
 
     for (const item of items) {
       const { productId, talla, color, cantidad } = item;
+
       if (!mongoose.Types.ObjectId.isValid(productId)) {
         return enviarError(res, `⚠️ ID de producto inválido: ${productId}`, 400);
       }
@@ -72,6 +75,7 @@ export const createOrder = async (req, res) => {
       estado: metodoPago.toLowerCase() === 'transferencia' ? 'pendiente' : 'pagado'
     });
 
+    // 🔄 Actualizar stock
     await Promise.all(items.map(async ({ productId, talla, color, cantidad }) => {
       const updated = await Product.findOneAndUpdate(
         { _id: productId, 'variants.talla': talla.toLowerCase(), 'variants.color': color.toLowerCase() },
@@ -85,12 +89,12 @@ export const createOrder = async (req, res) => {
         );
 
         if (variant && variant.stock <= 0) variant.activo = false;
-
         updated.isActive = !verificarProductoAgotado(updated.variants);
         await updated.save();
       }
     }));
 
+    // 📩 Enviar notificación
     await sendNotification({
       nombreCliente: newOrder.nombreCliente,
       telefono: newOrder.telefono,

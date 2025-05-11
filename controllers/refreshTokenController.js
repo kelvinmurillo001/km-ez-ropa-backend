@@ -10,10 +10,10 @@ import logger from '../utils/logger.js';
  */
 export const refreshTokenController = async (req, res) => {
   try {
-    const token = req.cookies?.refreshToken;
+    const rawToken = req.cookies?.refreshToken;
 
-    if (!token) {
-      logger.warn('🛑 Refresh token no proporcionado en la cookie.');
+    if (!rawToken || typeof rawToken !== 'string') {
+      logger.warn('🛑 No se proporcionó refreshToken en cookies.');
       return res.status(401).json({
         ok: false,
         message: '❌ Debes iniciar sesión para continuar.'
@@ -22,29 +22,31 @@ export const refreshTokenController = async (req, res) => {
 
     let payload;
     try {
-      payload = jwt.verify(token, config.jwtRefreshSecret);
+      payload = jwt.verify(rawToken, config.jwtRefreshSecret);
     } catch (err) {
-      logger.warn(`⛔ Refresh token inválido o expirado: ${err.message}`);
+      logger.warn(`⛔ Token inválido o expirado: ${err.message}`);
       return res.status(403).json({
         ok: false,
-        message: '⛔ Tu sesión ha expirado. Inicia sesión nuevamente.',
+        message: '⛔ Tu sesión ha expirado. Vuelve a iniciar sesión.',
         ...(config.env !== 'production' && { error: err.message })
       });
     }
 
     const userId = String(payload.id || '').trim();
-    if (!userId) {
-      logger.warn('⚠️ ID de usuario inválido en el token.');
-      return res.status(403).json({ ok: false, message: '⚠️ Token inválido.' });
+    if (!userId || userId.length < 10) {
+      logger.warn(`⚠️ ID inválido extraído del token: ${userId}`);
+      return res.status(403).json({ ok: false, message: '⚠️ Token inválido. ID incorrecto.' });
     }
 
     const user = await User.findById(userId).select('+refreshToken');
-    if (!user || user.refreshToken !== token) {
-      logger.warn(`⚠️ Token revocado o no coincide. ID: ${userId}`);
-      return res.status(403).json({
-        ok: false,
-        message: '⚠️ Sesión inválida. Por favor inicia sesión de nuevo.'
-      });
+    if (!user) {
+      logger.warn(`❌ Usuario no encontrado con ID: ${userId}`);
+      return res.status(403).json({ ok: false, message: '❌ Usuario no válido. Inicia sesión.' });
+    }
+
+    if (user.refreshToken !== rawToken) {
+      logger.warn(`⚠️ Token no coincide para el usuario ${user.username || user.email}`);
+      return res.status(403).json({ ok: false, message: '⚠️ Sesión inválida. Requiere nuevo login.' });
     }
 
     const newAccessToken = jwt.sign(
@@ -53,18 +55,18 @@ export const refreshTokenController = async (req, res) => {
       { expiresIn: '15m' }
     );
 
-    logger.info(`🔁 Nuevo access token emitido para: ${user.email || user.username || user._id}`);
+    logger.info(`🔁 Nuevo AccessToken emitido para: ${user.username || user.email}`);
 
     return res.status(200).json({
       ok: true,
       accessToken: newAccessToken,
-      message: '✅ Access token renovado exitosamente.'
+      message: '✅ Token renovado correctamente.'
     });
   } catch (err) {
-    logger.error('❌ Error interno al renovar token:', err);
+    logger.error('❌ Error al renovar el token:', err);
     return res.status(500).json({
       ok: false,
-      message: '❌ No se pudo renovar el token. Inicia sesión nuevamente.',
+      message: '❌ Error interno al renovar token. Intenta iniciar sesión nuevamente.',
       ...(config.env !== 'production' && { error: err.message })
     });
   }

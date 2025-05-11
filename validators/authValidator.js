@@ -2,22 +2,25 @@
 
 import { body } from 'express-validator'
 
+// 🧪 Validaciones individuales reutilizables
 const usernameValidator = body('username')
+  .exists({ checkFalsy: true }).withMessage('⚠️ El nombre de usuario es obligatorio.')
+  .isString().withMessage('⚠️ El nombre de usuario debe ser una cadena de texto.')
   .trim()
-  .notEmpty().withMessage('⚠️ El nombre de usuario es obligatorio.')
   .isLength({ min: 3 }).withMessage('⚠️ Mínimo 3 caracteres en el nombre de usuario.')
   .escape()
 
 const passwordValidator = body('password')
+  .exists({ checkFalsy: true }).withMessage('⚠️ La contraseña es obligatoria.')
+  .isString().withMessage('⚠️ La contraseña debe ser una cadena de texto.')
   .trim()
-  .notEmpty().withMessage('⚠️ La contraseña es obligatoria.')
   .isLength({ min: 6 }).withMessage('⚠️ Mínimo 6 caracteres en la contraseña.')
   .escape()
 
-// 🛡️ Validador para login de administrador
+// 🛡️ Validador principal para login de administrador
 export const loginValidation = [usernameValidator, passwordValidator]
 
-// (Opcional) Reutilizable para futuros registros/login de usuarios
+// 📦 Exportación para reuso flexible
 export const baseUserValidation = {
   usernameValidator,
   passwordValidator
