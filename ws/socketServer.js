@@ -1,26 +1,27 @@
 // 📁 backend/ws/socketServer.js
 import { Server } from 'socket.io'
 
-export default function crearSocketServer(httpServer) {
-  const io = new Server(httpServer, {
+let io
+
+export default function crearSocketServer(server) {
+  io = new Server(server, {
     cors: {
-      origin: '*',
+      origin: '*', // cambia esto según tu frontend
       methods: ['GET', 'POST']
     }
   })
 
   io.on('connection', (socket) => {
-    console.log(`🟢 Socket conectado: ${socket.id}`)
+    console.log(`🔌 Nuevo cliente conectado: ${socket.id}`)
 
-    socket.on('disconnect', () => {
-      console.log(`🔴 Socket desconectado: ${socket.id}`)
+    socket.on('mensaje', (msg) => {
+      console.log(`📩 Mensaje recibido: ${msg}`)
     })
 
-    // Puedes manejar eventos personalizados:
-    socket.on('mensaje', (data) => {
-      console.log('📩 mensaje recibido:', data)
+    socket.on('disconnect', () => {
+      console.log(`❌ Cliente desconectado: ${socket.id}`)
     })
   })
 
-  global.io = io // opcional para emitir desde otras partes del backend
+  global.io = io
 }

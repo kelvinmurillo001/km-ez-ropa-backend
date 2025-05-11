@@ -1,21 +1,17 @@
 // 📁 backend/metrics/prometheus.js
-import client from 'prom-client'
+import { Registry, collectDefaultMetrics, Counter } from 'prom-client'
 
-const promRegistry = new client.Registry()
+const promRegistry = new Registry()
+collectDefaultMetrics({ register: promRegistry })
 
-// Métricas globales
-const httpRequestCounter = new client.Counter({
+const httpRequestCounter = new Counter({
   name: 'http_requests_total',
-  help: 'Cantidad total de solicitudes HTTP',
-  labelNames: ['method', 'route', 'status']
+  help: 'Número total de requests HTTP',
+  labelNames: ['method', 'route', 'status'],
+  registers: [promRegistry]
 })
 
-promRegistry.registerMetric(httpRequestCounter)
-promRegistry.setDefaultLabels({ app: 'km-ez-ropa' })
-client.collectDefaultMetrics({ register: promRegistry })
-
-// Middleware para contar solicitudes
-export function contarRequestPrometheus(req, res, next) {
+const contarRequestPrometheus = (req, res, next) => {
   res.on('finish', () => {
     httpRequestCounter.inc({
       method: req.method,
@@ -26,4 +22,4 @@ export function contarRequestPrometheus(req, res, next) {
   next()
 }
 
-export { promRegistry }
+export { promRegistry, contarRequestPrometheus }
