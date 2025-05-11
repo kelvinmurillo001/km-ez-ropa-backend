@@ -19,6 +19,8 @@
     "fix-slugs-missing": "node scripts/corregirSlugsCLI.js --solo-faltantes"
   },
   "dependencies": {
+    "@sentry/node": "^9.17.0",
+    "@sentry/tracing": "^7.120.3",
     "axios": "^1.9.0",
     "bcryptjs": "^3.0.2",
     "cloudinary": "^1.41.3",
@@ -43,8 +45,10 @@
     "nodemailer": "^7.0.2",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
+    "prom-client": "^15.1.3",
     "streamifier": "^0.1.1",
     "winston": "^3.17.0",
+    "ws": "^8.18.2",
     "xss-clean": "^0.1.4"
   },
   "devDependencies": {

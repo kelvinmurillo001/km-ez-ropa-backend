@@ -1,47 +1,56 @@
 // 📁 backend/server.js
-import dotenv from 'dotenv';
-dotenv.config();
+import dotenv from 'dotenv'
+dotenv.config()
 
-import express from 'express';
-import mongoose from 'mongoose';
-import cors from 'cors';
-import helmet from 'helmet';
-import morgan from 'morgan';
-import compression from 'compression';
-import path from 'path';
-import rateLimit from 'express-rate-limit';
-import slowDown from 'express-slow-down';
-import mongoSanitize from 'express-mongo-sanitize';
-import xssClean from 'xss-clean';
-import hpp from 'hpp';
-import session from 'express-session';
-import passport from 'passport';
-import MongoStore from 'connect-mongo';
-import { fileURLToPath } from 'url';
+import express from 'express'
+import mongoose from 'mongoose'
+import cors from 'cors'
+import helmet from 'helmet'
+import morgan from 'morgan'
+import compression from 'compression'
+import path from 'path'
+import rateLimit from 'express-rate-limit'
+import slowDown from 'express-slow-down'
+import mongoSanitize from 'express-mongo-sanitize'
+import xssClean from 'xss-clean'
+import hpp from 'hpp'
+import session from 'express-session'
+import passport from 'passport'
+import MongoStore from 'connect-mongo'
+import { fileURLToPath } from 'url'
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// 📦 Nuevos imports
+import Sentry from './config/sentry.js'
+import validarBodyGlobal from './middleware/validateBody.js'
+import { promRegistry } from './metrics/prometheus.js'
+import crearSocketServer from './ws/socketServer.js'
 
-import config from './config/configuracionesito.js';
-import errorHandler from './middleware/errorHandler.js';
-import './config/passport.js';
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+import config from './config/configuracionesito.js'
+import errorHandler from './middleware/errorHandler.js'
+import './config/passport.js'
 
 // 🔗 Rutas API
-import authRoutes from './routes/authRoutes.js';
-import googleAuthRoutes from './routes/auth.js';
-import productRoutes from './routes/productRoutes.js';
-import categoryRoutes from './routes/categoryRoutes.js';
-import promoRoutes from './routes/promoRoutes.js';
-import orderRoutes from './routes/orderRoutes.js';
-import visitRoutes from './routes/visitRoutes.js';
-import statsRoutes from './routes/statsRoutes.js';
-import uploadRoutes from './routes/uploadRoutes.js';
-import paypalRoutes from './routes/paypalRoutes.js';
+import authRoutes from './routes/authRoutes.js'
+import googleAuthRoutes from './routes/auth.js'
+import productRoutes from './routes/productRoutes.js'
+import categoryRoutes from './routes/categoryRoutes.js'
+import promoRoutes from './routes/promoRoutes.js'
+import orderRoutes from './routes/orderRoutes.js'
+import visitRoutes from './routes/visitRoutes.js'
+import statsRoutes from './routes/statsRoutes.js'
+import uploadRoutes from './routes/uploadRoutes.js'
+import paypalRoutes from './routes/paypalRoutes.js'
 
-const app = express();
+const app = express()
+
+/* ───────🛡️ SENTRY──────── */
+app.use(Sentry.Handlers.requestHandler())
 
 /* ─────────────── SEGURIDAD GENERAL ─────────────── */
-app.disable('x-powered-by');
+app.disable('x-powered-by')
 
 app.use(rateLimit({
   windowMs: config.rateLimitWindow * 60 * 1000,
@@ -49,34 +58,34 @@ app.use(rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: '⚠️ Demasiadas solicitudes. Intenta más tarde.'
-}));
+}))
 
 app.use(slowDown({
   windowMs: config.rateLimitWindow * 60 * 1000,
   delayAfter: 20,
   delayMs: () => 500
-}));
+}))
 
-if (config.enableMongoSanitize) app.use(mongoSanitize());
-if (config.enableXSSProtection) app.use(xssClean());
-if (config.enableHPP) app.use(hpp());
+if (config.enableMongoSanitize) app.use(mongoSanitize())
+if (config.enableXSSProtection) app.use(xssClean())
+if (config.enableHPP) app.use(hpp())
 
 /* ─────────────── CORS SEGURO ─────────────── */
 app.use(cors({
   origin: (origin, callback) => {
-    const cleanOrigin = origin?.replace(/\/$/, '');
+    const cleanOrigin = origin?.replace(/\/$/, '')
     if (!origin || config.allowedOrigins.includes(cleanOrigin)) {
-      callback(null, true);
+      callback(null, true)
     } else {
-      console.warn(`❌ CORS rechazado: ${origin}`);
-      callback(new Error('CORS no permitido'));
+      console.warn(`❌ CORS rechazado: ${origin}`)
+      callback(new Error('CORS no permitido'))
     }
   },
   credentials: true
-}));
+}))
 
 /* ─────────────── HEADERS SEGUROS ─────────────── */
-app.use(helmet());
+app.use(helmet())
 app.use((req, res, next) => {
   res.setHeader("Content-Security-Policy",
     "default-src 'self'; " +
@@ -87,19 +96,20 @@ app.use((req, res, next) => {
     "frame-src https://accounts.google.com https://*.google.com; " +
     "connect-src 'self' https://api.kmezropacatalogo.com https://www.google-analytics.com; " +
     "object-src 'none'; base-uri 'self'; frame-ancestors 'none';"
-  );
-  res.setHeader("X-Frame-Options", "DENY");
-  res.setHeader("X-Content-Type-Options", "nosniff");
-  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
-  res.setHeader("Permissions-Policy", "geolocation=(), microphone=()");
-  next();
-});
+  )
+  res.setHeader("X-Frame-Options", "DENY")
+  res.setHeader("X-Content-Type-Options", "nosniff")
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin")
+  res.setHeader("Permissions-Policy", "geolocation=(), microphone=()")
+  next()
+})
 
 /* ─────────────── LOGS Y PARSERS ─────────────── */
-app.use(morgan(config.env === 'production' ? 'tiny' : 'dev'));
-app.use(express.json({ limit: '5mb' }));
-app.use(express.urlencoded({ extended: true }));
-app.use(compression());
+app.use(morgan(config.env === 'production' ? 'tiny' : 'dev'))
+app.use(express.json({ limit: '5mb' }))
+app.use(express.urlencoded({ extended: true }))
+app.use(validarBodyGlobal) // ✅ Validación Global
+app.use(compression())
 
 /* ─────────────── SESIONES SEGURAS ─────────────── */
 app.use(session({
@@ -116,69 +126,84 @@ app.use(session({
     httpOnly: true,
     sameSite: config.env === 'production' ? 'none' : 'lax'
   }
-}));
+}))
 
-app.use(passport.initialize());
-app.use(passport.session());
+app.use(passport.initialize())
+app.use(passport.session())
 
 /* ─────────────── RUTAS API ─────────────── */
-app.use('/api/auth', authRoutes);
-app.use('/auth', googleAuthRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/promos', promoRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/visitas', visitRoutes);
-app.use('/api/stats', statsRoutes);
-app.use('/api/uploads', uploadRoutes);
-app.use('/api/paypal', paypalRoutes);
+app.use('/api/auth', authRoutes)
+app.use('/auth', googleAuthRoutes)
+app.use('/api/products', productRoutes)
+app.use('/api/categories', categoryRoutes)
+app.use('/api/promos', promoRoutes)
+app.use('/api/orders', orderRoutes)
+app.use('/api/visitas', visitRoutes)
+app.use('/api/stats', statsRoutes)
+app.use('/api/uploads', uploadRoutes)
+app.use('/api/paypal', paypalRoutes)
+
+/* ─────────────── MÉTRICAS PROMETHEUS ─────────────── */
+app.get('/metrics', async (req, res) => {
+  try {
+    res.set('Content-Type', promRegistry.contentType)
+    res.end(await promRegistry.metrics())
+  } catch (err) {
+    res.status(500).end(err.message)
+  }
+})
 
 /* ─────────────── ESTADO RÁPIDO ─────────────── */
 app.get('/api/status', (req, res) => {
   res.status(200).json({
     status: 'ok',
     timestamp: new Date().toISOString()
-  });
-});
+  })
+})
 
 /* ─────────────── SALUD DETALLADA ─────────────── */
 app.get('/health', async (_req, res) => {
-  const dbStatus = mongoose.connection.readyState === 1 ? '🟢 OK' : '🔴 ERROR';
-  if (dbStatus !== '🟢 OK') console.warn('⚠️ MongoDB no está disponible.');
+  const dbStatus = mongoose.connection.readyState === 1 ? '🟢 OK' : '🔴 ERROR'
+  if (dbStatus !== '🟢 OK') console.warn('⚠️ MongoDB no está disponible.')
   res.status(200).json({
     status: '✅ Backend activo',
     db: dbStatus,
     timestamp: new Date().toISOString()
-  });
-});
+  })
+})
 
 /* ─────────────── RUTA NO ENCONTRADA ─────────────── */
 app.use('*', (req, res) => {
-  res.status(404).json({ message: '❌ Ruta no encontrada' });
-});
+  res.status(404).json({ message: '❌ Ruta no encontrada' })
+})
+
+/* ───────🛠️ SENTRY GLOBAL ERRORS──────── */
+app.use(Sentry.Handlers.errorHandler())
 
 /* ─────────────── MANEJO GLOBAL DE ERRORES ─────────────── */
-app.use(errorHandler);
+app.use(errorHandler)
 
 /* ─────────────── INICIAR SERVIDOR ─────────────── */
 if (process.env.NODE_ENV !== 'test') {
   const startServer = async () => {
     try {
-      if (!config.mongoUri) throw new Error('❌ FALTA config.mongoUri');
-      await mongoose.connect(config.mongoUri);
-      console.log('✅ Conectado a MongoDB Atlas');
+      if (!config.mongoUri) throw new Error('❌ FALTA config.mongoUri')
+      await mongoose.connect(config.mongoUri)
+      console.log('✅ Conectado a MongoDB Atlas')
 
-      app.listen(config.port, () => {
-        console.log(`🚀 Servidor escuchando en: http://localhost:${config.port}`);
-        console.log(`🌍 Modo: ${config.env}`);
-      });
+      const httpServer = app.listen(config.port, () => {
+        console.log(`🚀 Servidor escuchando en: http://localhost:${config.port}`)
+        console.log(`🌍 Modo: ${config.env}`)
+      })
+
+      crearSocketServer(httpServer) // ✅ WebSocket
     } catch (err) {
-      console.error('❌ Error al conectar con MongoDB:', err.message);
-      process.exit(1);
+      console.error('❌ Error al conectar con MongoDB:', err.message)
+      process.exit(1)
     }
-  };
+  }
 
-  startServer();
+  startServer()
 }
 
-export default app;
+export default app
