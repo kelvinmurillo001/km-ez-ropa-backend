@@ -1,4 +1,3 @@
-// 📁 backend/server.js
 import dotenv from 'dotenv'
 dotenv.config()
 
@@ -19,8 +18,7 @@ import passport from 'passport'
 import MongoStore from 'connect-mongo'
 import { fileURLToPath } from 'url'
 
-// 📦 Nuevos imports
-import Sentry from './config/sentry.js'
+// ✅ Mejoras modernas
 import validarBodyGlobal from './middleware/validateBody.js'
 import { promRegistry } from './metrics/prometheus.js'
 import crearSocketServer from './ws/socketServer.js'
@@ -45,9 +43,6 @@ import uploadRoutes from './routes/uploadRoutes.js'
 import paypalRoutes from './routes/paypalRoutes.js'
 
 const app = express()
-
-/* ───────🛡️ SENTRY──────── */
-app.use(Sentry.Handlers.requestHandler())
 
 /* ─────────────── SEGURIDAD GENERAL ─────────────── */
 app.disable('x-powered-by')
@@ -176,9 +171,6 @@ app.get('/health', async (_req, res) => {
 app.use('*', (req, res) => {
   res.status(404).json({ message: '❌ Ruta no encontrada' })
 })
-
-/* ───────🛠️ SENTRY GLOBAL ERRORS──────── */
-app.use(Sentry.Handlers.errorHandler())
 
 /* ─────────────── MANEJO GLOBAL DE ERRORES ─────────────── */
 app.use(errorHandler)

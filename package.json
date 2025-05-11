@@ -19,9 +19,7 @@
     "fix-slugs-missing": "node scripts/corregirSlugsCLI.js --solo-faltantes"
   },
   "dependencies": {
-    "@sentry/integrations": "^7.114.0",
-    "@sentry/node": "^9.17.0",
-    "@sentry/tracing": "^7.120.3",
+
     "axios": "^1.9.0",
     "bcryptjs": "^3.0.2",
     "cloudinary": "^1.41.3",
