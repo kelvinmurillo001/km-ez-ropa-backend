@@ -28,7 +28,6 @@ const generateRefreshToken = (user) =>
 export const loginAdmin = async (req, res) => {
   console.log('📥 [LOGIN] Body recibido:', req.body);
 
-  // ⛔ Verificar errores de validación
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     console.warn('⚠️ Errores de validación:', errors.array());
@@ -43,24 +42,23 @@ export const loginAdmin = async (req, res) => {
       return enviarError(res, '⚠️ Usuario y contraseña requeridos.', 400);
     }
 
-    console.log(`🔍 Intento de login con: "${rawUser}"`);
+    console.log(`🔍 Intento de login con usuario: "${rawUser}"`);
 
     const user = await User.findOne({ username: rawUser }).select('+password +refreshToken');
-
     if (!user) {
       console.warn('❌ Usuario no encontrado');
-      return enviarError(res, '❌ Usuario no encontrado.', 401);
+      return enviarError(res, '❌ Usuario o contraseña incorrectos.', 401);
     }
 
     if (user.role !== 'admin') {
-      console.warn('⛔ Acceso denegado: no es admin');
+      console.warn('⛔ Acceso denegado: el usuario no es administrador');
       return enviarError(res, '⛔ Acceso restringido solo a administradores.', 403);
     }
 
     const isMatch = await user.matchPassword(rawPass);
     if (!isMatch) {
       console.warn('🔐 Contraseña incorrecta');
-      return enviarError(res, '❌ Contraseña incorrecta.', 401);
+      return enviarError(res, '❌ Usuario o contraseña incorrectos.', 401);
     }
 
     const accessToken = generateAccessToken(user);
@@ -73,22 +71,19 @@ export const loginAdmin = async (req, res) => {
       httpOnly: true,
       secure: config.env === 'production',
       sameSite: 'Strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    return enviarExito(
-      res,
-      {
-        accessToken,
-        user: {
-          id: user._id,
-          username: user.username,
-          name: user.name,
-          role: user.role,
-        },
+    return enviarExito(res, {
+      accessToken,
+      user: {
+        id: user._id,
+        username: user.username,
+        name: user.name,
+        role: user.role,
       },
-      '✅ Acceso concedido'
-    );
+    }, '✅ Acceso concedido');
   } catch (err) {
     console.error('💥 Error inesperado en loginAdmin:', err);
     return enviarError(res, '❌ Error interno al iniciar sesión.', 500, err.message);

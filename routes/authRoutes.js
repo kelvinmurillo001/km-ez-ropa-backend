@@ -21,17 +21,20 @@ router.post(
   '/login',
   [
     body('username')
+      .trim()
+      .toLowerCase()
       .exists().withMessage('⚠️ Usuario requerido')
       .isString().withMessage('⚠️ El usuario debe ser texto')
       .isLength({ min: 3 }).withMessage('⚠️ Usuario muy corto'),
 
     body('password')
+      .trim()
       .exists().withMessage('⚠️ Contraseña requerida')
       .isString().withMessage('⚠️ La contraseña debe ser texto')
       .isLength({ min: 6 }).withMessage('⚠️ Contraseña muy corta')
   ],
   (req, res, next) => {
-    logger.info(`🔐 Intento de login recibido - IP: ${req.ip}`);
+    logger.info(`🔐 POST ${req.originalUrl} - Login recibido desde IP: ${req.ip}`);
     return loginAdmin(req, res, next);
   }
 );
@@ -43,7 +46,7 @@ router.post(
 router.post(
   '/refresh',
   (req, res, next) => {
-    logger.debug(`🔄 Petición de refreshToken desde IP: ${req.ip}`);
+    logger.debug(`🔄 POST ${req.originalUrl} - Refresh token desde IP: ${req.ip}`);
     return refreshTokenController(req, res, next);
   }
 );

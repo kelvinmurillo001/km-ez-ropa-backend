@@ -1,4 +1,3 @@
-// 📁 backend/controllers/product/getProductById.js
 import mongoose from 'mongoose';
 import Product from '../../models/Product.js';
 import { calcularStockTotal } from '../../utils/calculateStock.js';
@@ -10,18 +9,18 @@ import { calcularStockTotal } from '../../utils/calculateStock.js';
  */
 const getProductById = async (req, res) => {
   try {
-    const id = String(req.params.id || '').trim();
+    const rawId = String(req.params.id || '').trim();
 
-    // ✅ Validar ID de MongoDB
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    // ✅ Validar formato de ID
+    if (!rawId || !mongoose.Types.ObjectId.isValid(rawId)) {
       return res.status(400).json({
         ok: false,
         message: '⚠️ ID de producto inválido.'
       });
     }
 
-    // 🔍 Buscar producto por ID
-    const productoDoc = await Product.findById(id)
+    // 🔎 Buscar producto
+    const productoDoc = await Product.findById(rawId)
       .select('-__v')
       .lean();
 
@@ -32,17 +31,17 @@ const getProductById = async (req, res) => {
       });
     }
 
-    // 📦 Calcular stock total
+    // 📦 Agregar stock calculado
     const producto = {
       ...productoDoc,
       stockTotal: calcularStockTotal(productoDoc)
     };
 
-    // 🪵 Logging en desarrollo
+    // 🧾 Log de depuración
     if (process.env.NODE_ENV !== 'production') {
       console.log(
-        `🔍 Producto obtenido: ${producto.name} (ID: ${id})` +
-        (req.user ? ` [Usuario: ${req.user.username}]` : ' [Acceso público]')
+        `🔍 Producto cargado: ${producto.name} (ID: ${rawId})` +
+        (req.user ? ` [por: ${req.user.username}]` : ' [acceso público]')
       );
     }
 

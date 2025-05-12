@@ -41,7 +41,7 @@ import visitRoutes from './routes/visitRoutes.js';
 import statsRoutes from './routes/statsRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import paypalRoutes from './routes/paypalRoutes.js';
-import resetPasswordRoutes from './routes/reset.js'; // Nueva ruta
+import resetPasswordRoutes from './routes/reset.js';
 
 const app = express();
 
@@ -138,7 +138,7 @@ app.use('/api/visitas', visitRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/paypal', paypalRoutes);
-app.use('/api/auth', resetPasswordRoutes); // Incluimos ruta de reset nueva
+app.use('/api/auth', resetPasswordRoutes);
 
 /* ─────────────── MÉTRICAS PROMETHEUS ─────────────── */
 app.get('/metrics', async (req, res) => {
@@ -150,15 +150,11 @@ app.get('/metrics', async (req, res) => {
   }
 });
 
-/* ─────────────── ESTADO RÁPIDO ─────────────── */
+/* ─────────────── ESTADO Y SALUD ─────────────── */
 app.get('/api/status', (req, res) => {
-  res.status(200).json({
-    status: 'ok',
-    timestamp: new Date().toISOString()
-  });
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-/* ─────────────── SALUD DETALLADA ─────────────── */
 app.get('/health', async (_req, res) => {
   const dbStatus = mongoose.connection.readyState === 1 ? '🟢 OK' : '🔴 ERROR';
   if (dbStatus !== '🟢 OK') console.warn('⚠️ MongoDB no está disponible.');
@@ -169,12 +165,11 @@ app.get('/health', async (_req, res) => {
   });
 });
 
-/* ─────────────── RUTA NO ENCONTRADA ─────────────── */
+/* ─────────────── 404 Y ERRORES ─────────────── */
 app.use('*', (req, res) => {
   res.status(404).json({ message: '❌ Ruta no encontrada' });
 });
 
-/* ─────────────── MANEJO GLOBAL DE ERRORES ─────────────── */
 app.use(errorHandler);
 
 /* ─────────────── INICIAR SERVIDOR ─────────────── */
@@ -190,7 +185,7 @@ if (process.env.NODE_ENV !== 'test') {
         console.log(`🌍 Modo: ${config.env}`);
       });
 
-      crearSocketServer(httpServer); // WebSocket
+      crearSocketServer(httpServer);
     } catch (err) {
       console.error('❌ Error al conectar con MongoDB:', err.message);
       process.exit(1);

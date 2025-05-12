@@ -1,4 +1,3 @@
-// 📁 backend/controllers/product/createProduct.js
 import Product from '../../models/Product.js';
 import { validationResult } from 'express-validator';
 
@@ -40,13 +39,13 @@ const createProduct = async (req, res) => {
     createdBy = String(createdBy || '').trim();
     color = String(color || '').trim().toLowerCase();
 
-    if (!name || typeof price !== 'number' || !category || !subcategory || !tallaTipo || !createdBy) {
+    if (!name || typeof price !== 'number' || !category || !tallaTipo || !createdBy) {
       return res.status(400).json({ ok: false, message: '⚠️ Faltan campos obligatorios.' });
     }
 
     // 📷 Validación de imagen principal
-    if (!Array.isArray(images) || images.length < 1) {
-      return res.status(400).json({ ok: false, message: '⚠️ Debe haber al menos una imagen principal.' });
+    if (!Array.isArray(images) || images.length !== 1) {
+      return res.status(400).json({ ok: false, message: '⚠️ Debes enviar solo una imagen principal.' });
     }
 
     const main = images[0];
@@ -54,33 +53,35 @@ const createProduct = async (req, res) => {
       return res.status(400).json({ ok: false, message: '⚠️ Imagen principal incompleta.' });
     }
 
-    // 🧬 Validación de variantes o stock
+    // 🧬 Validación de variantes
+    const hasVariants = Array.isArray(variants) && variants.length > 0;
     let generalStock = 0;
-    if (Array.isArray(variants) && variants.length > 0) {
+
+    if (hasVariants) {
       if (variants.length > 4) {
         return res.status(400).json({ ok: false, message: '⚠️ Máximo 4 variantes permitidas.' });
       }
 
-      const comboSet = new Set();
+      const combos = new Set();
       for (const v of variants) {
-        const vtalla = String(v.talla || '').trim().toLowerCase();
-        const vcolor = String(v.color || '').trim().toLowerCase();
-        const vstock = Number(v.stock);
+        const talla = String(v.talla || '').trim().toLowerCase();
+        const col = String(v.color || '').trim().toLowerCase();
         const url = String(v.imageUrl || '').trim();
         const id = String(v.cloudinaryId || '').trim();
+        const stk = Number(v.stock);
 
-        if (!vtalla || !vcolor || !url || !id || isNaN(vstock)) {
+        if (!talla || !col || !url || !id || isNaN(stk)) {
           return res.status(400).json({
             ok: false,
-            message: '⚠️ Cada variante requiere talla, color, imagen, cloudinaryId y stock numérico.'
+            message: '⚠️ Cada variante debe tener talla, color, imagen, cloudinaryId y stock válido.'
           });
         }
 
-        const key = `${vtalla}-${vcolor}`;
-        if (comboSet.has(key)) {
-          return res.status(400).json({ ok: false, message: '⚠️ Variantes duplicadas (talla+color).' });
+        const combo = `${talla}-${col}`;
+        if (combos.has(combo)) {
+          return res.status(400).json({ ok: false, message: '⚠️ Variantes duplicadas.' });
         }
-        comboSet.add(key);
+        combos.add(combo);
       }
     } else {
       generalStock = Number(stock);
@@ -89,18 +90,18 @@ const createProduct = async (req, res) => {
       }
     }
 
-    // 🔍 Verificar duplicado
+    // 🧪 Verificación de duplicado por nombre y subcategoría
     const duplicate = await Product.findOne({ name, subcategory });
     if (duplicate) {
       return res.status(409).json({ ok: false, message: '⚠️ Ya existe un producto con ese nombre y subcategoría.' });
     }
 
-    // 🔠 Limpieza de tallas
+    // 🔡 Limpieza de tallas
     const cleanedSizes = Array.isArray(sizes)
       ? sizes.filter(s => typeof s === 'string' && s.trim()).map(s => s.trim().toUpperCase())
       : [];
 
-    // 🧪 Slug único
+    // 🔠 Slug único
     const slugBase = name
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/ñ/g, 'n')
@@ -122,7 +123,7 @@ const createProduct = async (req, res) => {
       return res.status(500).json({ ok: false, message: '⚠️ No se pudo generar un slug único.' });
     }
 
-    // 📦 Crear producto
+    // 📦 Preparar producto
     const productData = {
       name,
       description,
@@ -132,7 +133,7 @@ const createProduct = async (req, res) => {
       tallaTipo,
       featured: featured === true || featured === 'true',
       variants,
-      stock: variants.length === 0 ? generalStock : undefined,
+      stock: hasVariants ? undefined : generalStock,
       images,
       color,
       sizes: cleanedSizes,

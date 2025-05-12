@@ -1,4 +1,3 @@
-// 📁 backend/controllers/product/getProductBySlug.js
 import Product from '../../models/Product.js';
 import { calcularStockTotal } from '../../utils/calculateStock.js';
 
@@ -9,32 +8,45 @@ import { calcularStockTotal } from '../../utils/calculateStock.js';
  */
 const getProductBySlug = async (req, res) => {
   try {
-    // 🧼 Sanitizar y normalizar slug
-    let slugRaw = String(req.params.slug || '')
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // eliminar acentos
-      .trim().toLowerCase();
+    const rawSlug = String(req.params.slug || '').trim();
 
-    // ✅ Validar slug (mínimo 3 caracteres, solo letras, números y guiones)
-    if (!/^[a-z0-9-]{3,}$/.test(slugRaw)) {
-      return res.status(400).json({ ok: false, message: '⚠️ Slug inválido.' });
+    // 🧼 Normalizar y sanitizar slug
+    const slug = rawSlug
+      .normalize('NFD')                     // Eliminar tildes
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, '')           // Solo letras, números, guiones
+      .replace(/--+/g, '-')                 // Quitar guiones duplicados
+      .replace(/^-+|-+$/g, '');             // Quitar guiones al inicio o fin
+
+    if (!slug || slug.length < 3) {
+      return res.status(400).json({
+        ok: false,
+        message: '⚠️ Slug inválido.'
+      });
     }
 
-    // 🔍 Buscar producto por slug
-    const productoDoc = await Product.findOne({ slug: slugRaw })
+    // 🔍 Buscar producto
+    const productoDoc = await Product.findOne({ slug })
       .select('-__v')
       .lean();
 
     if (!productoDoc) {
-      return res.status(404).json({ ok: false, message: '❌ Producto no encontrado.' });
+      return res.status(404).json({
+        ok: false,
+        message: '❌ Producto no encontrado.'
+      });
     }
 
-    // 📦 Calcular stock total y preparar respuesta
-    const stockTotal = calcularStockTotal(productoDoc);
-    const producto = { ...productoDoc, stockTotal };
+    // 📦 Agregar stock calculado
+    const producto = {
+      ...productoDoc,
+      stockTotal: calcularStockTotal(productoDoc)
+    };
 
-    // 🪵 Log de desarrollo
+    // 🧾 Log interno en desarrollo
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`🔍 Producto obtenido por slug: ${slugRaw}`);
+      console.log(`🔍 Producto cargado por slug: ${slug}`);
     }
 
     return res.status(200).json({ ok: true, data: producto });

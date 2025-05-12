@@ -12,19 +12,20 @@ export const refreshTokenController = async (req, res) => {
   try {
     const rawToken = req.cookies?.refreshToken;
 
-    if (!rawToken || typeof rawToken !== 'string') {
-      logger.warn('🛑 No se proporcionó refreshToken en cookies.');
+    if (!rawToken || typeof rawToken !== 'string' || rawToken.length < 20) {
+      logger.warn('🛑 No se proporcionó un refreshToken válido en cookies.');
       return res.status(401).json({
         ok: false,
         message: '❌ Debes iniciar sesión para continuar.'
       });
     }
 
+    // 🔍 Verificar token de refresco
     let payload;
     try {
       payload = jwt.verify(rawToken, config.jwtRefreshSecret);
     } catch (err) {
-      logger.warn(`⛔ Token inválido o expirado: ${err.message}`);
+      logger.warn(`⛔ RefreshToken inválido o expirado: ${err.message}`);
       return res.status(403).json({
         ok: false,
         message: '⛔ Tu sesión ha expirado. Vuelve a iniciar sesión.',
@@ -45,17 +46,18 @@ export const refreshTokenController = async (req, res) => {
     }
 
     if (user.refreshToken !== rawToken) {
-      logger.warn(`⚠️ Token no coincide para el usuario ${user.username || user.email}`);
+      logger.warn(`⚠️ Token no coincide para el usuario ${user.username || user.email || 'N/A'}`);
       return res.status(403).json({ ok: false, message: '⚠️ Sesión inválida. Requiere nuevo login.' });
     }
 
+    // 🔐 Generar nuevo access token
     const newAccessToken = jwt.sign(
       { id: user._id, role: user.role },
       config.jwtSecret,
       { expiresIn: '15m' }
     );
 
-    logger.info(`🔁 Nuevo AccessToken emitido para: ${user.username || user.email}`);
+    logger.info(`🔁 AccessToken renovado para: ${user.username || user.email || 'N/A'}`);
 
     return res.status(200).json({
       ok: true,
@@ -63,7 +65,7 @@ export const refreshTokenController = async (req, res) => {
       message: '✅ Token renovado correctamente.'
     });
   } catch (err) {
-    logger.error('❌ Error al renovar el token:', err);
+    logger.error('❌ Error inesperado al renovar token:', err);
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al renovar token. Intenta iniciar sesión nuevamente.',

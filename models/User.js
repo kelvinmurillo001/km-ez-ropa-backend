@@ -7,12 +7,14 @@ const userSchema = new mongoose.Schema(
     googleId: {
       type: String,
       default: null,
-      trim: true
+      trim: true,
+      sparse: true
     },
     username: {
       type: String,
       unique: true,
       trim: true,
+      lowercase: true,
       minlength: [3, '⚠️ El nombre de usuario debe tener al menos 3 caracteres'],
       sparse: true
     },
@@ -100,8 +102,8 @@ userSchema.pre('validate', function (next) {
   if (this.email) this.email = this.email.toLowerCase().trim();
   if (this.username) this.username = this.username.toLowerCase().trim();
 
-  if (!this.googleId && !this.password) {
-    this.invalidate('password', '⚠️ Se requiere contraseña si no usas autenticación de Google');
+  if (!this.googleId && (!this.password || this.password.length < 6)) {
+    this.invalidate('password', '⚠️ Se requiere una contraseña válida si no usas autenticación de Google');
   }
 
   next();
@@ -127,7 +129,7 @@ userSchema.methods.matchPassword = async function (inputPassword) {
   return await bcrypt.compare(inputPassword, this.password);
 };
 
-// 📌 Índices para consultas rápidas y seguridad
+// 📌 Índices útiles
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ username: 1 }, { unique: true, sparse: true });
 userSchema.index({ role: 1 });

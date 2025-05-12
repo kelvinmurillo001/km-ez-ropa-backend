@@ -1,4 +1,3 @@
-// 📁 backend/controllers/product/getAllProducts.js
 import Product from '../../models/Product.js';
 import { calcularStockTotal } from '../../utils/calculateStock.js';
 
@@ -18,15 +17,17 @@ const getAllProducts = async (req, res) => {
       featured,
       pagina = 1,
       limite = 12,
-      conStock
+      conStock = 'false'
     } = req.query;
 
     const filtro = { isActive: true };
 
-    // 🔍 Filtros por nombre, categoría y subcategoría
+    // 🔍 Filtro por nombre
     if (nombre.trim()) {
       filtro.name = { $regex: new RegExp(nombre.trim(), 'i') };
     }
+
+    // 🔍 Filtro por categoría y subcategoría
     if (categoria.trim()) {
       filtro.category = categoria.trim().toLowerCase();
     }
@@ -39,7 +40,7 @@ const getAllProducts = async (req, res) => {
       filtro.featured = true;
     }
 
-    // 💵 Rango de precios
+    // 💵 Filtro por rango de precio
     const min = parseFloat(precioMin);
     const max = parseFloat(precioMax);
     if (!isNaN(min) || !isNaN(max)) {
@@ -53,34 +54,33 @@ const getAllProducts = async (req, res) => {
     const limit = Math.min(Math.max(parseInt(limite, 10) || 12, 1), 50);
     const skip = (page - 1) * limit;
 
-    // 🔍 Consulta base
+    // 🧾 Obtener productos y conteo total
     const [productosRaw, totalBruto] = await Promise.all([
       Product.find(filtro).skip(skip).limit(limit).sort({ createdAt: -1 }).lean(),
       Product.countDocuments(filtro)
     ]);
 
-    // 📦 Cálculo de stock real
-    const productos = productosRaw.map(p => ({
-      ...p,
-      stockTotal: calcularStockTotal(p)
+    // 🧮 Calcular stock solo si se necesita
+    const productos = productosRaw.map((prod) => ({
+      ...prod,
+      stockTotal: calcularStockTotal(prod)
     }));
 
-    // ✅ Filtro extra: solo productos con stock si se solicita
-    const productosFiltrados = conStock === 'true'
-      ? productos.filter(p => p.stockTotal > 0)
-      : productos;
+    // ✅ Filtro adicional: solo con stock
+    const productosFinales =
+      conStock === 'true' ? productos.filter((p) => p.stockTotal > 0) : productos;
 
-    const totalVisibles = productosFiltrados.length;
+    const totalVisibles = productosFinales.length;
     const totalPaginas = Math.ceil(totalBruto / limit);
 
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`📦 Productos devueltos: ${totalVisibles} de ${totalBruto} encontrados`);
+      console.log(`📦 Productos: ${totalVisibles}/${totalBruto} | Página ${page}`);
     }
 
     return res.status(200).json({
       ok: true,
       data: {
-        productos: productosFiltrados,
+        productos: productosFinales,
         total: totalVisibles,
         pagina: page,
         totalPaginas,
