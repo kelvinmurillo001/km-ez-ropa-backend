@@ -53,6 +53,18 @@ const userSchema = new mongoose.Schema(
     deleted: {
       type: Boolean,
       default: false
+    },
+
+    // 🔐 Campos para recuperación de contraseña
+    resetToken: {
+      type: String,
+      default: null,
+      select: false
+    },
+    resetExpires: {
+      type: Date,
+      default: null,
+      select: false
     }
   },
   {
@@ -63,6 +75,8 @@ const userSchema = new mongoose.Schema(
         delete ret.password;
         delete ret.refreshToken;
         delete ret.__v;
+        delete ret.resetToken;
+        delete ret.resetExpires;
         return ret;
       }
     },
@@ -72,13 +86,15 @@ const userSchema = new mongoose.Schema(
         delete ret.password;
         delete ret.refreshToken;
         delete ret.__v;
+        delete ret.resetToken;
+        delete ret.resetExpires;
         return ret;
       }
     }
   }
 );
 
-// ✅ Normalizar entradas
+// ✅ Normalización de datos antes de validar
 userSchema.pre('validate', function (next) {
   if (this.name) this.name = this.name.trim();
   if (this.email) this.email = this.email.toLowerCase().trim();
@@ -91,7 +107,7 @@ userSchema.pre('validate', function (next) {
   next();
 });
 
-// 🔐 Hash automático
+// 🔐 Encriptar contraseña si fue modificada
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password') || !this.password) return next();
 
@@ -105,13 +121,13 @@ userSchema.pre('save', async function (next) {
   }
 });
 
-// 🔑 Comparar password
+// 🔑 Comparación de contraseña
 userSchema.methods.matchPassword = async function (inputPassword) {
   if (!this.password || !inputPassword) return false;
   return await bcrypt.compare(inputPassword, this.password);
 };
 
-// 📌 Índices útiles
+// 📌 Índices para consultas rápidas y seguridad
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ username: 1 }, { unique: true, sparse: true });
 userSchema.index({ role: 1 });
