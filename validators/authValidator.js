@@ -4,6 +4,8 @@ import { body } from 'express-validator';
 /* ───────────────────────────────────────────── */
 /* 🔤 Validadores individuales reutilizables     */
 /* ───────────────────────────────────────────── */
+
+// 🔹 Validador para username (admin)
 const usernameValidator = body('username')
   .exists({ checkFalsy: true }).withMessage('⚠️ El nombre de usuario es obligatorio.')
   .bail()
@@ -13,6 +15,7 @@ const usernameValidator = body('username')
   .toLowerCase()
   .isLength({ min: 3 }).withMessage('⚠️ Mínimo 3 caracteres en el nombre de usuario.');
 
+// 🔹 Validador para email (cliente)
 const emailValidator = body('email')
   .exists({ checkFalsy: true }).withMessage('⚠️ El correo electrónico es obligatorio.')
   .bail()
@@ -22,6 +25,7 @@ const emailValidator = body('email')
   .isEmail().withMessage('⚠️ Debe ser un correo válido.')
   .normalizeEmail();
 
+// 🔹 Validador para password (ambos)
 const passwordValidator = body('password')
   .exists({ checkFalsy: true }).withMessage('⚠️ La contraseña es obligatoria.')
   .bail()
@@ -34,14 +38,14 @@ const passwordValidator = body('password')
 /* ✅ Validaciones agrupadas                     */
 /* ───────────────────────────────────────────── */
 
-// Admin login: username + password
+// 🛡️ Admin login: username + password
 export const loginValidation = [usernameValidator, passwordValidator];
 
-// Cliente login: email + password
+// 👤 Cliente login: email + password
 export const loginClienteValidation = [emailValidator, passwordValidator];
 
 /* ───────────────────────────────────────────── */
-/* 📦 Exportación de validadores individuales    */
+/* 📦 Exportación para validación flexible       */
 /* ───────────────────────────────────────────── */
 export const baseUserValidation = {
   usernameValidator,

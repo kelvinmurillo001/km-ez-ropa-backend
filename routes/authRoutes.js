@@ -1,26 +1,15 @@
 // 📁 backend/routes/authRoutes.js
+
 import express from 'express';
-import { body } from 'express-validator';
-
-// 🎯 Controladores
-import {
-  loginAdmin,
-  loginCliente,
-  refreshToken,
-  getUsuarioActual
-} from '../controllers/authController.js';
-
+import { loginAdmin, loginCliente, refreshToken, getUsuarioActual } from '../controllers/authController.js';
 import logger from '../utils/logger.js';
 import authMiddleware from '../middleware/authMiddleware.js';
-import {
-  loginValidation,
-  loginClienteValidation
-} from '../validators/authValidator.js';
+import { loginValidation, loginClienteValidation } from '../validators/authValidator.js';
 
 const router = express.Router();
 
 /* ───────────────────────────────────────────── */
-/* 🔐 LOGIN ADMIN (solo admins)                  */
+/* 🔐 LOGIN ADMINISTRADOR                        */
 /* ───────────────────────────────────────────── */
 router.post(
   '/login',
@@ -32,7 +21,7 @@ router.post(
 );
 
 /* ───────────────────────────────────────────── */
-/* 👤 LOGIN CLIENTE (correo + contraseña)         */
+/* 👤 LOGIN CLIENTE                              */
 /* ───────────────────────────────────────────── */
 router.post(
   '/login-cliente',
@@ -44,7 +33,7 @@ router.post(
 );
 
 /* ───────────────────────────────────────────── */
-/* 🔁 RENOVAR ACCESS TOKEN (refresh token cookie) */
+/* 🔁 REFRESCAR ACCESS TOKEN                     */
 /* ───────────────────────────────────────────── */
 router.post(
   '/refresh',
@@ -55,7 +44,7 @@ router.post(
 );
 
 /* ───────────────────────────────────────────── */
-/* 🔎 OBTENER USUARIO ACTUAL AUTENTICADO          */
+/* 🔎 USUARIO ACTUAL AUTENTICADO (JWT o sesión)  */
 /* ───────────────────────────────────────────── */
 router.get(
   '/me',

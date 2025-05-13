@@ -1,4 +1,3 @@
-// 📁 backend/utils/admin-auth-utils.js
 import config from '../config/configuracionesito.js';
 
 /**

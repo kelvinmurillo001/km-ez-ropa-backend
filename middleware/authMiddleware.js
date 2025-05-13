@@ -10,21 +10,22 @@ import {
 } from '../utils/admin-auth-utils.js';
 
 /**
- * 🔐 Middleware híbrido:
- * Verifica autenticación por JWT (Bearer) o sesión activa (Passport)
+ * 🔐 Middleware híbrido de autenticación:
+ * - Valida JWT en header Authorization: Bearer [token]
+ * - O bien sesión activa (Passport para Google login)
  */
 const authMiddleware = async (req, res, next) => {
   try {
     const method = req.method;
     const path = req.originalUrl;
 
-    // 1️⃣ INTENTAR CON TOKEN JWT
+    // 1️⃣ INTENTAR CON JWT (Bearer token)
     const token = obtenerTokenDesdeHeader(req);
     if (token) {
       try {
         const decoded = jwt.verify(token, config.jwtSecret);
-        const user = await User.findById(decoded.id).select('-password -refreshToken').lean();
 
+        const user = await User.findById(decoded.id).select('-password -refreshToken').lean();
         if (!user) {
           logger.warn(`🚫 Usuario no encontrado - ID: ${decoded.id}`);
           return enviarError(res, '🚫 Usuario no válido.', 403);
@@ -45,11 +46,13 @@ const authMiddleware = async (req, res, next) => {
         return next();
       } catch (err) {
         logger.warn(`⛔ JWT inválido: ${err.message} - ${method} ${path}`);
-        return enviarError(res, '⛔ Token inválido o expirado.', 401, config.env !== 'production' ? err.message : undefined);
+        return enviarError(res, '⛔ Token inválido o expirado.', 401,
+          config.env !== 'production' ? err.message : undefined
+        );
       }
     }
 
-    // 2️⃣ INTENTAR CON SESIÓN ACTIVA (PASSPORT)
+    // 2️⃣ INTENTAR CON SESIÓN ACTIVA (Passport)
     if (req.isAuthenticated?.() && req.user) {
       req.user = {
         id: req.user._id,
@@ -57,6 +60,7 @@ const authMiddleware = async (req, res, next) => {
         email: req.user.email,
         role: req.user.role
       };
+
       logger.info(`✅ Autenticado por sesión: ${req.user.email || req.user.id} - ${method} ${path}`);
       return next();
     }
