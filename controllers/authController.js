@@ -5,32 +5,22 @@ import config from '../config/configuracionesito.js';
 import { validationResult } from 'express-validator';
 import { enviarError, enviarExito } from '../utils/admin-auth-utils.js';
 
-/**
- * 🔐 Genera JWT de acceso (15 minutos)
- */
+/* ───────────────────────────────────────────── */
+/* 🔐 Generadores de tokens                      */
+/* ───────────────────────────────────────────── */
 const generateAccessToken = (user) =>
-  jwt.sign({ id: user._id, role: user.role }, config.jwtSecret, {
-    expiresIn: '15m',
-  });
+  jwt.sign({ id: user._id, role: user.role }, config.jwtSecret, { expiresIn: '15m' });
 
-/**
- * 🔁 Genera JWT de refresco (7 días)
- */
 const generateRefreshToken = (user) =>
-  jwt.sign({ id: user._id }, config.jwtRefreshSecret, {
-    expiresIn: '7d',
-  });
+  jwt.sign({ id: user._id }, config.jwtRefreshSecret, { expiresIn: '7d' });
 
-/**
- * 🎫 POST /api/auth/login
- * Login exclusivo para administradores
- */
+/* ───────────────────────────────────────────── */
+/* 🎫 POST /api/auth/login (Admin)               */
+/* ───────────────────────────────────────────── */
 export const loginAdmin = async (req, res) => {
-  console.log('📥 [LOGIN] Body recibido:', req.body);
-
+  console.log('📥 [LOGIN ADMIN] Body:', req.body);
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    console.warn('⚠️ Errores de validación:', errors.array());
     return enviarError(res, '❌ Datos inválidos en el formulario.', 400, errors.array());
   }
 
@@ -38,26 +28,13 @@ export const loginAdmin = async (req, res) => {
     const rawUser = String(req.body.username || '').trim().toLowerCase();
     const rawPass = String(req.body.password || '');
 
-    if (!rawUser || !rawPass) {
-      return enviarError(res, '⚠️ Usuario y contraseña requeridos.', 400);
-    }
-
-    console.log(`🔍 Intento de login con usuario: "${rawUser}"`);
-
     const user = await User.findOne({ username: rawUser }).select('+password +refreshToken');
-    if (!user) {
-      console.warn('❌ Usuario no encontrado');
-      return enviarError(res, '❌ Usuario o contraseña incorrectos.', 401);
-    }
-
-    if (user.role !== 'admin') {
-      console.warn('⛔ Acceso denegado: el usuario no es administrador');
+    if (!user || user.role !== 'admin') {
       return enviarError(res, '⛔ Acceso restringido solo a administradores.', 403);
     }
 
     const isMatch = await user.matchPassword(rawPass);
     if (!isMatch) {
-      console.warn('🔐 Contraseña incorrecta');
       return enviarError(res, '❌ Usuario o contraseña incorrectos.', 401);
     }
 
@@ -70,7 +47,7 @@ export const loginAdmin = async (req, res) => {
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: config.env === 'production',
-      sameSite: 'Strict',
+      sameSite: 'None',
       path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
@@ -83,21 +60,69 @@ export const loginAdmin = async (req, res) => {
         name: user.name,
         role: user.role,
       },
-    }, '✅ Acceso concedido');
+    }, '✅ Acceso administrador concedido');
   } catch (err) {
-    console.error('💥 Error inesperado en loginAdmin:', err);
-    return enviarError(res, '❌ Error interno al iniciar sesión.', 500, err.message);
+    console.error('💥 Error en loginAdmin:', err);
+    return enviarError(res, '❌ Error interno', 500, err.message);
   }
 };
 
-/**
- * ✨ POST /api/auth/refresh
- * Renovar access token usando refresh token (cookie)
- */
+/* ───────────────────────────────────────────── */
+/* 👤 POST /auth/login-cliente (CLIENTE)         */
+/* ───────────────────────────────────────────── */
+export const loginCliente = async (req, res) => {
+  const { email, password } = req.body;
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return enviarError(res, '⚠️ Validación fallida.', 400, errors.array());
+  }
+
+  try {
+    const user = await User.findOne({ email: email.toLowerCase().trim() }).select('+password +refreshToken');
+    if (!user || user.role !== 'client') {
+      return enviarError(res, '❌ Credenciales inválidas o usuario no permitido', 401);
+    }
+
+    const valid = await user.matchPassword(password);
+    if (!valid) {
+      return enviarError(res, '❌ Contraseña incorrecta', 401);
+    }
+
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: config.env === "production",
+      sameSite: "None",
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return enviarExito(res, {
+      accessToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    }, "✅ Login cliente exitoso");
+  } catch (err) {
+    console.error("💥 Error en loginCliente:", err);
+    return enviarError(res, "❌ Error al iniciar sesión cliente", 500, err.message);
+  }
+};
+
+/* ───────────────────────────────────────────── */
+/* 🔁 POST /api/auth/refresh                     */
+/* ───────────────────────────────────────────── */
 export const refreshToken = async (req, res) => {
   try {
     const token = req.cookies?.refreshToken;
-
     if (!token) {
       return enviarError(res, '❌ Refresh token no proporcionado.', 401);
     }
@@ -106,7 +131,6 @@ export const refreshToken = async (req, res) => {
     try {
       payload = jwt.verify(token, config.jwtRefreshSecret);
     } catch (err) {
-      console.warn('⛔ Refresh token inválido o expirado');
       return enviarError(res, '❌ Token inválido o expirado.', 403);
     }
 
@@ -120,5 +144,22 @@ export const refreshToken = async (req, res) => {
   } catch (err) {
     console.error('💥 Error al renovar token:', err);
     return enviarError(res, '❌ Error al procesar token de sesión.', 500, err.message);
+  }
+};
+
+/* ───────────────────────────────────────────── */
+/* 🔍 GET /api/auth/me                           */
+/* ───────────────────────────────────────────── */
+export const getUsuarioActual = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password -refreshToken');
+    if (!user) {
+      return enviarError(res, '❌ Usuario no encontrado', 404);
+    }
+
+    return enviarExito(res, { user }, '✅ Usuario autenticado');
+  } catch (err) {
+    console.error('💥 Error en /auth/me:', err);
+    return enviarError(res, '❌ Error al obtener usuario', 500, err.message);
   }
 };

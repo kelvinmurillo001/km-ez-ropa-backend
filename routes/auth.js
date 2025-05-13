@@ -4,11 +4,21 @@ import passport from 'passport';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import validator from 'validator';
+
 import User from '../models/User.js';
 import logger from '../utils/logger.js';
-import sendEmail from '../utils/emailSender.js'; // 🛡️ Uso de versión validada y mejorada
+import sendEmail from '../utils/emailSender.js';
+
+import { loginCliente, getUsuarioActual } from '../controllers/authController.js';
+import { loginClienteValidation } from '../validators/authValidator.js';
+import authMiddleware from '../middleware/authMiddleware.js';
 
 const router = express.Router();
+
+/* -------------------------------------------------------------------------- */
+/* 🔐 LOGIN CLIENTE JWT (NUEVO)                                               */
+/* -------------------------------------------------------------------------- */
+router.post('/login-cliente', loginClienteValidation, loginCliente);
 
 /* -------------------------------------------------------------------------- */
 /* 🔐 AUTENTICACIÓN CON GOOGLE                                                */
@@ -47,15 +57,7 @@ router.get(
 /* -------------------------------------------------------------------------- */
 /* 👤 USUARIO ACTUAL AUTENTICADO                                              */
 /* -------------------------------------------------------------------------- */
-router.get('/me', (req, res) => {
-  if (!req.isAuthenticated?.() || !req.user) {
-    logger.warn(`🔒 Acceso denegado a /me desde IP: ${req.ip}`);
-    return res.status(401).json({ ok: false, message: '🔒 Usuario no autenticado' });
-  }
-
-  const { _id, name, email, role } = req.user;
-  return res.status(200).json({ ok: true, user: { id: _id, name, email, role } });
-});
+router.get('/me', authMiddleware, getUsuarioActual);
 
 /* -------------------------------------------------------------------------- */
 /* 🚪 CERRAR SESIÓN                                                           */
