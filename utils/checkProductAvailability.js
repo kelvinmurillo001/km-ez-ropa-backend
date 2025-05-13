@@ -34,7 +34,7 @@ export function checkVariantDisponible(variants = [], talla, color, cantidad = 1
     };
   }
 
-  if (variante.isActive === false) {
+  if (!variante.activo) {
     return {
       ok: false,
       message: `❌ Variante inactiva: ${talla} - ${color}`
@@ -60,7 +60,7 @@ export function verificarProductoAgotado(variants = []) {
   if (!Array.isArray(variants) || variants.length === 0) return true;
 
   return variants.every(v =>
-    v?.isActive === false ||
+    !v?.activo ||
     !Number.isFinite(v?.stock) ||
     v.stock <= 0
   );

@@ -1,5 +1,6 @@
 // 📁 backend/tests/unit/paypalService.unit.test.js
 
+import { jest } from '@jest/globals'; // ✅ IMPORT NECESARIO EN ESM
 import axios from 'axios';
 import paypalService, { crearOrden, capturarOrden } from '../../services/paypalService.js';
 

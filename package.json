@@ -19,7 +19,6 @@
     "fix-slugs-missing": "node scripts/corregirSlugsCLI.js --solo-faltantes"
   },
   "dependencies": {
-
     "axios": "^1.9.0",
     "bcryptjs": "^3.0.2",
     "cloudinary": "^1.41.3",
@@ -54,6 +53,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.25.1",
+    "@jest/globals": "^29.7.0",
     "eslint": "^8.57.1",
     "eslint-config-standard": "^17.1.0",
     "eslint-plugin-import": "^2.31.0",

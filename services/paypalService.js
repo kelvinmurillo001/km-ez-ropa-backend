@@ -51,7 +51,7 @@ async function obtenerTokenPayPal() {
     return token;
   } catch (err) {
     logger.error('❌ Error autenticando con PayPal:', err.response?.data || err.message);
-    throw new Error('⚠️ Error al obtener token de PayPal. Verifica credenciales o red.');
+    throw new Error('❌ Error autenticando con PayPal: ' + (err.response?.data?.error_description || err.message));
   }
 }
 
@@ -61,7 +61,7 @@ async function obtenerTokenPayPal() {
  */
 export async function crearOrden(total) {
   if (!total || isNaN(total) || total <= 0) {
-    throw new Error('❌ Monto total inválido para crear la orden');
+    throw new Error('❌ Total inválido: debe ser un número mayor a 0');
   }
 
   try {
@@ -72,12 +72,14 @@ export async function crearOrden(total) {
       `${PAYPAL_API}/v2/checkout/orders`,
       {
         intent: 'CAPTURE',
-        purchase_units: [{
-          amount: {
-            currency_code: 'USD',
-            value: total.toFixed(2)
+        purchase_units: [
+          {
+            amount: {
+              currency_code: 'USD',
+              value: total.toFixed(2)
+            }
           }
-        }]
+        ]
       },
       {
         headers: {
@@ -94,7 +96,7 @@ export async function crearOrden(total) {
     return res.data;
   } catch (err) {
     logger.error('❌ Error creando orden PayPal:', err.response?.data || err.message);
-    throw new Error('⚠️ Falló la creación de orden PayPal. Intenta más tarde.');
+    throw new Error('❌ Error creando orden PayPal: ' + (err.response?.data?.message || err.message));
   }
 }
 
@@ -129,7 +131,7 @@ export async function capturarOrden(orderId) {
     return res.data;
   } catch (err) {
     logger.error('❌ Error capturando orden PayPal:', err.response?.data || err.message);
-    throw new Error('⚠️ No se pudo capturar la orden de PayPal. Verifica el ID o intenta más tarde.');
+    throw new Error('❌ Error capturando orden PayPal: ' + (err.response?.data?.message || err.message));
   }
 }
 
