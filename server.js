@@ -21,7 +21,7 @@ import { fileURLToPath } from 'url';
 
 import validarBodyGlobal from './middleware/validateBody.js';
 import { promRegistry } from './metrics/prometheus.js';
-import crearSocketServer from './ws/socketServer.js';
+import { crearSocketServer } from './ws/socketServer.js'; // ✅ Corrección aquí
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -185,10 +185,7 @@ if (process.env.NODE_ENV !== 'test') {
         console.log(`🌍 Modo: ${config.env}`);
       });
 
-      // ⏱️ Opcional: timeout para proteger entorno de producción
-      httpServer.setTimeout(120000); // 2 minutos
-
-      crearSocketServer(httpServer);
+      crearSocketServer(httpServer); // ✅ Ahora funciona correctamente
     } catch (err) {
       console.error('❌ Error al conectar con MongoDB:', err.message);
       process.exit(1);
