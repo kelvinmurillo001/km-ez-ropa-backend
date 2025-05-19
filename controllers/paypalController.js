@@ -3,18 +3,15 @@ import config from '../config/configuracionesito.js';
 import { crearOrden, capturarOrden } from '../services/paypalService.js';
 import { validationResult, body } from 'express-validator';
 
-/**
- * ✅ Validaciones para crear orden de PayPal
- */
+/* ───────────────────────────────────────────── */
+/* ✅ VALIDACIONES PAYPAL                        */
+/* ───────────────────────────────────────────── */
 export const validateCreateOrder = [
   body('total')
     .exists().withMessage('⚠️ El total es requerido.')
     .isFloat({ gt: 0 }).withMessage('⚠️ El total debe ser un número mayor a 0.')
 ];
 
-/**
- * ✅ Validaciones para capturar orden de PayPal
- */
 export const validateCaptureOrder = [
   body('orderId')
     .exists().withMessage('⚠️ orderId es requerido.')
@@ -22,11 +19,9 @@ export const validateCaptureOrder = [
     .isLength({ min: 5 }).withMessage('⚠️ orderId muy corto.')
 ];
 
-/**
- * 🛒 Crear una orden en PayPal
- * @route   POST /api/paypal/create-order
- * @access  Público
- */
+/* ───────────────────────────────────────────── */
+/* 🛒 CREAR ORDEN PAYPAL                         */
+/* ───────────────────────────────────────────── */
 export const createOrderController = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -39,7 +34,9 @@ export const createOrderController = async (req, res) => {
 
   try {
     const total = parseFloat(req.body.total);
-    console.log(`💳 Solicitando creación de orden PayPal por $${total}...`);
+    if (config.env !== 'production') {
+      console.log(`💳 Creando orden PayPal por $${total}...`);
+    }
 
     const orden = await crearOrden(total);
 
@@ -63,11 +60,9 @@ export const createOrderController = async (req, res) => {
   }
 };
 
-/**
- * 💵 Capturar una orden en PayPal
- * @route   POST /api/paypal/capture-order
- * @access  Público
- */
+/* ───────────────────────────────────────────── */
+/* 💵 CAPTURAR ORDEN PAYPAL                      */
+/* ───────────────────────────────────────────── */
 export const captureOrderController = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -80,12 +75,14 @@ export const captureOrderController = async (req, res) => {
 
   try {
     const orderId = req.body.orderId.trim();
-    console.log(`💳 Capturando orden PayPal con ID: ${orderId}`);
+    if (config.env !== 'production') {
+      console.log(`💳 Capturando orden PayPal con ID: ${orderId}`);
+    }
 
     const captura = await capturarOrden(orderId);
 
     if (!captura || captura?.status?.toUpperCase() !== 'COMPLETED') {
-      console.warn('⚠️ Captura incompleta:', captura?.status || captura);
+      console.warn('⚠️ Captura incompleta o fallida:', captura?.status || captura);
       return res.status(502).json({
         ok: false,
         message: '⚠️ La captura de la orden no fue exitosa.',

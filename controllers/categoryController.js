@@ -1,19 +1,14 @@
+// 📁 backend/controllers/categoryController.js
 import mongoose from 'mongoose';
 import Category from '../models/category.js';
 import logger from '../utils/logger.js';
 
-/**
- * 📥 Obtener todas las categorías
- * @route   GET /api/categories
- * @access  Público
- */
+/* ───────────────────────────────────────────── */
+/* 📥 GET /api/categories — Público              */
+/* ───────────────────────────────────────────── */
 export const getAllCategories = async (_req, res) => {
   try {
-    const categories = await Category.find()
-      .select('-__v')
-      .sort({ name: 1 })
-      .lean();
-
+    const categories = await Category.find().select('-__v').sort({ name: 1 }).lean();
     return res.status(200).json({ ok: true, data: categories });
   } catch (err) {
     logger.error('❌ Error al obtener categorías:', err);
@@ -25,17 +20,16 @@ export const getAllCategories = async (_req, res) => {
   }
 };
 
-/**
- * ➕ Crear nueva categoría
- * @route   POST /api/categories
- * @access  Admin
- */
+/* ───────────────────────────────────────────── */
+/* ➕ POST /api/categories — Admin                */
+/* ───────────────────────────────────────────── */
 export const createCategory = async (req, res) => {
   try {
     const nameRaw = String(req.body.name || '').trim().toLowerCase();
     const subRaw = String(req.body.subcategory || '').trim().toLowerCase();
 
-    if (!/^[a-záéíóúüñ0-9\s]{2,50}$/i.test(nameRaw)) {
+    const isValid = /^[a-záéíóúüñ0-9\s]{2,50}$/i.test(nameRaw);
+    if (!isValid) {
       return res.status(400).json({
         ok: false,
         message: '⚠️ El nombre debe tener entre 2 y 50 caracteres válidos (sin símbolos especiales).',
@@ -44,10 +38,7 @@ export const createCategory = async (req, res) => {
 
     const exists = await Category.findOne({ name: nameRaw }).lean();
     if (exists) {
-      return res.status(409).json({
-        ok: false,
-        message: '⚠️ La categoría ya existe.',
-      });
+      return res.status(409).json({ ok: false, message: '⚠️ La categoría ya existe.' });
     }
 
     const newCategory = await Category.create({
@@ -66,11 +57,9 @@ export const createCategory = async (req, res) => {
   }
 };
 
-/**
- * ➕ Agregar subcategoría
- * @route   POST /api/categories/:categoryId/subcategories
- * @access  Admin
- */
+/* ───────────────────────────────────────────── */
+/* ➕ POST /api/categories/:id/subcategories — Admin */
+/* ───────────────────────────────────────────── */
 export const addSubcategory = async (req, res) => {
   try {
     const { categoryId } = req.params;
@@ -80,10 +69,11 @@ export const addSubcategory = async (req, res) => {
       return res.status(400).json({ ok: false, message: '⚠️ ID de categoría inválido.' });
     }
 
-    if (!/^[a-záéíóúüñ0-9\s]{2,50}$/i.test(subRaw)) {
+    const isValid = /^[a-záéíóúüñ0-9\s]{2,50}$/i.test(subRaw);
+    if (!isValid) {
       return res.status(400).json({
         ok: false,
-        message: '⚠️ Subcategoría inválida. Debe tener entre 2 y 50 caracteres alfanuméricos.',
+        message: '⚠️ Subcategoría inválida. Debe tener entre 2 y 50 caracteres.',
       });
     }
 
@@ -110,11 +100,9 @@ export const addSubcategory = async (req, res) => {
   }
 };
 
-/**
- * 🗑️ Eliminar categoría completa
- * @route   DELETE /api/categories/:id
- * @access  Admin
- */
+/* ───────────────────────────────────────────── */
+/* 🗑️ DELETE /api/categories/:id — Admin         */
+/* ───────────────────────────────────────────── */
 export const deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;
@@ -140,11 +128,9 @@ export const deleteCategory = async (req, res) => {
   }
 };
 
-/**
- * 🗑️ Eliminar subcategoría específica
- * @route   DELETE /api/categories/:categoryId/subcategories/:subcategory
- * @access  Admin
- */
+/* ───────────────────────────────────────────── */
+/* 🗑️ DELETE /api/categories/:id/subcategories/:subcategory */
+/* ───────────────────────────────────────────── */
 export const deleteSubcategory = async (req, res) => {
   try {
     const { categoryId, subcategory } = req.params;
@@ -161,7 +147,7 @@ export const deleteSubcategory = async (req, res) => {
 
     const index = category.subcategories.indexOf(subRaw);
     if (index === -1) {
-      return res.status(404).json({ ok: false, message: '❌ Subcategoría no encontrada en esta categoría.' });
+      return res.status(404).json({ ok: false, message: '❌ Subcategoría no encontrada.' });
     }
 
     category.subcategories.splice(index, 1);

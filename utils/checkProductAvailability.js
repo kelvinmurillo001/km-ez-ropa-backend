@@ -24,7 +24,9 @@ export function checkVariantDisponible(variants = [], talla, color, cantidad = 1
   }
 
   const variante = variants.find(
-    v => v.talla === keyTalla && v.color === keyColor
+    v =>
+      v?.talla?.toLowerCase?.().trim() === keyTalla &&
+      v?.color?.toLowerCase?.().trim() === keyColor
   );
 
   if (!variante) {
@@ -34,7 +36,7 @@ export function checkVariantDisponible(variants = [], talla, color, cantidad = 1
     };
   }
 
-  if (!variante.activo) {
+  if (variante.isActive === false) {
     return {
       ok: false,
       message: `❌ Variante inactiva: ${talla} - ${color}`
@@ -59,9 +61,10 @@ export function checkVariantDisponible(variants = [], talla, color, cantidad = 1
 export function verificarProductoAgotado(variants = []) {
   if (!Array.isArray(variants) || variants.length === 0) return true;
 
-  return variants.every(v =>
-    !v?.activo ||
-    !Number.isFinite(v?.stock) ||
-    v.stock <= 0
+  return variants.every(
+    v =>
+      v?.isActive === false ||
+      !Number.isFinite(v?.stock) ||
+      v.stock <= 0
   );
 }

@@ -9,55 +9,53 @@ import logger from '../utils/logger.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// 📍 Ruta al archivo de visitas
+// 📂 Ruta del archivo visitas.json
 const visitasFilePath = path.join(__dirname, '..', 'data', 'visitas.json');
 
 /**
- * 🧮 Leer contador de visitas desde JSON o crear archivo si no existe
+ * 🧮 Leer visitas desde JSON o inicializar si no existe
  * @returns {Promise<number>}
  */
 const leerVisitas = async () => {
   try {
     const contenido = await fs.readFile(visitasFilePath, 'utf-8');
     const json = JSON.parse(contenido);
-
     const count = Number.isInteger(json.count)
       ? json.count
       : Number.isInteger(json.visitas)
       ? json.visitas
       : 0;
-
     return Math.max(count, 0);
   } catch (err) {
     if (err.code === 'ENOENT') {
-      logger.warn('📂 visitas.json no encontrado. Creando archivo inicial...');
+      logger.warn('📂 visitas.json no encontrado. Creando archivo...');
       await fs.writeFile(visitasFilePath, JSON.stringify({ count: 0 }, null, 2));
       return 0;
     }
 
-    logger.warn(`⚠️ Error leyendo visitas.json: ${err.message}`);
+    logger.warn(`⚠️ Error al leer visitas.json: ${err.message}`);
     return 0;
   }
 };
 
 /**
  * 📈 POST /api/visitas
- * ➤ Registrar nueva visita (con respaldo)
+ * ➤ Registra una nueva visita con respaldo diario
  */
 export const registrarVisita = async (_req, res) => {
   try {
     const actuales = await leerVisitas();
     const nuevas = actuales + 1;
 
-    // 📦 Crear respaldo antes de sobrescribir
+    // 📁 Crear respaldo
     const backupName = `visitas_backup_${format(new Date(), 'yyyy-MM-dd')}.json`;
     const backupPath = path.join(__dirname, '..', 'data', backupName);
 
     try {
       await fs.copyFile(visitasFilePath, backupPath);
-      logger.info(`📁 Respaldo creado: ${backupName}`);
+      logger.info(`📁 Respaldo de visitas creado: ${backupName}`);
     } catch (backupErr) {
-      logger.warn(`⚠️ No se pudo crear respaldo: ${backupErr.message}`);
+      logger.warn(`⚠️ No se pudo crear respaldo de visitas: ${backupErr.message}`);
     }
 
     // ✍️ Guardar nuevo conteo
@@ -80,7 +78,7 @@ export const registrarVisita = async (_req, res) => {
 
 /**
  * 📊 GET /api/visitas
- * ➤ Consultar visitas totales
+ * ➤ Devuelve la cantidad total de visitas registradas
  */
 export const obtenerVisitas = async (_req, res) => {
   try {

@@ -1,3 +1,4 @@
+// 📁 backend/controllers/products/getProductBySlug.js
 import Product from '../../models/Product.js';
 import { calcularStockTotal } from '../../utils/calculateStock.js';
 
@@ -10,14 +11,14 @@ const getProductBySlug = async (req, res) => {
   try {
     const rawSlug = String(req.params.slug || '').trim();
 
-    // 🧼 Normalizar y sanitizar slug
+    // 🧼 Sanitizar y normalizar slug
     const slug = rawSlug
-      .normalize('NFD')                     // Eliminar tildes
-      .replace(/[\u0300-\u036f]/g, '')
+      .normalize('NFD')                         // Eliminar acentos
+      .replace(/[\u0300-\u036f]/g, '')          // Quitar tildes
       .toLowerCase()
-      .replace(/[^a-z0-9-]/g, '')           // Solo letras, números, guiones
-      .replace(/--+/g, '-')                 // Quitar guiones duplicados
-      .replace(/^-+|-+$/g, '');             // Quitar guiones al inicio o fin
+      .replace(/[^a-z0-9-]/g, '')               // Solo letras, números y guiones
+      .replace(/--+/g, '-')                     // Quitar guiones duplicados
+      .replace(/^-+|-+$/g, '');                 // Quitar guiones al inicio o final
 
     if (!slug || slug.length < 3) {
       return res.status(400).json({
@@ -26,10 +27,8 @@ const getProductBySlug = async (req, res) => {
       });
     }
 
-    // 🔍 Buscar producto
-    const productoDoc = await Product.findOne({ slug })
-      .select('-__v')
-      .lean();
+    // 🔍 Buscar producto por slug
+    const productoDoc = await Product.findOne({ slug }).select('-__v').lean();
 
     if (!productoDoc) {
       return res.status(404).json({
@@ -38,15 +37,15 @@ const getProductBySlug = async (req, res) => {
       });
     }
 
-    // 📦 Agregar stock calculado
+    // 🧮 Calcular stock total
     const producto = {
       ...productoDoc,
       stockTotal: calcularStockTotal(productoDoc)
     };
 
-    // 🧾 Log interno en desarrollo
+    // 🐞 Log de desarrollo
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`🔍 Producto cargado por slug: ${slug}`);
+      console.log(`🔍 Producto encontrado por slug: ${slug}`);
     }
 
     return res.status(200).json({ ok: true, data: producto });

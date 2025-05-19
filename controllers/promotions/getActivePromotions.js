@@ -1,16 +1,15 @@
 // 📁 backend/controllers/promotions/getActivePromotions.js
-import Promotion from '../../models/promotion.js'
+import Promotion from '../../models/promotion.js';
 
 /**
  * 📢 Devuelve promociones activas y vigentes según la fecha actual.
  * @route   GET /api/promotions/active
  * @access  Público
  */
-const getActivePromotions = async (req, res) => {
+const getActivePromotions = async (_req, res) => {
   try {
-    const now = new Date()
+    const now = new Date();
 
-    // 🔎 Buscar promociones activas dentro de rango de fechas o sin fechas
     const promociones = await Promotion.find({
       active: true,
       $or: [
@@ -22,13 +21,12 @@ const getActivePromotions = async (req, res) => {
     })
       .select('-__v')
       .sort({ createdAt: -1 })
-      .lean()
+      .lean();
 
-    // 🧾 Formatear respuesta con fechas ISO y duración
     const data = promociones.map(p => ({
       id: p._id,
-      title: p.title,
-      message: p.message,
+      title: p.title || '',
+      message: p.message || '',
       active: p.active,
       startDate: p.startDate?.toISOString() || null,
       endDate: p.endDate?.toISOString() || null,
@@ -39,24 +37,23 @@ const getActivePromotions = async (req, res) => {
       theme: p.theme || null,
       mediaUrl: p.mediaUrl || null,
       mediaType: p.mediaType || null,
-      pages: p.pages || [],
+      pages: Array.isArray(p.pages) ? p.pages : [],
       position: p.position || null
-    }))
+    }));
 
-    // 🐛 Log de desarrollo
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`📢 Promociones activas encontradas: ${data.length}`)
+      console.log(`📢 Promociones activas encontradas: ${data.length}`);
     }
 
-    return res.status(200).json({ ok: true, data })
+    return res.status(200).json({ ok: true, data });
   } catch (err) {
-    console.error('❌ Error al obtener promociones activas:', err)
+    console.error('❌ Error al obtener promociones activas:', err);
     return res.status(500).json({
       ok: false,
-      message: '❌ Error interno al obtener promociones activas',
+      message: '❌ Error interno al obtener promociones activas.',
       ...(process.env.NODE_ENV !== 'production' && { error: err.message })
-    })
+    });
   }
-}
+};
 
-export default getActivePromotions
+export default getActivePromotions;

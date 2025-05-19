@@ -1,3 +1,4 @@
+// 📁 backend/controllers/products/deleteProduct.js
 import mongoose from 'mongoose';
 import Product from '../../models/Product.js';
 import { cloudinary } from '../../config/cloudinary.js';
@@ -16,6 +17,7 @@ const deleteProduct = async (req, res) => {
       return res.status(400).json({ ok: false, message: '⚠️ ID de producto inválido.' });
     }
 
+    // 🔎 Buscar producto
     const product = await Product.findById(id).lean();
     if (!product) {
       return res.status(404).json({ ok: false, message: '❌ Producto no encontrado.' });
@@ -24,6 +26,7 @@ const deleteProduct = async (req, res) => {
     const deletedCloudinaryIds = [];
     const failedDeletions = [];
 
+    // 🧹 Función para eliminar imagen de Cloudinary
     const eliminarDeCloudinary = async (cloudinaryId, tipo) => {
       try {
         const resultado = await cloudinary.uploader.destroy(cloudinaryId);
@@ -37,30 +40,19 @@ const deleteProduct = async (req, res) => {
       }
     };
 
-    // 🖼️ Recopilar imágenes a eliminar
-    const imagenes = [];
-
-    if (Array.isArray(product.images)) {
-      for (const img of product.images) {
-        if (img.cloudinaryId) imagenes.push({ id: img.cloudinaryId, tipo: 'principal' });
-      }
-    }
-
-    if (Array.isArray(product.variants)) {
-      for (const v of product.variants) {
-        if (v.cloudinaryId) imagenes.push({ id: v.cloudinaryId, tipo: 'variante' });
-      }
-    }
+    // 🖼️ Recopilar IDs de imágenes a eliminar
+    const imagenes = [
+      ...(Array.isArray(product.images) ? product.images.map(img => ({ id: img.cloudinaryId, tipo: 'principal' })) : []),
+      ...(Array.isArray(product.variants) ? product.variants.map(v => ({ id: v.cloudinaryId, tipo: 'variante' })) : [])
+    ].filter(img => img.id);
 
     // 🚮 Eliminar imágenes en paralelo
-    await Promise.all(
-      imagenes.map(({ id, tipo }) => eliminarDeCloudinary(id, tipo))
-    );
+    await Promise.all(imagenes.map(({ id, tipo }) => eliminarDeCloudinary(id, tipo)));
 
-    // 🧽 Eliminar producto de DB
+    // 🧽 Eliminar producto de la base de datos
     await Product.deleteOne({ _id: id });
 
-    // ✅ Respuesta final
+    // 📤 Respuesta final
     const response = {
       ok: true,
       message: '✅ Producto eliminado correctamente.',
@@ -70,22 +62,22 @@ const deleteProduct = async (req, res) => {
       }
     };
 
-    if (failedDeletions.length) {
+    if (failedDeletions.length > 0) {
       response.warning = '⚠️ Algunas imágenes no pudieron eliminarse.';
-      response.fails = failedDeletions;
+      response.errors = failedDeletions;
     }
 
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`🗑️ Producto ${id} eliminado. Cloudinary: ${deletedCloudinaryIds.length} imágenes`);
+      console.log(`🗑️ Producto eliminado: ${id} | Imágenes eliminadas: ${deletedCloudinaryIds.length}`);
     }
 
     return res.status(200).json(response);
   } catch (err) {
-    console.error('❌ Error interno al eliminar producto:', err);
+    console.error('❌ Error al eliminar producto:', err);
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al eliminar producto.',
-      ...(process.env.NODE_ENV === 'development' && { error: err.message })
+      ...(process.env.NODE_ENV !== 'production' && { error: err.message })
     });
   }
 };

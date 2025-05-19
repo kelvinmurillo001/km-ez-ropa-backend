@@ -1,3 +1,4 @@
+// 📁 backend/utils/admin-auth-utils.js
 import config from '../config/configuracionesito.js';
 
 /**
@@ -7,7 +8,6 @@ import config from '../config/configuracionesito.js';
  */
 export function esAdmin(usuario) {
   return (
-    usuario &&
     typeof usuario === 'object' &&
     (
       usuario.role?.toLowerCase?.() === 'admin' ||
@@ -24,13 +24,13 @@ export function esAdmin(usuario) {
  * @param {any} detalles - (opcional) Detalles internos para debug
  */
 export function enviarError(res, mensaje = '❌ Error del servidor', status = 500, detalles = null) {
-  if (!res || typeof res.status !== 'function') {
-    console.warn('⚠️ [enviarError] Objeto de respuesta inválido');
+  if (!res || typeof res.status !== 'function' || typeof res.json !== 'function') {
+    console.warn('[AUTH] ⚠️ Objeto de respuesta inválido');
     return;
   }
 
   if (config.env !== 'production' && detalles) {
-    console.error(`🪵 [ERROR DEBUG] ${mensaje}`, detalles);
+    console.error(`[AUTH] 🪵 DEBUG: ${mensaje}`, detalles);
   }
 
   return res.status(status).json({
@@ -47,8 +47,8 @@ export function enviarError(res, mensaje = '❌ Error del servidor', status = 50
  * @param {string} mensaje - Mensaje opcional de éxito
  */
 export function enviarExito(res, data = {}, mensaje = '✅ Operación exitosa') {
-  if (!res || typeof res.status !== 'function') {
-    console.warn('⚠️ [enviarExito] Objeto de respuesta inválido');
+  if (!res || typeof res.status !== 'function' || typeof res.json !== 'function') {
+    console.warn('[AUTH] ⚠️ Objeto de respuesta inválido');
     return;
   }
 
@@ -65,9 +65,11 @@ export function enviarExito(res, data = {}, mensaje = '✅ Operación exitosa') 
  * @returns {string|null} Token válido o null si no existe o es inválido
  */
 export function obtenerTokenDesdeHeader(req) {
-  if (!req?.headers?.authorization) return null;
+  if (!req?.headers || typeof req.headers.authorization !== 'string') {
+    return null;
+  }
 
-  const authHeader = String(req.headers.authorization || '').trim();
+  const authHeader = req.headers.authorization.trim();
   const [bearer, token] = authHeader.split(' ');
 
   const isValidBearer = bearer?.toLowerCase() === 'bearer';
@@ -75,7 +77,7 @@ export function obtenerTokenDesdeHeader(req) {
 
   if (!isValidBearer || !isTokenValid) {
     if (config.env !== 'production') {
-      console.warn('⚠️ Token inválido o mal formado en Authorization header');
+      console.warn('[AUTH] ⚠️ Token inválido o mal formado en Authorization header');
     }
     return null;
   }

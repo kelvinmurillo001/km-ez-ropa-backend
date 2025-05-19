@@ -185,6 +185,9 @@ if (process.env.NODE_ENV !== 'test') {
         console.log(`🌍 Modo: ${config.env}`);
       });
 
+      // ⏱️ Opcional: timeout para proteger entorno de producción
+      httpServer.setTimeout(120000); // 2 minutos
+
       crearSocketServer(httpServer);
     } catch (err) {
       console.error('❌ Error al conectar con MongoDB:', err.message);

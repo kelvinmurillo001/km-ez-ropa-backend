@@ -1,21 +1,21 @@
 // 📁 backend/tests/paypalService.test.js
 
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'; // ⚠️ SOLO para entorno sandbox
+// ⚠️ SOLO para entorno sandbox (evita errores de certificados locales)
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 import dotenv from 'dotenv';
 dotenv.config();
 
 import { crearOrden, capturarOrden } from '../services/paypalService.js';
 
-describe('🧪 PayPalService - Pruebas de integración robustas', () => {
+describe('🧪 Integración PayPalService (sandbox)', () => {
   let createdOrderId = '';
 
-  test('✅ Crear orden PayPal con total válido', async () => {
+  test('✅ Debe crear orden válida con monto > 0', async () => {
     const total = 10.5;
 
     const response = await crearOrden(total);
-
-    console.log('💬 Orden creada:', JSON.stringify(response, null, 2));
+    console.log('📝 Orden creada:', JSON.stringify(response, null, 2));
 
     expect(response).toBeDefined();
     expect(response).toHaveProperty('id');
@@ -24,26 +24,27 @@ describe('🧪 PayPalService - Pruebas de integración robustas', () => {
     createdOrderId = response.id;
   });
 
-  test('✅ Capturar orden creada previamente (puede requerir aprobación manual)', async () => {
+  test('✅ Capturar orden previamente creada (requiere aprobación previa)', async () => {
     if (!createdOrderId) {
-      console.warn('⚠️ Test omitido: No se creó la orden.');
+      console.warn('⚠️ Prueba omitida: No se generó una orden previa.');
       return;
     }
 
     try {
-      const response = await capturarOrden(createdOrderId);
+      const result = await capturarOrden(createdOrderId);
 
-      expect(response).toBeDefined();
-      expect(response).toHaveProperty('id', createdOrderId);
-      expect(response.status).toBe('COMPLETED');
+      console.log('📦 Resultado captura:', result);
+
+      expect(result).toBeDefined();
+      expect(result).toHaveProperty('id', createdOrderId);
+      expect(result.status).toBe('COMPLETED');
     } catch (err) {
-      const msg = err.message?.toLowerCase() || '';
+      const msg = (err.message || '').toLowerCase();
 
-      // ⚠️ Error común en entorno sandbox si no fue aprobada manualmente
-      if (msg.includes('422') || msg.includes('approval')) {
-        console.warn('⚠️ La orden aún no fue aprobada en Sandbox. Captura omitida.');
+      if (msg.includes('422') || msg.includes('approval') || msg.includes('not authorized')) {
+        console.warn('⚠️ Orden aún no aprobada. Captura omitida.');
       } else {
-        throw err; // Rethrow si es otro error inesperado
+        throw err; // re-lanzar error si es inesperado
       }
     }
   });
@@ -57,7 +58,7 @@ describe('🧪 PayPalService - Pruebas de integración robustas', () => {
     }
   });
 
-  test('❌ No debe capturar orden con ID inexistente', async () => {
+  test('❌ No debe capturar orden con ID no existente', async () => {
     expect.assertions(1);
     try {
       await capturarOrden('orden_inexistente_123');

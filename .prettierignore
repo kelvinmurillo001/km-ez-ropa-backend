@@ -1,29 +1,47 @@
-# 🔌 Dependencias y locks
+# 🔌 Dependencias y lockfiles
 node_modules/
 package-lock.json
 yarn.lock
+pnpm-lock.yaml
 
 # ⚙️ Archivos del sistema y entorno
 .DS_Store
 .env
 .env.*
+*.pid
 
 # 📦 Archivos generados o de build
 dist/
 build/
+.vite/
+.cache/
 uploads/
 logs/
 *.log
+coverage/
+.nyc_output/
 
 # 🖼️ Multimedia y recursos estáticos
 public/
 assets/
 frontend/assets/
 
-# ⚙️ Configuración y control de versiones
+# 📂 Directorios y archivos de tests
+__tests__/
+*.test.js
+*.spec.js
+*.test.ts
+*.spec.ts
+
+# 🔧 Configuración y control de versiones
 .git/
 .gitignore
 .prettierrc
 .prettierignore
 .eslintrc.json
 .eslintignore
+.vscode/
+.idea/
+
+# ⚙️ Scripts o plantillas específicas
+render.yaml

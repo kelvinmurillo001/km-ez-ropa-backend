@@ -1,65 +1,68 @@
 // 📁 scripts/corregirSlugsCLI.js
-import mongoose from 'mongoose'
-import dotenv from 'dotenv'
-import fs from 'fs'
-import Product from '../models/Product.js' // Ajustado a subir desde raíz
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
+import Product from '../models/Product.js';
 
-dotenv.config()
+dotenv.config();
 
-const args = process.argv.slice(2)
-const dryRun = args.includes('--dry-run')
-const soloFaltantes = args.includes('--solo-faltantes')
+const args = process.argv.slice(2);
+const dryRun = args.includes('--dry-run');
+const soloFaltantes = args.includes('--solo-faltantes');
 
-const generarSlug = (nombre = '') =>
-  nombre
+// ✅ Generador de slugs profesional (seguro y legible)
+function generarSlug(nombre = '') {
+  return nombre
     .toLowerCase()
     .trim()
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/ñ/g, 'n')
+    .replace(/[^\w\s-]/g, '')
     .replace(/\s+/g, '-')
-    .replace(/[^\w-]/g, '')
     .replace(/-+/g, '-')
     .replace(/^-+|-+$/g, '')
-    .substring(0, 100)
+    .substring(0, 100);
+}
 
-async function corregirSlugs () {
+async function corregirSlugs() {
   try {
     if (!process.env.MONGO_URI) {
-      throw new Error('❌ MONGO_URI no definida en .env')
+      throw new Error('❌ MONGO_URI no definida en .env');
     }
 
-    await mongoose.connect(process.env.MONGO_URI)
-    console.log('✅ Conectado a MongoDB')
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log('✅ Conectado a MongoDB');
 
-    const productos = await Product.find().lean()
-    console.log(`🔍 Productos encontrados: ${productos.length}`)
+    const productos = await Product.find().lean();
+    console.log(`🔍 Productos encontrados: ${productos.length}`);
 
-    const slugsUsados = new Set()
-    const productosModificados = []
+    const slugsUsados = new Set();
+    const productosModificados = [];
 
     for (const producto of productos) {
-      if (!producto.name) continue
+      if (!producto?.name?.trim()) continue;
 
-      const slugBase = generarSlug(producto.name)
-      let slugFinal = slugBase
-      let contador = 1
+      if (soloFaltantes && producto.slug) continue;
 
-      if (soloFaltantes && producto.slug) continue
+      const slugBase = generarSlug(producto.name);
+      let slugFinal = slugBase;
+      let contador = 1;
 
       while (
         slugsUsados.has(slugFinal) ||
         await Product.exists({ slug: slugFinal, _id: { $ne: producto._id } })
       ) {
-        slugFinal = `${slugBase}-${contador++}`
-        if (contador > 20) break
+        slugFinal = `${slugBase}-${contador++}`;
+        if (contador > 20) break;
       }
 
       if (producto.slug !== slugFinal) {
-        console.log(`🔄 ${producto.name}`)
-        console.log(`   ${producto.slug || '[vacío]'} ➡️ ${slugFinal}`)
+        console.log(`🔄 ${producto.name}`);
+        console.log(`   ${producto.slug || '[vacío]'} ➡️ ${slugFinal}`);
 
         if (!dryRun) {
-          await Product.findByIdAndUpdate(producto._id, { slug: slugFinal })
+          await Product.findByIdAndUpdate(producto._id, { slug: slugFinal });
         }
 
         productosModificados.push({
@@ -67,25 +70,26 @@ async function corregirSlugs () {
           nombre: producto.name,
           anterior: producto.slug || null,
           nuevo: slugFinal
-        })
+        });
 
-        slugsUsados.add(slugFinal)
+        slugsUsados.add(slugFinal);
       }
     }
 
-    console.log(`\n✅ Slugs ${dryRun ? 'simulados' : 'corregidos'}: ${productosModificados.length}`)
+    const resumen = `\n✅ Slugs ${dryRun ? 'simulados' : 'corregidos'}: ${productosModificados.length}`;
+    console.log(resumen);
 
     if (!dryRun && productosModificados.length > 0) {
-      const fileName = `slug_log_${Date.now()}.json`
-      fs.writeFileSync(fileName, JSON.stringify(productosModificados, null, 2))
-      console.log(`📝 Log guardado en ${fileName}`)
+      const fileName = path.join(process.cwd(), `slug_log_${Date.now()}.json`);
+      fs.writeFileSync(fileName, JSON.stringify(productosModificados, null, 2));
+      console.log(`📝 Log guardado en ${fileName}`);
     }
   } catch (err) {
-    console.error('❌ Error:', err.message)
+    console.error('❌ Error general:', err.message || err);
   } finally {
-    await mongoose.disconnect()
-    process.exit(0)
+    await mongoose.disconnect();
+    process.exit(0);
   }
 }
 
-corregirSlugs()
+corregirSlugs();

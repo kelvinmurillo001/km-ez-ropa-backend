@@ -1,34 +1,40 @@
-// 📁 routes/visitRoutes.js
+// 📁 backend/routes/visitRoutes.js
 import express from 'express';
 
 // 📚 Controladores
 import { registrarVisita, obtenerVisitas } from '../controllers/visitController.js';
 
-// 🛡️ Middlewares
+// 🛡️ Seguridad
 import authMiddleware from '../middleware/authMiddleware.js';
 import adminOnly from '../middleware/adminOnly.js';
 
 const router = express.Router();
 
 /* ───────────────────────────────────────────── */
-/* 📈 RUTAS DE VISITAS                           */
+/* 📈 RUTAS: GESTIÓN DE VISITAS WEB              */
 /* ───────────────────────────────────────────── */
 
 /**
  * @route   POST /api/visitas/registrar
- * @desc    Registrar una nueva visita (público, excepto bots)
- * @access  Público (user-agent filtrado)
+ * @desc    Registrar una nueva visita (solo desde navegadores reales)
+ * @access  Público
  */
 router.post(
   '/registrar',
   (req, res, next) => {
     const userAgent = String(req.headers['user-agent'] || '').toLowerCase();
 
-    const bloqueados = ['curl', 'postman', 'bot', 'crawler', 'axios', 'python-requests'];
-    if (bloqueados.some(b => userAgent.includes(b))) {
+    // Bloquear bots, scripts y scrapers
+    const agentesBloqueados = ['curl', 'postman', 'bot', 'crawler', 'axios', 'python', 'fetch'];
+
+    const esBot = agentesBloqueados.some(fragmento =>
+      userAgent.includes(fragmento)
+    );
+
+    if (esBot) {
       return res.status(403).json({
         ok: false,
-        message: '🚫 Acceso automatizado denegado. Agente no permitido.'
+        message: '🚫 Acceso automatizado denegado.'
       });
     }
 
@@ -39,8 +45,8 @@ router.post(
 
 /**
  * @route   GET /api/visitas
- * @desc    Obtener el total de visitas (solo admins)
- * @access  Privado (Admin)
+ * @desc    Obtener el total de visitas (panel admin)
+ * @access  Privado (solo admin)
  */
 router.get(
   '/',
@@ -49,5 +55,4 @@ router.get(
   obtenerVisitas
 );
 
-// 🚀 Exportar router
 export default router;

@@ -4,17 +4,21 @@ import logger from '../utils/logger.js';
 import config from '../config/configuracionesito.js';
 
 /**
- * 🛡️ Limita la cantidad de solicitudes por IP para rutas sensibles (ej. /api/auth)
+ * 🛡️ Middleware: Limita solicitudes por IP para rutas críticas (ej: /api/auth)
  */
 
-// 💡 Opciones personalizadas
+// 📌 Fallback de configuración segura
+const windowMs = parseInt(config.rateLimitWindow, 10) * 60 * 1000 || 15 * 60 * 1000; // 15 min
+const maxRequests = parseInt(config.rateLimitMax, 10) || 30;
+
+// 🧱 Opciones del limitador
 const limiterOptions = {
-  windowMs: config.rateLimitWindow * 60 * 1000 || 15 * 60 * 1000, // en minutos (fallback 15 min)
-  max: config.rateLimitMax || 30, // fallback: 30 req por ventana
-  standardHeaders: true, // muestra headers de límite
-  legacyHeaders: false,
+  windowMs,
+  max: maxRequests,
+  standardHeaders: true,   // RateLimit-* headers
+  legacyHeaders: false,    // No X-RateLimit-* (obsoleto)
   handler: (req, res, _next) => {
-    logger.warn(`🚫 Límite alcanzado desde IP: ${req.ip} - ${req.originalUrl}`);
+    logger.warn(`🚫 Límite de rate alcanzado | IP: ${req.ip} | Ruta: ${req.originalUrl}`);
     res.status(429).json({
       ok: false,
       message: '⚠️ Demasiadas solicitudes. Intenta nuevamente en unos minutos.'
@@ -22,5 +26,5 @@ const limiterOptions = {
   }
 };
 
-// 🛡️ Exporta limitador para rutas admin (login, dashboard, etc)
+// ✅ Limitador específico para rutas críticas (ej: login admin)
 export const adminLimiter = rateLimit(limiterOptions);

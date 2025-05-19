@@ -19,17 +19,17 @@ import validarErrores from '../middleware/validarErrores.js';
 const router = express.Router();
 
 /* ───────────────────────────────────────────── */
-/* 🗂️ RUTAS: Categorías de productos             */
+/* 🗂️ RUTAS DE CATEGORÍAS Y SUBCATEGORÍAS        */
 /* ───────────────────────────────────────────── */
 
 /**
- * 📥 GET /
+ * 📥 GET /api/categories
  * ➤ Obtener todas las categorías (PÚBLICO)
  */
 router.get('/', getAllCategories);
 
 /**
- * ➕ POST /
+ * ➕ POST /api/categories
  * ➤ Crear nueva categoría (SOLO ADMIN)
  */
 router.post(
@@ -38,15 +38,13 @@ router.post(
   adminOnly,
   [
     body('name')
-      .trim()
-      .toLowerCase()
+      .trim().toLowerCase()
       .notEmpty().withMessage('⚠️ El nombre de la categoría es obligatorio')
       .isLength({ min: 2, max: 50 }).withMessage('⚠️ La categoría debe tener entre 2 y 50 caracteres'),
 
     body('subcategory')
       .optional()
-      .trim()
-      .toLowerCase()
+      .trim().toLowerCase()
       .isString().withMessage('⚠️ Subcategoría inválida')
       .isLength({ min: 2, max: 50 }).withMessage('⚠️ La subcategoría debe tener entre 2 y 50 caracteres')
   ],
@@ -55,8 +53,8 @@ router.post(
 );
 
 /**
- * ➕ POST /:categoryId/subcategories
- * ➤ Agregar subcategoría a una categoría (SOLO ADMIN)
+ * ➕ POST /api/categories/:categoryId/subcategories
+ * ➤ Agregar subcategoría (SOLO ADMIN)
  */
 router.post(
   '/:categoryId/subcategories',
@@ -67,8 +65,7 @@ router.post(
       .isMongoId().withMessage('⚠️ ID de categoría inválido'),
 
     body('subcategory')
-      .trim()
-      .toLowerCase()
+      .trim().toLowerCase()
       .notEmpty().withMessage('⚠️ La subcategoría es requerida')
       .isLength({ min: 2, max: 50 }).withMessage('⚠️ La subcategoría debe tener entre 2 y 50 caracteres')
   ],
@@ -77,7 +74,7 @@ router.post(
 );
 
 /**
- * 🗑️ DELETE /:id
+ * 🗑️ DELETE /api/categories/:id
  * ➤ Eliminar categoría completa (SOLO ADMIN)
  */
 router.delete(
@@ -93,8 +90,8 @@ router.delete(
 );
 
 /**
- * 🗑️ DELETE /:categoryId/subcategories/:subcategory
- * ➤ Eliminar una subcategoría específica (SOLO ADMIN)
+ * 🗑️ DELETE /api/categories/:categoryId/subcategories/:subcategory
+ * ➤ Eliminar subcategoría específica (SOLO ADMIN)
  */
 router.delete(
   '/:categoryId/subcategories/:subcategory',
@@ -105,8 +102,7 @@ router.delete(
       .isMongoId().withMessage('⚠️ ID de categoría inválido'),
 
     param('subcategory')
-      .trim()
-      .toLowerCase()
+      .trim().toLowerCase()
       .notEmpty().withMessage('⚠️ Subcategoría requerida')
       .isLength({ min: 2, max: 50 }).withMessage('⚠️ La subcategoría debe tener entre 2 y 50 caracteres')
   ],

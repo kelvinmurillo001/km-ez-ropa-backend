@@ -14,16 +14,16 @@ const PAYPAL_API = PAYPAL_API_BASE || 'https://api-m.sandbox.paypal.com';
 
 // 🚨 Verificación de credenciales
 if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
-  logger.warn('⚠️ Falta configuración de PayPal: CLIENT_ID y/o CLIENT_SECRET no definidos.');
+  logger.warn('⚠️ Faltan las credenciales PAYPAL_CLIENT_ID o PAYPAL_CLIENT_SECRET');
 }
 
-// 🌐 Axios seguro para entorno local
+// 🌐 Cliente Axios seguro (ignorar certificados solo en desarrollo local)
 const axiosClient = NODE_ENV !== 'production'
   ? axios.create({ httpsAgent: new https.Agent({ rejectUnauthorized: false }) })
   : axios;
 
 /**
- * 🔑 Solicita un token de acceso Bearer a PayPal
+ * 🔑 Obtener token Bearer PayPal
  */
 async function obtenerTokenPayPal() {
   try {
@@ -47,7 +47,7 @@ async function obtenerTokenPayPal() {
       throw new Error('❌ Token de PayPal no recibido o inválido');
     }
 
-    logger.info('✅ Token PayPal obtenido correctamente');
+    logger.info('✅ Token de PayPal obtenido correctamente');
     return token;
   } catch (err) {
     logger.error('❌ Error autenticando con PayPal:', err.response?.data || err.message);
@@ -56,8 +56,8 @@ async function obtenerTokenPayPal() {
 }
 
 /**
- * 🛒 Crea una orden PayPal
- * @param {number} total - Monto total de la compra
+ * 🛒 Crear orden PayPal
+ * @param {number} total
  */
 export async function crearOrden(total) {
   if (!total || isNaN(total) || total <= 0) {
@@ -72,14 +72,12 @@ export async function crearOrden(total) {
       `${PAYPAL_API}/v2/checkout/orders`,
       {
         intent: 'CAPTURE',
-        purchase_units: [
-          {
-            amount: {
-              currency_code: 'USD',
-              value: total.toFixed(2)
-            }
+        purchase_units: [{
+          amount: {
+            currency_code: 'USD',
+            value: total.toFixed(2)
           }
-        ]
+        }]
       },
       {
         headers: {
@@ -101,8 +99,8 @@ export async function crearOrden(total) {
 }
 
 /**
- * 💳 Captura una orden PayPal
- * @param {string} orderId - ID de la orden
+ * 💵 Capturar orden PayPal
+ * @param {string} orderId
  */
 export async function capturarOrden(orderId) {
   if (!orderId || typeof orderId !== 'string' || orderId.length < 5) {
@@ -125,7 +123,7 @@ export async function capturarOrden(orderId) {
     );
 
     if (!res.data?.status) {
-      logger.warn('⚠️ Captura sin status en respuesta:', res.data);
+      logger.warn('⚠️ Captura sin status válido:', res.data);
     }
 
     return res.data;
@@ -135,7 +133,7 @@ export async function capturarOrden(orderId) {
   }
 }
 
-// ✅ Export default
+// ✅ Exportación para uso en controlador
 export default {
   crearOrden,
   capturarOrden

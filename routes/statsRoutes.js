@@ -1,11 +1,12 @@
 // 📁 backend/routes/statsRoutes.js
+
 import express from 'express';
 
 // 🛡️ Middlewares
 import authMiddleware from '../middleware/authMiddleware.js';
 import adminOnly from '../middleware/adminOnly.js';
 
-// 📊 Controladores
+// 📊 Controlador
 import { getResumenEstadisticas } from '../controllers/statsController.js';
 
 const router = express.Router();
@@ -16,8 +17,8 @@ const router = express.Router();
 
 /**
  * @route   GET /api/stats/resumen
- * @desc    Obtener resumen de estadísticas para el panel administrativo
- * @access  Privado (Solo Admin)
+ * @desc    Obtener resumen de estadísticas para panel admin
+ * @access  Privado (adminOnly)
  */
 router.get(
   '/resumen',

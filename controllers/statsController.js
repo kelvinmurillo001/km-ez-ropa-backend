@@ -7,11 +7,11 @@ import { fileURLToPath } from 'url';
 import config from '../config/configuracionesito.js';
 import logger from '../utils/logger.js';
 
-// 📍 __dirname compatible con ESModules
+// 📍 Compatibilidad ESModules (__dirname)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// 📁 Ruta al archivo de visitas
+// 📂 Ruta del archivo de visitas
 const visitasPath = path.join(__dirname, '..', 'data', 'visitas.json');
 
 /**
@@ -20,21 +20,21 @@ const visitasPath = path.join(__dirname, '..', 'data', 'visitas.json');
  */
 export const getResumenEstadisticas = async (_req, res) => {
   try {
-    // 🧪 Obtener productos y pedidos simultáneamente
+    // 🧾 Obtener productos y pedidos en paralelo
     const [productos, pedidos] = await Promise.all([
       Product.find().select('-__v').lean(),
       Order.find().select('-__v').lean()
     ]);
 
-    // 📈 Visitas desde JSON
+    // 👁️ Visitas totales
     const visitas = await obtenerVisitas();
 
-    // 📅 Pedidos realizados hoy
+    // 📅 Pedidos del día
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
     const pedidosHoy = pedidos.filter(p => new Date(p.createdAt) >= hoy).length;
 
-    // 📦 Totales
+    // 📦 Totales generales
     const totalProductos = productos.length;
     const productosDestacados = productos.filter(p => p.featured).length;
     const totalPedidos = pedidos.length;
@@ -42,10 +42,10 @@ export const getResumenEstadisticas = async (_req, res) => {
       .filter(p => p.estado === 'enviado')
       .reduce((sum, p) => sum + (parseFloat(p.total) || 0), 0);
 
-    // 📊 Productos por categoría
+    // 📊 Distribución por categoría
     const productosPorCategoria = productos.reduce((acc, p) => {
-      const cat = (p.category || 'sin_categoria').trim().toLowerCase();
-      acc[cat] = (acc[cat] || 0) + 1;
+      const categoria = (p.category || 'sin_categoria').trim().toLowerCase();
+      acc[categoria] = (acc[categoria] || 0) + 1;
       return acc;
     }, {});
 
@@ -64,7 +64,7 @@ export const getResumenEstadisticas = async (_req, res) => {
     });
 
   } catch (err) {
-    logger.error('❌ Error en resumen de estadísticas:', err);
+    logger.error('❌ Error generando estadísticas:', err);
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al generar estadísticas.',
@@ -74,21 +74,20 @@ export const getResumenEstadisticas = async (_req, res) => {
 };
 
 /**
- * 📂 Cargar visitas desde visitas.json
+ * 📂 Lee el archivo de visitas.json de forma segura
  */
 async function obtenerVisitas() {
   try {
     const raw = await fs.readFile(visitasPath, 'utf-8');
-    const json = JSON.parse(raw);
+    const data = JSON.parse(raw);
 
-    if (Number.isInteger(json.count)) return json.count;
-    if (Number.isInteger(json.visitas)) return json.visitas;
+    if (Number.isInteger(data.count)) return data.count;
+    if (Number.isInteger(data.visitas)) return data.visitas;
 
-    logger.warn('⚠️ visits.json sin campo válido');
+    logger.warn('⚠️ visits.json no contiene campos válidos (count o visitas)');
     return 0;
-
   } catch (err) {
-    logger.warn(`⚠️ No se pudo leer visitas.json: ${err.message}`);
+    logger.warn(`⚠️ Error leyendo visitas.json: ${err.message}`);
     return 0;
   }
 }

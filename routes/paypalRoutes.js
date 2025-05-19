@@ -1,4 +1,5 @@
 // 📁 backend/routes/paypalRoutes.js
+
 import express from 'express';
 
 // ✅ Controladores y validaciones
@@ -9,19 +10,18 @@ import {
   validateCaptureOrder
 } from '../controllers/paypalController.js';
 
-// ✅ Middleware para validar errores de express-validator
 import validarErrores from '../middleware/validarErrores.js';
 
 const router = express.Router();
 
 /* ───────────────────────────────────────────── */
-/* 💵 RUTAS DE INTEGRACIÓN CON PAYPAL            */
+/* 💵 RUTAS DE INTEGRACIÓN CON PAYPAL (Públicas) */
 /* ───────────────────────────────────────────── */
 
 /**
  * 🛒 POST /api/paypal/create-order
- * ➤ Crea una orden de PayPal
- * @access Público
+ * ➤ Crear una nueva orden PayPal
+ * ➤ Público
  */
 router.post(
   '/create-order',
@@ -32,8 +32,8 @@ router.post(
 
 /**
  * 💳 POST /api/paypal/capture-order
- * ➤ Captura una orden PayPal existente
- * @access Público
+ * ➤ Capturar una orden ya creada en PayPal
+ * ➤ Público
  */
 router.post(
   '/capture-order',

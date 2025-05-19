@@ -9,47 +9,32 @@ import { validationResult, body } from 'express-validator';
 /* ───────────────────────────────────────────── */
 export const validatePromotion = [
   body('message')
-    .exists().withMessage('⚠️ El mensaje es requerido.').bail()
+    .exists().withMessage('⚠️ El mensaje es requerido.')
     .isString().withMessage('⚠️ El mensaje debe ser texto.')
     .isLength({ min: 3 }).withMessage('⚠️ Mínimo 3 caracteres.')
     .trim(),
 
-  body('active')
-    .optional().isBoolean().withMessage('⚠️ "active" debe ser booleano.'),
-
-  body('theme')
-    .optional().isString().trim().withMessage('⚠️ "theme" debe ser texto.'),
-
-  body('startDate')
-    .optional().isISO8601().toDate().withMessage('⚠️ Fecha de inicio inválida.'),
-
-  body('endDate')
-    .optional().isISO8601().toDate().withMessage('⚠️ Fecha de fin inválida.'),
+  body('active').optional().isBoolean().withMessage('⚠️ "active" debe ser booleano.'),
+  body('theme').optional().isString().trim().withMessage('⚠️ "theme" debe ser texto.'),
+  body('startDate').optional().isISO8601().toDate().withMessage('⚠️ Fecha de inicio inválida.'),
+  body('endDate').optional().isISO8601().toDate().withMessage('⚠️ Fecha de fin inválida.'),
 
   body().custom(({ startDate, endDate }) => {
     if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
-      throw new Error('⚠️ La fecha de inicio no puede ser posterior a la fecha de fin.');
+      throw new Error('⚠️ La fecha de inicio no puede ser posterior a la de fin.');
     }
     return true;
   }),
 
-  body('mediaUrl')
-    .optional().isURL().withMessage('⚠️ mediaUrl debe ser una URL válida.'),
-
-  body('mediaType')
-    .optional().isIn(['image', 'video']).withMessage("⚠️ mediaType debe ser 'image' o 'video'."),
-
-  body('pages')
-    .optional().isArray().withMessage('⚠️ pages debe ser un arreglo.'),
-
-  body('pages.*')
-    .optional().isString().withMessage('⚠️ Cada página debe ser texto.'),
-
-  body('position')
-    .optional().isIn(['top', 'bottom', 'side']).withMessage('⚠️ position inválido.')
+  body('mediaUrl').optional().isURL().withMessage('⚠️ mediaUrl debe ser una URL válida.'),
+  body('mediaType').optional().isIn(['image', 'video']).withMessage('⚠️ mediaType debe ser "image" o "video".'),
+  body('pages').optional().isArray().withMessage('⚠️ pages debe ser un arreglo.'),
+  body('pages.*').optional().isString().withMessage('⚠️ Cada página debe ser texto.'),
+  body('position').optional().isIn(['top', 'bottom', 'side']).withMessage('⚠️ position inválido.')
 ];
 
 /* ───────────────────────────────────────────── */
+
 export const getPromotion = async (_req, res) => {
   try {
     const now = new Date();
@@ -78,12 +63,12 @@ export const getPromotion = async (_req, res) => {
       pages: p.pages,
       position: p.position,
       createdBy: p.createdBy,
-      createdAt: p.createdAt.toISOString()
+      createdAt: p.createdAt?.toISOString() || null
     }));
 
     return res.status(200).json({ ok: true, data });
   } catch (err) {
-    console.error('❌ Error getPromotion:', err.stack || err);
+    console.error('❌ Error al obtener promociones activas:', err);
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al obtener promociones activas.',
@@ -97,7 +82,7 @@ export const getAllPromotions = async (_req, res) => {
     const promos = await Promotion.find().select('-__v').sort({ createdAt: -1 }).lean();
     return res.status(200).json({ ok: true, data: promos });
   } catch (err) {
-    console.error('❌ Error getAllPromotions:', err.stack || err);
+    console.error('❌ Error al obtener todas las promociones:', err);
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al cargar promociones.',
@@ -135,19 +120,21 @@ export const updatePromotion = async (req, res) => {
     const promo = new Promotion({
       message: message.trim(),
       active: Boolean(active),
-      theme: String(theme).trim().toLowerCase(),
+      theme: theme.trim().toLowerCase(),
       startDate,
       endDate,
       mediaUrl,
       mediaType,
       pages: pages.map(p => String(p).trim().toLowerCase()),
-      position: String(position).trim().toLowerCase(),
+      position: position.trim().toLowerCase(),
       createdBy: req.user?.username || 'admin'
     });
 
     await promo.save();
 
-    console.log(`📢 Promoción creada por: ${promo.createdBy}`);
+    if (config.env !== 'production') {
+      console.log(`📢 Promoción creada por: ${promo.createdBy}`);
+    }
 
     return res.status(201).json({
       ok: true,
@@ -160,7 +147,7 @@ export const updatePromotion = async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('❌ Error updatePromotion:', err.stack || err);
+    console.error('❌ Error al guardar promoción:', err);
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al guardar promoción.',
@@ -184,7 +171,7 @@ export const deletePromotion = async (req, res) => {
 
     return res.status(200).json({ ok: true, data: { deletedId: id } });
   } catch (err) {
-    console.error('❌ Error deletePromotion:', err.stack || err);
+    console.error('❌ Error al eliminar promoción:', err);
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al eliminar promoción.',
@@ -195,9 +182,10 @@ export const deletePromotion = async (req, res) => {
 
 export const togglePromoActive = async (req, res) => {
   try {
-    const id = req.params.id;
+    const id = String(req.params.id || '').trim();
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ ok: false, message: '⚠️ ID inválido.' });
+      return res.status(400).json({ ok: false, message: '⚠️ ID de promoción inválido.' });
     }
 
     const promo = await Promotion.findById(id);
@@ -217,10 +205,10 @@ export const togglePromoActive = async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('❌ Error togglePromoActive:', err.stack || err);
+    console.error('❌ Error al cambiar estado de promoción:', err);
     return res.status(500).json({
       ok: false,
-      message: '❌ Error al alternar estado de promoción.',
+      message: '❌ Error interno al alternar estado de promoción.',
       ...(config.env !== 'production' && { error: err.message })
     });
   }

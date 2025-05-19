@@ -1,3 +1,4 @@
+// 📁 backend/controllers/products/updateProduct.js
 import mongoose from 'mongoose';
 import Product from '../../models/Product.js';
 import { cloudinary } from '../../config/cloudinary.js';
@@ -40,7 +41,7 @@ const updateProduct = async (req, res) => {
       stock
     } = req.body;
 
-    // 🖼️ Imagen principal
+    // 📷 Procesar imagen principal
     let newImages = product.images;
     if (Array.isArray(images) && images.length === 1) {
       const img = images[0];
@@ -48,14 +49,16 @@ const updateProduct = async (req, res) => {
         return res.status(400).json({ ok: false, message: '⚠️ Imagen principal incompleta.' });
       }
 
-      const url = img.url.trim();
-      if (product.images[0]?.url !== url) {
+      const nuevaUrl = img.url.trim();
+      const urlOriginal = product.images[0]?.url;
+
+      if (urlOriginal !== nuevaUrl) {
         await Promise.all(product.images.map(i =>
           i.cloudinaryId ? cloudinary.uploader.destroy(i.cloudinaryId) : null
         ));
 
         newImages = [{
-          url,
+          url: nuevaUrl,
           cloudinaryId: img.cloudinaryId.trim(),
           talla: String(img.talla || '').trim().toLowerCase(),
           color: String(img.color || '').trim().toLowerCase()
@@ -65,7 +68,7 @@ const updateProduct = async (req, res) => {
       return res.status(400).json({ ok: false, message: '⚠️ Solo se permite una imagen principal.' });
     }
 
-    // 🎨 Variantes
+    // 🎨 Procesar variantes
     let newVariants = [];
     if (Array.isArray(variants) && variants.length > 0) {
       if (variants.length > 4) {
@@ -106,10 +109,11 @@ const updateProduct = async (req, res) => {
       }
     }
 
-    // 📝 Campos generales
+    // 📝 Actualizar campos principales
     if (name && name.trim() !== product.name) {
       product.name = name.trim();
 
+      // 🔠 Regenerar slug único si cambia el nombre
       const slugBase = name.normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .replace(/ñ/g, 'n')
@@ -134,6 +138,7 @@ const updateProduct = async (req, res) => {
       product.slug = slug;
     }
 
+    // 🔄 Otros campos
     if (!isNaN(Number(price))) product.price = Number(price);
     if (category) product.category = String(category).trim().toLowerCase();
     if (subcategory) product.subcategory = String(subcategory).trim().toLowerCase();
@@ -141,11 +146,12 @@ const updateProduct = async (req, res) => {
     if (typeof color === 'string') product.color = color.trim().toLowerCase();
     if (Array.isArray(sizes)) product.sizes = sizes.map(s => String(s).trim());
     product.featured = featured === true || featured === 'true';
+
     product.images = newImages;
     product.variants = newVariants;
     product.updatedBy = req.user?.username || 'admin';
 
-    // 🔢 Stock
+    // 📦 Stock
     if (newVariants.length > 0) {
       product.stock = undefined;
     } else if (!isNaN(Number(stock))) {

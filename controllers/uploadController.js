@@ -13,17 +13,17 @@ export const uploadImage = async (req, res) => {
   try {
     const file = req.file;
 
-    // 📛 Validar presencia del archivo
+    // 📛 Validar archivo presente
     if (!file?.buffer) {
-      logger.warn('📭 Subida fallida: archivo no presente.');
+      logger.warn('📭 Subida fallida: archivo no proporcionado.');
       return res.status(400).json({
         ok: false,
         message: '⚠️ No se ha proporcionado ningún archivo de imagen.'
       });
     }
 
-    // 📛 Validar tipo MIME
-    if (!file.mimetype || !file.mimetype.startsWith('image/')) {
+    // 🧪 Validar tipo MIME
+    if (!file.mimetype?.startsWith('image/')) {
       logger.warn(`⛔ Tipo MIME inválido: ${file.mimetype}`);
       return res.status(400).json({
         ok: false,
@@ -31,27 +31,28 @@ export const uploadImage = async (req, res) => {
       });
     }
 
-    // 📛 Validar tamaño máximo si aplica
+    // 🧪 Validar tamaño del archivo
     const maxSizeMb = config.maxUploadSizeMb || 5;
     const maxSizeBytes = maxSizeMb * 1024 * 1024;
     if (file.size > maxSizeBytes) {
-      logger.warn(`⛔ Archivo demasiado grande: ${file.size} bytes`);
+      logger.warn(`⛔ Archivo excede límite: ${file.size} bytes`);
       return res.status(413).json({
         ok: false,
         message: `⚠️ Tamaño máximo permitido: ${maxSizeMb}MB.`
       });
     }
 
-    // 📂 Validar carpeta destino segura
-    const carpetaSolicitada = String(req.body.folder || config.defaultUploadFolder || 'otros').trim().toLowerCase();
+    // 📁 Validar carpeta de destino
+    const folderSolicitada = String(req.body.folder || config.defaultUploadFolder || 'otros').trim().toLowerCase();
     const carpetasPermitidas = Array.isArray(config.allowedUploadFolders)
       ? config.allowedUploadFolders.map(f => f.toLowerCase())
       : ['productos_kmezropa', 'promos', 'otros'];
-    const folder = carpetasPermitidas.includes(carpetaSolicitada)
-      ? carpetaSolicitada
+
+    const folder = carpetasPermitidas.includes(folderSolicitada)
+      ? folderSolicitada
       : (config.defaultUploadFolder || 'otros');
 
-    // 🚀 Subir usando stream
+    // ☁️ Subir a Cloudinary vía stream
     const uploadResult = await new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
         {
@@ -65,7 +66,8 @@ export const uploadImage = async (req, res) => {
       streamifier.createReadStream(file.buffer).pipe(stream);
     });
 
-    logger.info(`✅ Imagen subida a Cloudinary en carpeta '${folder}'`, {
+    logger.info(`✅ Imagen subida a Cloudinary`, {
+      folder,
       url: uploadResult.secure_url,
       id: uploadResult.public_id
     });
@@ -80,7 +82,7 @@ export const uploadImage = async (req, res) => {
       }
     });
   } catch (err) {
-    logger.error('❌ Error interno en uploadImage:', err);
+    logger.error('❌ Error al subir imagen:', err);
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al subir imagen.',

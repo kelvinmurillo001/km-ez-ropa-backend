@@ -6,39 +6,42 @@ import logger from '../utils/logger.js';
 
 /**
  * 🔄 POST /api/auth/refresh
- * ➤ Renovar Access Token usando Refresh Token (desde cookie HTTP-only)
+ * ➤ Renueva el Access Token a partir del Refresh Token (vía cookie HTTP-only)
  */
 export const refreshTokenController = async (req, res) => {
   try {
     const rawToken = req.cookies?.refreshToken;
 
+    // 🔐 Validar token presente
     if (!rawToken || typeof rawToken !== 'string' || rawToken.length < 20) {
-      logger.warn('🛑 No se proporcionó un refreshToken válido en cookies.');
+      logger.warn('🛑 Refresh token ausente o inválido.');
       return res.status(401).json({
         ok: false,
         message: '❌ Debes iniciar sesión para continuar.'
       });
     }
 
-    // 🔍 Verificar token de refresco
+    // 🔍 Verificar firma del token
     let payload;
     try {
       payload = jwt.verify(rawToken, config.jwtRefreshSecret);
     } catch (err) {
-      logger.warn(`⛔ RefreshToken inválido o expirado: ${err.message}`);
+      logger.warn(`⛔ Token de refresco inválido o expirado: ${err.message}`);
       return res.status(403).json({
         ok: false,
-        message: '⛔ Tu sesión ha expirado. Vuelve a iniciar sesión.',
+        message: '⛔ Tu sesión ha expirado. Inicia sesión nuevamente.',
         ...(config.env !== 'production' && { error: err.message })
       });
     }
 
+    // 📌 Extraer y validar ID del token
     const userId = String(payload.id || '').trim();
     if (!userId || userId.length < 10) {
       logger.warn(`⚠️ ID inválido extraído del token: ${userId}`);
       return res.status(403).json({ ok: false, message: '⚠️ Token inválido. ID incorrecto.' });
     }
 
+    // 🔎 Verificar usuario y token registrado
     const user = await User.findById(userId).select('+refreshToken');
     if (!user) {
       logger.warn(`❌ Usuario no encontrado con ID: ${userId}`);
@@ -46,11 +49,11 @@ export const refreshTokenController = async (req, res) => {
     }
 
     if (user.refreshToken !== rawToken) {
-      logger.warn(`⚠️ Token no coincide para el usuario ${user.username || user.email || 'N/A'}`);
+      logger.warn(`⚠️ El refreshToken no coincide para ${user.username || user.email || 'N/A'}`);
       return res.status(403).json({ ok: false, message: '⚠️ Sesión inválida. Requiere nuevo login.' });
     }
 
-    // 🔐 Generar nuevo access token
+    // ✅ Generar nuevo Access Token
     const newAccessToken = jwt.sign(
       { id: user._id, role: user.role },
       config.jwtSecret,

@@ -7,25 +7,24 @@ import logger from '../utils/logger.js';
 
 // 🔒 Limita el número de solicitudes por IP por ventana de tiempo
 const limiter = rateLimit({
-  windowMs: (config.rateLimitWindow || 5) * 60 * 1000, // ⏱️ 5 minutos por defecto
-  max: config.rateLimitMax || 100, // 🔢 Máximo de peticiones permitidas
+  windowMs: (config.rateLimitWindow || 5) * 60 * 1000, // ⏱️ Ventana de tiempo en ms (por defecto 5 min)
+  max: config.rateLimitMax || 100, // 🔢 Máximo de peticiones por IP
   message: {
     status: 429,
-    message: '⚠️ Demasiadas solicitudes. Intenta nuevamente en unos minutos.',
+    message: '⚠️ Demasiadas solicitudes. Intenta nuevamente en unos minutos.'
   },
-  standardHeaders: true, // 📋 Añade headers modernos como RateLimit-Limit
-  legacyHeaders: false, // ❌ Desactiva encabezados antiguos X-RateLimit-*
+  standardHeaders: true, // 📋 Añade headers estándar RateLimit-Limit, etc.
+  legacyHeaders: false,  // ❌ Desactiva encabezados antiguos X-RateLimit-*
+  skipSuccessfulRequests: false, // 🔄 Cuenta todas las peticiones (incluso exitosas)
 
-  // 📈 Log si se excede el límite
+  // 📈 Log personalizado cuando se supera el límite
   handler: (req, res, next, options) => {
-    logger.warn(`🚨 Rate limit excedido: ${req.ip}`);
+    logger.warn(`🚨 Rate limit excedido: ${req.ip} - ${req.method} ${req.originalUrl}`);
     res.status(options.statusCode).json(options.message);
-  },
-
-  skipSuccessfulRequests: false // 👉 También cuenta las exitosas (ajustable)
+  }
 });
 
-// 🔍 Debug opcional en entorno desarrollo
+// 🧪 Log de configuración en entorno de desarrollo
 if (config.env !== 'production') {
   logger.info(`🛡️ Rate limiter activo: ${config.rateLimitMax} reqs / ${config.rateLimitWindow} min por IP`);
 }

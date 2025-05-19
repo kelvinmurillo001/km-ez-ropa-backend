@@ -1,10 +1,7 @@
 // 📁 backend/models/category.js
-import mongoose from 'mongoose'
+import mongoose from 'mongoose';
 
-// 📦 Lista de páginas válidas si se usan más adelante (ej. para promociones)
-// const allowedPages = ['home', 'productos', 'categorias', 'carrito']
-
-// 📦 Esquema de Categoría con subcategorías embebidas
+// 📦 Esquema de Categoría con subcategorías
 const categorySchema = new mongoose.Schema({
   name: {
     type: String,
@@ -31,9 +28,9 @@ const categorySchema = new mongoose.Schema({
           arr.map(sub =>
             sub.trim()
               .toLowerCase()
-              .normalize('NFD') // quitar tildes
+              .normalize('NFD')
               .replace(/[\u0300-\u036f]/g, '')
-              .replace(/[^\w\s-]/g, '') // quitar símbolos raros
+              .replace(/[^\w\s-]/g, '')
           )
         )]
       : []
@@ -57,52 +54,53 @@ const categorySchema = new mongoose.Schema({
     virtuals: true,
     versionKey: false,
     transform: (_doc, ret) => {
-      ret.id = ret._id.toString()
-      delete ret._id
-      return ret
+      ret.id = ret._id.toString();
+      delete ret._id;
+      return ret;
     }
   },
   toObject: {
     virtuals: true,
     versionKey: false
   }
-})
+});
 
-// 🆕 Virtual: slug autogenerado (no guardado en BD, pero accesible)
+// 🆕 Virtual: slug autogenerado para URLs amigables
 categorySchema.virtual('slug').get(function () {
   return this.name
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // eliminar tildes
-    .replace(/ñ/g, 'n') // reemplazar ñ
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/ñ/g, 'n')
     .replace(/\s+/g, '-')
     .replace(/[^\w-]/g, '')
-    .toLowerCase()
-})
+    .toLowerCase();
+});
 
-// 🔍 Índice con collation: ignora mayúsculas y tildes
+// 🔍 Índice con collation español para evitar duplicados por tildes/mayúsculas
 categorySchema.index(
   { name: 1 },
   {
     unique: true,
-    collation: { locale: 'es', strength: 2 } // Ignora acentos y mayúsculas
+    collation: { locale: 'es', strength: 2 }
   }
-)
+);
 
-// ✅ Log de errores específicos si ocurre un fallo de validación
+// ✅ Log automático en guardado
 categorySchema.post('save', function (doc, next) {
-  console.log(`✅ Categoría guardada: ${doc.name} (${doc._id})`)
-  next()
-})
+  console.log(`✅ Categoría guardada: ${doc.name} (${doc._id})`);
+  next();
+});
 
+// ❌ Log de errores duplicados
 categorySchema.post('error', function (err, _doc, next) {
   if (err.name === 'MongoServerError' && err.code === 11000) {
-    console.error('❌ Error: Nombre de categoría duplicado.')
+    console.error('❌ Error: El nombre de categoría ya existe.');
   } else {
-    console.error('❌ Error al guardar categoría:', err)
+    console.error('❌ Error al guardar categoría:', err);
   }
-  next(err)
-})
+  next(err);
+});
 
 // 🚀 Exportar modelo
-const Category = mongoose.model('Category', categorySchema)
-export default Category
+const Category = mongoose.model('Category', categorySchema);
+export default Category;

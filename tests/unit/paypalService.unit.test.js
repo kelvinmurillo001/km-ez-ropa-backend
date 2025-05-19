@@ -34,11 +34,12 @@ describe('🧪 paypalService.js (Unit Tests)', () => {
       expect(axios.post).toHaveBeenCalledTimes(2);
     });
 
-    test('❌ debe rechazar orden con total inválido', async () => {
-      await expect(crearOrden(0)).rejects.toThrow(/total/i);
-      await expect(crearOrden(-5)).rejects.toThrow(/total/i);
-      await expect(crearOrden(null)).rejects.toThrow(/total/i);
-    });
+    test.each([0, -5, null, undefined, NaN])(
+      '❌ debe rechazar crear orden con total inválido: %p',
+      async (total) => {
+        await expect(crearOrden(total)).rejects.toThrow(/total/i);
+      }
+    );
 
     test('❌ debe fallar si no se obtiene token', async () => {
       axios.post.mockRejectedValueOnce(new Error('Token error'));
@@ -66,11 +67,12 @@ describe('🧪 paypalService.js (Unit Tests)', () => {
       expect(axios.post).toHaveBeenCalledTimes(2);
     });
 
-    test('❌ debe rechazar capturar orden con ID inválido', async () => {
-      await expect(capturarOrden('')).rejects.toThrow(/orderid/i);
-      await expect(capturarOrden('12')).rejects.toThrow(/orderid/i);
-      await expect(capturarOrden(null)).rejects.toThrow(/orderid/i);
-    });
+    test.each(['', '12', null, undefined])(
+      '❌ debe rechazar capturar orden con ID inválido: %p',
+      async (orderId) => {
+        await expect(capturarOrden(orderId)).rejects.toThrow(/orderid/i);
+      }
+    );
 
     test('❌ debe fallar si no se obtiene token para captura', async () => {
       axios.post.mockRejectedValueOnce(new Error('token fail'));

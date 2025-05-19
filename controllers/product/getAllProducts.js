@@ -1,3 +1,4 @@
+// 📁 backend/controllers/products/getAllProducts.js
 import Product from '../../models/Product.js';
 import { calcularStockTotal } from '../../utils/calculateStock.js';
 
@@ -8,6 +9,7 @@ import { calcularStockTotal } from '../../utils/calculateStock.js';
  */
 const getAllProducts = async (req, res) => {
   try {
+    // 🔍 Extraer filtros desde query
     const {
       nombre = '',
       categoria = '',
@@ -22,25 +24,25 @@ const getAllProducts = async (req, res) => {
 
     const filtro = { isActive: true };
 
-    // 🔍 Filtro por nombre
-    if (nombre.trim()) {
+    // 🔎 Nombre (búsqueda parcial)
+    if (typeof nombre === 'string' && nombre.trim().length > 1) {
       filtro.name = { $regex: new RegExp(nombre.trim(), 'i') };
     }
 
-    // 🔍 Filtro por categoría y subcategoría
-    if (categoria.trim()) {
+    // 🧭 Categoría / subcategoría
+    if (typeof categoria === 'string' && categoria.trim()) {
       filtro.category = categoria.trim().toLowerCase();
     }
-    if (subcategoria.trim()) {
+    if (typeof subcategoria === 'string' && subcategoria.trim()) {
       filtro.subcategory = subcategoria.trim().toLowerCase();
     }
 
-    // ⭐ Productos destacados
+    // 🌟 Destacados
     if (featured === 'true') {
       filtro.featured = true;
     }
 
-    // 💵 Filtro por rango de precio
+    // 💲 Rango de precio
     const min = parseFloat(precioMin);
     const max = parseFloat(precioMax);
     if (!isNaN(min) || !isNaN(max)) {
@@ -49,34 +51,37 @@ const getAllProducts = async (req, res) => {
       if (!isNaN(max)) filtro.price.$lte = max;
     }
 
-    // 📄 Paginación segura
+    // 📄 Paginación con límites seguros
     const page = Math.max(parseInt(pagina, 10) || 1, 1);
-    const limit = Math.min(Math.max(parseInt(limite, 10) || 12, 1), 50);
+    const limit = Math.min(Math.max(parseInt(limite, 10) || 12, 1), 100);
     const skip = (page - 1) * limit;
 
-    // 🧾 Obtener productos y conteo total
+    // 🧾 Consulta base
     const [productosRaw, totalBruto] = await Promise.all([
       Product.find(filtro).skip(skip).limit(limit).sort({ createdAt: -1 }).lean(),
       Product.countDocuments(filtro)
     ]);
 
-    // 🧮 Calcular stock solo si se necesita
-    const productos = productosRaw.map((prod) => ({
+    // 🔢 Calcular stock total por producto
+    const productos = productosRaw.map(prod => ({
       ...prod,
       stockTotal: calcularStockTotal(prod)
     }));
 
-    // ✅ Filtro adicional: solo con stock
-    const productosFinales =
-      conStock === 'true' ? productos.filter((p) => p.stockTotal > 0) : productos;
+    // ✅ Filtrar por stock positivo si se requiere
+    const productosFinales = conStock === 'true'
+      ? productos.filter(p => p.stockTotal > 0)
+      : productos;
 
     const totalVisibles = productosFinales.length;
     const totalPaginas = Math.ceil(totalBruto / limit);
 
+    // 🐞 Log opcional
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`📦 Productos: ${totalVisibles}/${totalBruto} | Página ${page}`);
+      console.log(`📦 Productos listados: ${totalVisibles}/${totalBruto} | Página ${page}`);
     }
 
+    // 📤 Respuesta final
     return res.status(200).json({
       ok: true,
       data: {
@@ -91,7 +96,7 @@ const getAllProducts = async (req, res) => {
     console.error('❌ Error al obtener productos:', err);
     return res.status(500).json({
       ok: false,
-      message: '❌ Error interno al obtener productos',
+      message: '❌ Error interno al obtener productos.',
       ...(process.env.NODE_ENV !== 'production' && { error: err.message })
     });
   }

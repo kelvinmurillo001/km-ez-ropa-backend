@@ -1,6 +1,7 @@
+// 📁 backend/models/Product.js
 import mongoose from 'mongoose';
 
-/* 🧩 Subesquema: Variante de producto (talla + color) */
+/* 🧩 Subesquema: Variante del producto */
 const variantSchema = new mongoose.Schema({
   talla: {
     type: String,
@@ -36,7 +37,7 @@ const variantSchema = new mongoose.Schema({
   }
 }, { _id: false });
 
-/* 🧾 Esquema del producto */
+/* 📦 Esquema principal del producto */
 const productSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -178,12 +179,12 @@ const productSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-/* 🔢 Virtual: stock total dinámico */
+/* 🔢 Virtual: stock total calculado */
 productSchema.virtual('stockTotal').get(function () {
   return this.variants?.reduce((acc, v) => acc + (v.stock || 0), 0) || 0;
 });
 
-/* 🧠 Normalización y slug automático */
+/* 🧠 Slug y metadescripción automáticos */
 productSchema.pre('validate', async function (next) {
   this.name = this.name?.trim();
   this.category = this.category?.trim().toLowerCase();
@@ -193,12 +194,13 @@ productSchema.pre('validate', async function (next) {
   if (!this.slug && this.name) {
     const base = this.name.toLowerCase()
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .replace(/ñ/g, 'n').replace(/\s+/g, '-')
-      .replace(/[^\w-]/g, '').substring(0, 100);
+      .replace(/ñ/g, 'n')
+      .replace(/\s+/g, '-')
+      .replace(/[^\w-]/g, '')
+      .substring(0, 100);
 
     let slug = base;
     let i = 1;
-
     while (await mongoose.models.Product.exists({ slug })) {
       slug = `${base}-${i++}`;
     }
@@ -206,7 +208,7 @@ productSchema.pre('validate', async function (next) {
     this.slug = slug;
   }
 
-  // 📝 Meta por defecto
+  // 📝 Meta automática si no fue definida
   if (!this.metaDescription && this.name && this.category) {
     this.metaDescription = `Compra ${this.name} en nuestra sección de ${this.category}. Calidad garantizada.`;
   }
@@ -214,12 +216,12 @@ productSchema.pre('validate', async function (next) {
   next();
 });
 
-/* 🧭 Índices para búsquedas */
+/* 🔍 Índices útiles para catálogo y panel */
 productSchema.index({ slug: 1 }, { unique: true });
 productSchema.index({ name: 1, category: 1, subcategory: 1 });
 productSchema.index({ category: 1, subcategory: 1, tallaTipo: 1 });
 productSchema.index({ isActive: 1 });
 
-/* 📦 Exportar modelo */
+/* 🚀 Exportar modelo */
 const Product = mongoose.model('Product', productSchema);
 export default Product;

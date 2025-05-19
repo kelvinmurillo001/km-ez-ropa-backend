@@ -36,7 +36,7 @@ export const listImages = async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('❌ Error listando imágenes desde Cloudinary:', err);
+    console.error('❌ Error al listar imágenes:', err);
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al listar imágenes.',
@@ -54,11 +54,11 @@ export const deleteImage = async (req, res) => {
   try {
     const publicId = String(req.params.publicId || '').trim();
 
-    const validPublicId = /^[a-zA-Z0-9_\-/]+$/;
+    const validPublicId = /^[\w\-\/]+$/;
     if (!publicId || !validPublicId.test(publicId)) {
       return res.status(400).json({
         ok: false,
-        message: '⚠️ publicId inválido. Usa solo letras, números, guiones, guion bajo y slash.'
+        message: '⚠️ publicId inválido. Usa solo letras, números, guiones, guión bajo y slash.'
       });
     }
 
@@ -72,9 +72,12 @@ export const deleteImage = async (req, res) => {
       });
     }
 
-    return res.status(200).json({ ok: true, data: { deleted: publicId } });
+    return res.status(200).json({
+      ok: true,
+      data: { deleted: publicId }
+    });
   } catch (err) {
-    console.error('❌ Error eliminando imagen en Cloudinary:', err);
+    console.error('❌ Error al eliminar imagen:', err);
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al eliminar imagen.',

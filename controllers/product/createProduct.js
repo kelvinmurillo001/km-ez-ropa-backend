@@ -1,3 +1,4 @@
+// 📁 backend/controllers/products/createProduct.js
 import Product from '../../models/Product.js';
 import { validationResult } from 'express-validator';
 
@@ -9,12 +10,12 @@ import { validationResult } from 'express-validator';
 const createProduct = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    console.warn('🛑 Validación fallida al crear producto:', errors.array());
+    console.warn('🛑 Validación fallida:', errors.array());
     return res.status(400).json({ ok: false, errors: errors.array() });
   }
 
   try {
-    // 🧹 Normalización de entradas
+    // 🧹 Normalizar campos
     let {
       name,
       description = '',
@@ -45,7 +46,7 @@ const createProduct = async (req, res) => {
 
     // 📷 Validación de imagen principal
     if (!Array.isArray(images) || images.length !== 1) {
-      return res.status(400).json({ ok: false, message: '⚠️ Debes enviar solo una imagen principal.' });
+      return res.status(400).json({ ok: false, message: '⚠️ Debes enviar una imagen principal.' });
     }
 
     const main = images[0];
@@ -71,16 +72,14 @@ const createProduct = async (req, res) => {
         const stk = Number(v.stock);
 
         if (!talla || !col || !url || !id || isNaN(stk)) {
-          return res.status(400).json({
-            ok: false,
-            message: '⚠️ Cada variante debe tener talla, color, imagen, cloudinaryId y stock válido.'
-          });
+          return res.status(400).json({ ok: false, message: '⚠️ Cada variante debe tener talla, color, imagen y stock válido.' });
         }
 
         const combo = `${talla}-${col}`;
         if (combos.has(combo)) {
           return res.status(400).json({ ok: false, message: '⚠️ Variantes duplicadas.' });
         }
+
         combos.add(combo);
       }
     } else {
@@ -90,18 +89,18 @@ const createProduct = async (req, res) => {
       }
     }
 
-    // 🧪 Verificación de duplicado por nombre y subcategoría
+    // 🧪 Verificar duplicado
     const duplicate = await Product.findOne({ name, subcategory });
     if (duplicate) {
       return res.status(409).json({ ok: false, message: '⚠️ Ya existe un producto con ese nombre y subcategoría.' });
     }
 
-    // 🔡 Limpieza de tallas
+    // 🔤 Limpieza y capitalización de tallas
     const cleanedSizes = Array.isArray(sizes)
       ? sizes.filter(s => typeof s === 'string' && s.trim()).map(s => s.trim().toUpperCase())
       : [];
 
-    // 🔠 Slug único
+    // 🆔 Generar slug único
     const slugBase = name
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/ñ/g, 'n')
@@ -123,7 +122,7 @@ const createProduct = async (req, res) => {
       return res.status(500).json({ ok: false, message: '⚠️ No se pudo generar un slug único.' });
     }
 
-    // 📦 Preparar producto
+    // 📦 Crear objeto producto
     const productData = {
       name,
       description,
@@ -154,7 +153,7 @@ const createProduct = async (req, res) => {
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al crear producto.',
-      ...(process.env.NODE_ENV === 'development' && { error: err.message })
+      ...(process.env.NODE_ENV !== 'production' && { error: err.message })
     });
   }
 };

@@ -1,4 +1,5 @@
 // 📁 backend/routes/productRoutes.js
+
 import express from 'express';
 import { param } from 'express-validator';
 
@@ -31,11 +32,9 @@ const router = express.Router();
 /* 📦 RUTAS DE PRODUCTOS                         */
 /* ───────────────────────────────────────────── */
 
-/* 🔓 Rutas públicas */
-
 /**
  * 📥 GET /api/products
- * ➤ Obtener productos con filtros (catálogo público)
+ * ➤ Obtener todos los productos con filtros (PÚBLICO)
  */
 router.get(
   '/',
@@ -46,7 +45,7 @@ router.get(
 
 /**
  * 🔍 GET /api/products/slug/:slug
- * ➤ Obtener producto por slug (URL amigable)
+ * ➤ Obtener un producto por su slug
  */
 router.get(
   '/slug/:slug',
@@ -59,7 +58,7 @@ router.get(
 
 /**
  * 🔍 GET /api/products/:id
- * ➤ Obtener producto por ID Mongo
+ * ➤ Obtener un producto por ID
  */
 router.get(
   '/:id',
@@ -70,11 +69,11 @@ router.get(
   getProductById
 );
 
-/* 🔐 Rutas privadas (solo admins) */
+/* 🔐 Rutas protegidas para administradores */
 
 /**
  * ➕ POST /api/products
- * ➤ Crear nuevo producto
+ * ➤ Crear un nuevo producto
  */
 router.post(
   '/',
@@ -87,7 +86,7 @@ router.post(
 
 /**
  * ✏️ PUT /api/products/:id
- * ➤ Actualizar producto existente
+ * ➤ Actualizar un producto existente
  */
 router.put(
   '/:id',
@@ -103,7 +102,7 @@ router.put(
 
 /**
  * 🗑️ DELETE /api/products/:id
- * ➤ Eliminar producto
+ * ➤ Eliminar un producto por ID
  */
 router.delete(
   '/:id',

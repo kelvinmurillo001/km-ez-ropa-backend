@@ -16,23 +16,21 @@ import authMiddleware from '../middleware/authMiddleware.js';
 const router = express.Router();
 
 /* -------------------------------------------------------------------------- */
-/* 🔐 LOGIN CLIENTE JWT (NUEVO)                                               */
+/* 🔐 LOGIN CLIENTE (con JWT)                                                 */
 /* -------------------------------------------------------------------------- */
 router.post('/login-cliente', loginClienteValidation, loginCliente);
 
 /* -------------------------------------------------------------------------- */
-/* 🔐 AUTENTICACIÓN CON GOOGLE                                                */
+/* 🔐 AUTENTICACIÓN CON GOOGLE (OAuth)                                        */
 /* -------------------------------------------------------------------------- */
-router.get(
-  '/google',
+router.get('/google',
   passport.authenticate('google', {
     scope: ['profile', 'email'],
     prompt: 'select_account'
   })
 );
 
-router.get(
-  '/google/callback',
+router.get('/google/callback',
   passport.authenticate('google', {
     failureRedirect: '/login.html',
     failureMessage: true,
@@ -46,16 +44,16 @@ router.get(
         : 'https://kmezropacatalogo.com/cliente';
 
       logger.info(`🔐 Login exitoso vía Google - Usuario: ${req.user.email}, Rol: ${role}`);
-      return res.redirect(redirectUrl);
-    } catch (error) {
-      logger.error('❌ Error en redirección post-login:', error);
-      return res.redirect('/login.html');
+      res.redirect(redirectUrl);
+    } catch (err) {
+      logger.error('❌ Error redirigiendo después de login:', err);
+      res.redirect('/login.html');
     }
   }
 );
 
 /* -------------------------------------------------------------------------- */
-/* 👤 USUARIO ACTUAL AUTENTICADO                                              */
+/* 🔍 USUARIO AUTENTICADO ACTUAL (por JWT o sesión)                           */
 /* -------------------------------------------------------------------------- */
 router.get('/me', authMiddleware, getUsuarioActual);
 
@@ -85,7 +83,7 @@ router.get('/logout', (req, res) => {
     });
   } catch (err) {
     logger.error('❌ Error inesperado en /logout:', err);
-    return res.status(500).json({ ok: false, message: '❌ Error interno cerrando sesión' });
+    return res.status(500).json({ ok: false, message: '❌ Error cerrando sesión' });
   }
 });
 
@@ -102,70 +100,79 @@ router.post('/forgot-password', async (req, res) => {
     const normalizedEmail = email.toLowerCase().trim();
     const user = await User.findOne({ email: normalizedEmail });
 
+    // No revelar si el email existe
     if (!user) {
-      logger.warn(`⚠️ Reset solicitado para correo inexistente: ${normalizedEmail}`);
-      return res.status(200).json({ ok: true, message: '📬 Si el correo existe, se envió el enlace' });
+      logger.warn(`⚠️ Reset solicitado para correo no registrado: ${normalizedEmail}`);
+      return res.status(200).json({
+        ok: true,
+        message: '📬 Si el correo está registrado, se ha enviado un enlace de recuperación.'
+      });
     }
 
     const token = crypto.randomBytes(32).toString('hex');
     user.resetToken = token;
-    user.resetExpires = new Date(Date.now() + 1000 * 60 * 60); // 1 hora
+    user.resetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
     await user.save();
 
     const resetLink = `https://kmezropacatalogo.com/resetear.html?token=${token}`;
     await sendEmail(
       normalizedEmail,
-      '🔐 Recuperar Contraseña',
+      '🔐 Recuperar contraseña',
       `
-        <p>Hola ${user.name || ''},</p>
-        <p>Hemos recibido una solicitud para restablecer tu contraseña.</p>
-        <p>Haz clic en el siguiente enlace para continuar:</p>
+        <p>Hola ${user.name},</p>
+        <p>Haz clic en el siguiente enlace para restablecer tu contraseña:</p>
         <p><a href="${resetLink}">${resetLink}</a></p>
         <p>Este enlace expirará en 1 hora.</p>
-        <p>Si no solicitaste esto, ignora este mensaje.</p>
+        <hr/>
+        <small>Si no solicitaste este correo, puedes ignorarlo.</small>
       `
     );
 
     logger.info(`📧 Token de recuperación enviado a ${user.email}`);
-    res.json({ ok: true, message: '📬 Si el correo existe, se envió el enlace de recuperación' });
+    return res.status(200).json({
+      ok: true,
+      message: '📬 Si el correo está registrado, se ha enviado un enlace de recuperación.'
+    });
   } catch (err) {
     logger.error('❌ Error en forgot-password:', err);
-    res.status(500).json({ message: '❌ Error enviando recuperación' });
+    res.status(500).json({ message: '❌ No se pudo enviar el correo de recuperación.' });
   }
 });
 
 /* -------------------------------------------------------------------------- */
-/* 🔁 RESETEO DE CONTRASEÑA                                                   */
+/* 🔁 CAMBIO DE CONTRASEÑA DESDE TOKEN                                        */
 /* -------------------------------------------------------------------------- */
 router.post('/reset-password', async (req, res) => {
   try {
     const { token, password } = req.body;
 
-    if (!token || !password || typeof password !== 'string' || password.length < 6) {
-      return res.status(400).json({ message: '❌ Token o contraseña inválidos' });
+    if (!token || typeof token !== 'string' || !password || password.length < 6) {
+      return res.status(400).json({ message: '❌ Token o nueva contraseña inválidos' });
     }
 
     const user = await User.findOne({
       resetToken: token,
-      resetExpires: { $gt: Date.now() }
+      resetExpires: { $gt: new Date() }
     });
 
     if (!user) {
-      return res.status(400).json({ message: '❌ Token inválido o expirado' });
+      return res.status(400).json({ message: '❌ Token inválido o expirado.' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
-    user.password = hashedPassword;
+    user.password = await bcrypt.hash(password, 12);
     user.resetToken = null;
     user.resetExpires = null;
 
     await user.save();
-    logger.info(`🔁 Contraseña reseteada correctamente para ${user.email}`);
 
-    res.json({ success: true, message: '✅ Contraseña actualizada correctamente.' });
+    logger.info(`🔁 Contraseña actualizada para ${user.email}`);
+    return res.status(200).json({
+      success: true,
+      message: '✅ Contraseña actualizada correctamente.'
+    });
   } catch (err) {
     logger.error('❌ Error en reset-password:', err);
-    res.status(500).json({ message: '❌ Error al resetear contraseña.' });
+    res.status(500).json({ message: '❌ No se pudo actualizar la contraseña.' });
   }
 });
 

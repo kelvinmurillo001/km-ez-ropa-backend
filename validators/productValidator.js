@@ -58,7 +58,7 @@ const variantesRules = [
 export const createProductValidation = [
   body('name')
     .notEmpty().withMessage('⚠️ El nombre del producto es obligatorio.').bail()
-    .isString().withMessage('⚠️ El nombre debe ser texto.').bail()
+    .isString().withMessage('⚠️ El nombre debe ser texto.')
     .isLength({ min: 2 }).withMessage('⚠️ Mínimo 2 caracteres.'),
 
   body('price')
@@ -72,7 +72,9 @@ export const createProductValidation = [
     .notEmpty().withMessage('⚠️ La subcategoría es obligatoria.'),
 
   body('tallaTipo')
-    .notEmpty().withMessage('⚠️ El tipo de talla es obligatorio.'),
+    .notEmpty().withMessage('⚠️ El tipo de talla es obligatorio.')
+    .isIn(['adulto', 'joven', 'niño', 'niña', 'bebé'])
+    .withMessage('⚠️ Tipo de talla inválido. Opciones: adulto, joven, niño, niña, bebé'),
 
   body('createdBy')
     .notEmpty().withMessage('⚠️ Campo createdBy obligatorio.'),
@@ -80,6 +82,11 @@ export const createProductValidation = [
   body('sizes')
     .optional()
     .isArray().withMessage('⚠️ El campo sizes debe ser un arreglo.'),
+
+  body('sizes.*')
+    .optional()
+    .isString().withMessage('⚠️ Cada talla debe ser texto.')
+    .isLength({ min: 1 }).withMessage('⚠️ Talla vacía no permitida.'),
 
   body('stock')
     .optional()
@@ -91,7 +98,7 @@ export const createProductValidation = [
 
   body('color')
     .optional()
-    .isString().withMessage('⚠️ Color inválido.'),
+    .isString().trim().isLength({ min: 1 }).withMessage('⚠️ Color inválido.'),
 
   ...imagenPrincipalRules,
   ...variantesRules
@@ -106,7 +113,7 @@ const updateVarianteRules = variantesRules.map(rule => rule.optional())
 export const updateProductValidation = [
   body('name')
     .optional()
-    .isString().withMessage('⚠️ El nombre debe ser texto.').bail()
+    .isString().withMessage('⚠️ El nombre debe ser texto.')
     .isLength({ min: 2 }).withMessage('⚠️ Nombre demasiado corto.'),
 
   body('price')
@@ -123,15 +130,21 @@ export const updateProductValidation = [
 
   body('tallaTipo')
     .optional()
-    .isString().withMessage('⚠️ Tipo de talla inválido.'),
+    .isIn(['adulto', 'joven', 'niño', 'niña', 'bebé'])
+    .withMessage('⚠️ Tipo de talla inválido. Opciones: adulto, joven, niño, niña, bebé'),
 
   body('color')
     .optional()
-    .isString().withMessage('⚠️ Color inválido.'),
+    .isString().trim().isLength({ min: 1 }).withMessage('⚠️ Color inválido.'),
 
   body('sizes')
     .optional()
     .isArray().withMessage('⚠️ Sizes debe ser un arreglo.'),
+
+  body('sizes.*')
+    .optional()
+    .isString().withMessage('⚠️ Cada talla debe ser texto.')
+    .isLength({ min: 1 }).withMessage('⚠️ Talla vacía no permitida.'),
 
   body('stock')
     .optional()

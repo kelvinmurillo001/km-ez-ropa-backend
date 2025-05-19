@@ -1,4 +1,4 @@
-// 📁 routes/uploadRoutes.js
+// 📁 backend/routes/uploadRoutes.js
 import express from 'express';
 import multer from 'multer';
 import streamifier from 'streamifier';
@@ -6,11 +6,11 @@ import { cloudinary } from '../config/cloudinary.js';
 import config from '../config/configuracionesito.js';
 import logger from '../utils/logger.js';
 
-// 🛡️ Middlewares
+// 🛡️ Seguridad
 import authMiddleware from '../middleware/authMiddleware.js';
 import adminOnly from '../middleware/adminOnly.js';
 
-// 📂 Controladores
+// 📂 Controlador auxiliar
 import { cleanOrphanedImages } from '../controllers/uploads/cleanOrphanedImages.js';
 
 const router = express.Router();
@@ -19,19 +19,23 @@ const router = express.Router();
 const storage = multer.memoryStorage();
 const upload = multer({
   storage,
-  limits: { fileSize: config.maxUploadSizeMb * 1024 * 1024 || 2 * 1024 * 1024 }, // Tamaño dinámico
+  limits: {
+    fileSize: (config.maxUploadSizeMb || 2) * 1024 * 1024
+  },
   fileFilter: (_req, file, cb) => {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'];
     if (!allowedTypes.includes(file.mimetype)) {
-      return cb(new Error('❌ Solo se permiten imágenes válidas (JPG, PNG, WEBP, GIF, AVIF)'));
+      return cb(new Error('❌ Solo se permiten imágenes JPG, PNG, WEBP, GIF, AVIF.'));
     }
     cb(null, true);
   }
 });
 
-/* ─────────── RUTAS ─────────── */
-
-// 📤 SUBIR IMAGEN
+/* ───────────────────────────────────────────── */
+/* 📤 SUBIR IMAGEN                               */
+/* @route POST /api/uploads                      */
+/* @access Admin                                  */
+/* ───────────────────────────────────────────── */
 router.post(
   '/',
   authMiddleware,
@@ -41,14 +45,14 @@ router.post(
     try {
       const file = req.file;
       if (!file?.buffer) {
-        return res.status(400).json({ ok: false, message: '⚠️ No se ha enviado ninguna imagen.' });
+        return res.status(400).json({ ok: false, message: '⚠️ No se envió ninguna imagen.' });
       }
 
       const folder = String(req.body.folder || config.defaultUploadFolder || 'otros').toLowerCase().trim();
       const validFolders = config.allowedUploadFolders || ['productos_kmezropa', 'promos', 'otros'];
 
       if (!validFolders.includes(folder)) {
-        return res.status(400).json({ ok: false, message: '⚠️ Carpeta de destino no permitida.' });
+        return res.status(400).json({ ok: false, message: '⚠️ Carpeta no permitida.' });
       }
 
       const stream = cloudinary.uploader.upload_stream(
@@ -60,7 +64,7 @@ router.post(
         },
         (error, result) => {
           if (error) {
-            logger.error('❌ Error Cloudinary al subir:', error);
+            logger.error('❌ Error Cloudinary:', error);
             return res.status(500).json({ ok: false, message: '❌ Fallo al subir la imagen.' });
           }
 
@@ -78,13 +82,16 @@ router.post(
 
       streamifier.createReadStream(file.buffer).pipe(stream);
     } catch (err) {
-      logger.error('❌ Excepción al subir imagen:', err.message);
-      res.status(500).json({ ok: false, message: '❌ Error inesperado al subir imagen.' });
+      logger.error('❌ Excepción al subir imagen:', err);
+      return res.status(500).json({ ok: false, message: '❌ Error interno al subir imagen.' });
     }
   }
 );
 
-// 🗑️ ELIMINAR IMAGEN POR PARAM
+/* ───────────────────────────────────────────── */
+/* 🗑️ ELIMINAR IMAGEN (por parámetro URL)        */
+/* @route DELETE /api/uploads/:publicId          */
+/* ───────────────────────────────────────────── */
 router.delete('/:publicId', authMiddleware, adminOnly, async (req, res) => {
   try {
     const publicId = req.params.publicId?.trim();
@@ -99,12 +106,15 @@ router.delete('/:publicId', authMiddleware, adminOnly, async (req, res) => {
 
     return res.status(200).json({ ok: true, message: '✅ Imagen eliminada.', data: { publicId } });
   } catch (err) {
-    logger.error('❌ Error al eliminar imagen por param:', err.message);
-    res.status(500).json({ ok: false, message: '❌ Error interno al eliminar imagen.' });
+    logger.error('❌ Error eliminando imagen:', err);
+    return res.status(500).json({ ok: false, message: '❌ Error interno al eliminar imagen.' });
   }
 });
 
-// 🗑️ ELIMINAR IMAGEN POR BODY
+/* ───────────────────────────────────────────── */
+/* 🗑️ ELIMINAR IMAGEN (por body cloudinaryId)    */
+/* @route POST /api/uploads/delete               */
+/* ───────────────────────────────────────────── */
 router.post('/delete', authMiddleware, adminOnly, async (req, res) => {
   try {
     const cloudinaryId = req.body.cloudinaryId?.trim();
@@ -119,12 +129,15 @@ router.post('/delete', authMiddleware, adminOnly, async (req, res) => {
 
     return res.status(200).json({ ok: true, message: '✅ Imagen eliminada.', data: { cloudinaryId } });
   } catch (err) {
-    logger.error('❌ Error en POST /delete:', err.message);
-    res.status(500).json({ ok: false, message: '❌ Error interno al eliminar imagen.' });
+    logger.error('❌ Error en POST /delete:', err);
+    return res.status(500).json({ ok: false, message: '❌ Error interno al eliminar imagen.' });
   }
 });
 
-// 📃 LISTAR IMÁGENES
+/* ───────────────────────────────────────────── */
+/* 📃 LISTAR IMÁGENES DE UNA CARPETA             */
+/* @route GET /api/uploads/list                  */
+/* ───────────────────────────────────────────── */
 router.get('/list', authMiddleware, adminOnly, async (_req, res) => {
   try {
     const folder = config.defaultUploadFolder || 'productos_kmezropa';
@@ -143,12 +156,15 @@ router.get('/list', authMiddleware, adminOnly, async (_req, res) => {
 
     return res.status(200).json({ ok: true, total: images.length, data: images });
   } catch (err) {
-    logger.error('❌ Error al listar imágenes:', err.message);
-    res.status(500).json({ ok: false, message: '❌ Error al obtener imágenes.' });
+    logger.error('❌ Error al listar imágenes:', err);
+    return res.status(500).json({ ok: false, message: '❌ Error al obtener imágenes.' });
   }
 });
 
-// 🧹 LIMPIAR IMÁGENES HUÉRFANAS
+/* ───────────────────────────────────────────── */
+/* 🧹 LIMPIAR IMÁGENES HUÉRFANAS                 */
+/* @route GET /api/uploads/limpiar-huerfanas     */
+/* ───────────────────────────────────────────── */
 router.get('/limpiar-huerfanas', authMiddleware, adminOnly, cleanOrphanedImages);
 
 export default router;

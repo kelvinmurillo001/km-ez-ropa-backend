@@ -13,38 +13,42 @@ const transporter = nodemailer.createTransport({
 });
 
 /**
- * 📧 Enviar email con validación estricta
- * @param {string} to - Email destino
- * @param {string} subject - Asunto del email
- * @param {string} html - Contenido HTML del mensaje
+ * 📧 Enviar correo electrónico HTML con validación estricta
+ * @param {string} to - Dirección de correo destino
+ * @param {string} subject - Asunto del correo
+ * @param {string} html - Contenido HTML
  */
 const sendEmail = async (to, subject, html) => {
   try {
-    // Validar email destino
     if (!validator.isEmail(to)) {
       throw new Error(`Email inválido: ${to}`);
     }
 
-    // Validación básica de contenido
-    if (!subject || !html || typeof subject !== 'string' || typeof html !== 'string') {
-      throw new Error('Asunto o contenido no válido.');
+    if (
+      !subject || typeof subject !== 'string' || subject.trim().length < 3 ||
+      !html || typeof html !== 'string' || html.trim().length < 10
+    ) {
+      throw new Error('⚠️ Asunto o contenido HTML inválido.');
     }
 
-    const info = await transporter.sendMail({
+    const mailOptions = {
       from: `"KM & EZ ROPA" <${process.env.EMAIL_FROM}>`,
       to,
-      subject,
-      html,
+      subject: subject.trim(),
+      html: html.trim(),
       headers: {
         'X-Priority': '3',
-        'X-Mailer': 'KM&EZ-Mailer'
+        'X-Mailer': 'KM-EZ-ROPA-Mailer'
       }
-    });
+    };
+
+    const info = await transporter.sendMail(mailOptions);
 
     logger.info(`📨 Correo enviado a ${to} | ID: ${info.messageId}`);
-  } catch (error) {
-    logger.error(`❌ Error al enviar correo a ${to}: ${error.message}`);
-    throw new Error('No se pudo enviar el correo.');
+    return true;
+  } catch (err) {
+    logger.error(`❌ Error al enviar correo a ${to}: ${err.message}`);
+    throw new Error('❌ No se pudo enviar el correo.');
   }
 };
 

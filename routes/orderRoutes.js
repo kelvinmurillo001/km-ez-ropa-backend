@@ -29,11 +29,12 @@ import validarErrores from '../middleware/validarErrores.js';
 const router = express.Router();
 
 /* ───────────────────────────────────────────── */
-/* 🛒 RUTAS: Gestión de Pedidos                  */
+/* 🛒 RUTAS PARA PEDIDOS                         */
 /* ───────────────────────────────────────────── */
 
 /**
- * ➕ Crear nuevo pedido (PÚBLICO)
+ * ➕ POST /api/orders
+ * ➤ Crear nuevo pedido (PÚBLICO)
  */
 router.post(
   '/',
@@ -43,7 +44,8 @@ router.post(
 );
 
 /**
- * 📋 Obtener todos los pedidos (SOLO ADMIN)
+ * 📋 GET /api/orders
+ * ➤ Obtener todos los pedidos (ADMIN)
  */
 router.get(
   '/',
@@ -53,7 +55,8 @@ router.get(
 );
 
 /**
- * 👤 Obtener pedidos del cliente autenticado
+ * 👤 GET /api/orders/mis-pedidos
+ * ➤ Obtener pedidos del cliente autenticado
  */
 router.get(
   '/mis-pedidos',
@@ -63,7 +66,8 @@ router.get(
 );
 
 /**
- * 🔄 Actualizar estado de un pedido
+ * 🔄 PUT /api/orders/:id/estado
+ * ➤ Actualizar estado del pedido (ADMIN)
  */
 router.put(
   '/:id/estado',
@@ -75,7 +79,8 @@ router.put(
 );
 
 /**
- * 🗑️ Eliminar pedido por ID
+ * 🗑️ DELETE /api/orders/:id
+ * ➤ Eliminar un pedido por ID (ADMIN)
  */
 router.delete(
   '/:id',
@@ -91,7 +96,8 @@ router.delete(
 );
 
 /**
- * 📊 Obtener resumen de estadísticas
+ * 📊 GET /api/orders/resumen
+ * ➤ Obtener resumen de estadísticas (ADMIN)
  */
 router.get(
   '/resumen',
@@ -101,7 +107,8 @@ router.get(
 );
 
 /**
- * 📊 Alias adicional para resumen
+ * 📊 GET /api/orders/stats/ventas
+ * ➤ Alias para estadísticas (ADMIN)
  */
 router.get(
   '/stats/ventas',
@@ -111,14 +118,15 @@ router.get(
 );
 
 /**
- * 🔍 Seguimiento de pedido por código
+ * 🔍 GET /api/orders/track/:codigo
+ * ➤ Consultar estado por código de seguimiento (PÚBLICO)
  */
 router.get(
   '/track/:codigo',
   [
     param('codigo')
       .notEmpty()
-      .withMessage('⚠️ El código de seguimiento es obligatorio')
+      .withMessage('⚠️ Código de seguimiento requerido')
   ],
   validarErrores,
   trackOrder

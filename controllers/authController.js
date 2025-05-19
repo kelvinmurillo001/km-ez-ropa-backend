@@ -5,18 +5,18 @@ import config from '../config/configuracionesito.js';
 import { validationResult } from 'express-validator';
 import { enviarError, enviarExito } from '../utils/admin-auth-utils.js';
 
-/* ──────────────────────────────────────────────────────────────────────── */
-/* 🔐 Generadores de tokens                      */
-/* ──────────────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────── */
+/* 🔐 GENERADORES DE TOKEN JWT                   */
+/* ───────────────────────────────────────────── */
 const generateAccessToken = (user) =>
   jwt.sign({ id: user._id, role: user.role }, config.jwtSecret, { expiresIn: '15m' });
 
 const generateRefreshToken = (user) =>
   jwt.sign({ id: user._id }, config.jwtRefreshSecret, { expiresIn: '7d' });
 
-/* ──────────────────────────────────────────────────────────────────────── */
-/* 🎻 POST /api/auth/login (Admin)               */
-/* ──────────────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────── */
+/* 🛡️ LOGIN DE ADMINISTRADOR                    */
+/* ───────────────────────────────────────────── */
 export const loginAdmin = async (req, res) => {
   console.log('📥 [LOGIN ADMIN] Body:', req.body);
   const errors = validationResult(req);
@@ -29,10 +29,7 @@ export const loginAdmin = async (req, res) => {
     const rawPass = String(req.body.password || '');
 
     const user = await User.findOne({
-      $or: [
-        { username: rawUser },
-        { email: rawUser }
-      ]
+      $or: [{ username: rawUser }, { email: rawUser }]
     }).select('+password +refreshToken');
 
     if (!user || user.role !== 'admin') {
@@ -55,7 +52,7 @@ export const loginAdmin = async (req, res) => {
       secure: config.env === 'production',
       sameSite: 'None',
       path: '/',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
     return enviarExito(res, {
@@ -64,8 +61,8 @@ export const loginAdmin = async (req, res) => {
         id: user._id,
         username: user.username,
         name: user.name,
-        role: user.role,
-      },
+        role: user.role
+      }
     }, '✅ Acceso administrador concedido');
   } catch (err) {
     console.error('💥 Error en loginAdmin:', err);
@@ -73,9 +70,9 @@ export const loginAdmin = async (req, res) => {
   }
 };
 
-/* ──────────────────────────────────────────────────────────────────────── */
-/* 👤 POST /auth/login-cliente (CLIENTE)         */
-/* ──────────────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────── */
+/* 👤 LOGIN CLIENTE                             */
+/* ───────────────────────────────────────────── */
 export const loginCliente = async (req, res) => {
   const { email, password } = req.body;
   const errors = validationResult(req);
@@ -86,12 +83,12 @@ export const loginCliente = async (req, res) => {
   try {
     const user = await User.findOne({ email: email.toLowerCase().trim() }).select('+password +refreshToken');
     if (!user || user.role !== 'client') {
-      return enviarError(res, '❌ Credenciales inválidas o usuario no permitido', 401);
+      return enviarError(res, '❌ Credenciales inválidas o usuario no permitido.', 401);
     }
 
     const valid = await user.matchPassword(password);
     if (!valid) {
-      return enviarError(res, '❌ Contraseña incorrecta', 401);
+      return enviarError(res, '❌ Contraseña incorrecta.', 401);
     }
 
     const accessToken = generateAccessToken(user);
@@ -100,12 +97,12 @@ export const loginCliente = async (req, res) => {
     user.refreshToken = refreshToken;
     await user.save();
 
-    res.cookie("refreshToken", refreshToken, {
+    res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: config.env === "production",
-      sameSite: "None",
-      path: "/",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      secure: config.env === 'production',
+      sameSite: 'None',
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
     return enviarExito(res, {
@@ -114,18 +111,18 @@ export const loginCliente = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role,
-      },
-    }, "✅ Login cliente exitoso");
+        role: user.role
+      }
+    }, '✅ Login cliente exitoso');
   } catch (err) {
-    console.error("💥 Error en loginCliente:", err);
-    return enviarError(res, "❌ Error al iniciar sesión cliente", 500, err.message);
+    console.error('💥 Error en loginCliente:', err);
+    return enviarError(res, '❌ Error al iniciar sesión cliente', 500, err.message);
   }
 };
 
-/* ──────────────────────────────────────────────────────────────────────── */
-/* ↺ POST /api/auth/refresh                     */
-/* ──────────────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────── */
+/* 🔁 REFRESH TOKEN                             */
+/* ───────────────────────────────────────────── */
 export const refreshToken = async (req, res) => {
   try {
     const token = req.cookies?.refreshToken;
@@ -136,7 +133,7 @@ export const refreshToken = async (req, res) => {
     let payload;
     try {
       payload = jwt.verify(token, config.jwtRefreshSecret);
-    } catch (err) {
+    } catch {
       return enviarError(res, '❌ Token inválido o expirado.', 403);
     }
 
@@ -153,14 +150,14 @@ export const refreshToken = async (req, res) => {
   }
 };
 
-/* ──────────────────────────────────────────────────────────────────────── */
-/* 🔍 GET /api/auth/me                           */
-/* ──────────────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────── */
+/* 👁️ OBTENER USUARIO ACTUAL                   */
+/* ───────────────────────────────────────────── */
 export const getUsuarioActual = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password -refreshToken');
     if (!user) {
-      return enviarError(res, '❌ Usuario no encontrado', 404);
+      return enviarError(res, '❌ Usuario no encontrado.', 404);
     }
 
     return enviarExito(res, { user }, '✅ Usuario autenticado');

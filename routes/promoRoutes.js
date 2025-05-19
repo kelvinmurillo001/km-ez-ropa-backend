@@ -1,4 +1,5 @@
 // 📁 backend/routes/promoRoutes.js
+
 import express from 'express';
 import { param } from 'express-validator';
 
@@ -31,23 +32,22 @@ const router = express.Router();
 router.get('/', getPromotion);
 
 /* ───────────────────────────────────────────── */
-/* 🔐 RUTAS ADMINISTRADOR                        */
+/* 🔐 RUTAS PROTEGIDAS (ADMIN)                   */
 /* ───────────────────────────────────────────── */
 
-// Aplicar middleware de autenticación y rol admin a todas las rutas siguientes
 router.use(authMiddleware, adminOnly);
 
 /**
  * @route   GET /api/promos/admin
- * @desc    Obtener todas las promociones (modo admin)
- * @access  Privado
+ * @desc    Obtener todas las promociones
+ * @access  Admin
  */
 router.get('/admin', getAllPromotions);
 
 /**
  * @route   PUT /api/promos
  * @desc    Crear o actualizar una promoción
- * @access  Privado
+ * @access  Admin
  */
 router.put(
   '/',
@@ -59,27 +59,23 @@ router.put(
 /**
  * @route   PATCH /api/promos/:id/estado
  * @desc    Alternar estado activo/inactivo de promoción
- * @access  Privado
+ * @access  Admin
  */
 router.patch(
   '/:id/estado',
-  param('id')
-    .isMongoId()
-    .withMessage('⚠️ ID de promoción inválido'),
+  param('id').isMongoId().withMessage('⚠️ ID de promoción inválido'),
   validarErrores,
   togglePromoActive
 );
 
 /**
  * @route   DELETE /api/promos/:id
- * @desc    Eliminar una promoción por ID
- * @access  Privado
+ * @desc    Eliminar una promoción
+ * @access  Admin
  */
 router.delete(
   '/:id',
-  param('id')
-    .isMongoId()
-    .withMessage('⚠️ ID inválido para eliminar promoción'),
+  param('id').isMongoId().withMessage('⚠️ ID inválido para eliminar promoción'),
   validarErrores,
   deletePromotion
 );

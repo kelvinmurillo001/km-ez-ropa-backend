@@ -1,6 +1,5 @@
 // 📁 backend/validators/orderValidator.js
-
-import { body, param } from 'express-validator';
+import { body, param } from 'express-validator'
 
 /* 🧾 Validaciones para crear un pedido */
 export const createOrderValidation = [
@@ -13,21 +12,20 @@ export const createOrderValidation = [
 
   body('items.*.name')
     .isString().withMessage('⚠️ Nombre de producto faltante.')
-    .trim().isLength({ min: 2, max: 100 }).withMessage('⚠️ Nombre del producto debe tener entre 2 y 100 caracteres.'),
+    .trim().isLength({ min: 2, max: 100 }).withMessage('⚠️ El nombre del producto debe tener entre 2 y 100 caracteres.'),
 
   body('items.*.talla')
-    .isString().withMessage('⚠️ Talla del producto requerida.')
+    .isString().withMessage('⚠️ La talla del producto es requerida.')
     .trim().notEmpty().withMessage('⚠️ La talla no puede estar vacía.'),
 
   body('items.*.color')
-    .optional()
-    .isString().trim().withMessage('⚠️ Color inválido.'),
+    .isString().trim().notEmpty().withMessage('⚠️ El color es obligatorio.'),
 
   body('items.*.cantidad')
-    .isInt({ min: 1 }).withMessage('⚠️ Cantidad debe ser al menos 1.'),
+    .isInt({ min: 1 }).withMessage('⚠️ La cantidad debe ser al menos 1.'),
 
   body('items.*.precio')
-    .isFloat({ min: 0 }).withMessage('⚠️ Precio del producto inválido.'),
+    .isFloat({ min: 0 }).withMessage('⚠️ El precio del producto es inválido.'),
 
   // 💰 Total
   body('total')
@@ -39,7 +37,8 @@ export const createOrderValidation = [
     .isLength({ min: 2, max: 100 }).withMessage('⚠️ El nombre debe tener entre 2 y 100 caracteres.'),
 
   body('email')
-    .isEmail().normalizeEmail().withMessage('⚠️ Email inválido.'),
+    .isEmail().withMessage('⚠️ Email inválido.')
+    .normalizeEmail(),
 
   body('telefono')
     .isString().trim()
@@ -68,7 +67,8 @@ export const createOrderValidation = [
   // 🧾 Validación de factura (opcional)
   body('factura')
     .optional()
-    .isObject().withMessage('⚠️ Datos de factura inválidos.'),
+    .custom(value => typeof value === 'object' && value !== null)
+    .withMessage('⚠️ Datos de factura inválidos.'),
 
   body('factura.razonSocial')
     .optional()
@@ -86,7 +86,7 @@ export const createOrderValidation = [
     .optional()
     .isEmail().normalizeEmail()
     .withMessage('⚠️ Email de facturación inválido.')
-];
+]
 
 /* 🔄 Validaciones para actualizar estado del pedido */
 export const updateOrderStatusValidation = [
@@ -99,4 +99,4 @@ export const updateOrderStatusValidation = [
     .notEmpty()
     .isIn(['pendiente', 'en_proceso', 'enviado', 'cancelado', 'pagado'])
     .withMessage('⚠️ Estado no válido. Elige uno válido: pendiente, en_proceso, enviado, cancelado, pagado.')
-];
+]

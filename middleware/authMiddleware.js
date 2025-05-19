@@ -1,5 +1,4 @@
 // 📁 backend/middleware/authMiddleware.js
-
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import config from '../config/configuracionesito.js';
@@ -11,48 +10,48 @@ import {
 
 /**
  * 🔐 Middleware híbrido de autenticación:
- * - Valida JWT en header Authorization: Bearer [token]
- * - O bien sesión activa (Passport para Google login)
+ * - Valida JWT (Authorization: Bearer [token])
+ * - O sesión activa (Passport para login con Google)
  */
 const authMiddleware = async (req, res, next) => {
-  try {
-    const method = req.method;
-    const path = req.originalUrl;
+  const method = req.method;
+  const path = req.originalUrl;
 
-    // 1️⃣ INTENTAR CON JWT (Bearer token)
+  try {
+    // 1️⃣ Autenticación por JWT
     const token = obtenerTokenDesdeHeader(req);
     if (token) {
       try {
         const decoded = jwt.verify(token, config.jwtSecret);
-
         const user = await User.findById(decoded.id).select('-password -refreshToken').lean();
+
         if (!user) {
           logger.warn(`🚫 Usuario no encontrado - ID: ${decoded.id}`);
           return enviarError(res, '🚫 Usuario no válido.', 403);
         }
 
         if (user.banned) {
-          logger.warn(`🚫 Usuario bloqueado: ${user._id}`);
-          return enviarError(res, '⛔ Tu cuenta está suspendida.', 403);
+          logger.warn(`⛔ Usuario bloqueado - ID: ${user._id}`);
+          return enviarError(res, '⛔ Tu cuenta ha sido suspendida.', 403);
         }
 
         if (user.deleted) {
-          logger.warn(`🚫 Usuario eliminado: ${user._id}`);
-          return enviarError(res, '⛔ Usuario eliminado.', 403);
+          logger.warn(`⛔ Usuario eliminado - ID: ${user._id}`);
+          return enviarError(res, '⛔ Tu cuenta fue eliminada.', 403);
         }
 
         req.user = user;
-        logger.info(`✅ Autenticado por token: ${user.email || user.username} - ${method} ${path}`);
+        logger.info(`✅ Autenticado por JWT: ${user.email || user.username} | ${method} ${path}`);
         return next();
       } catch (err) {
-        logger.warn(`⛔ JWT inválido: ${err.message} - ${method} ${path}`);
+        logger.warn(`⛔ JWT inválido o expirado | ${method} ${path} | ${err.message}`);
         return enviarError(res, '⛔ Token inválido o expirado.', 401,
           config.env !== 'production' ? err.message : undefined
         );
       }
     }
 
-    // 2️⃣ INTENTAR CON SESIÓN ACTIVA (Passport)
+    // 2️⃣ Autenticación por sesión activa (Google Passport)
     if (req.isAuthenticated?.() && req.user) {
       req.user = {
         id: req.user._id,
@@ -61,12 +60,12 @@ const authMiddleware = async (req, res, next) => {
         role: req.user.role
       };
 
-      logger.info(`✅ Autenticado por sesión: ${req.user.email || req.user.id} - ${method} ${path}`);
+      logger.info(`✅ Autenticado por sesión (Google): ${req.user.email} | ${method} ${path}`);
       return next();
     }
 
-    // 3️⃣ NO AUTENTICADO
-    logger.warn(`🔒 Requiere autenticación - ${method} ${path}`);
+    // 3️⃣ No autenticado
+    logger.warn(`🔒 Requiere autenticación | ${method} ${path}`);
     return enviarError(res, '🔒 Debes iniciar sesión para continuar.', 401);
   } catch (err) {
     logger.error('❌ Error inesperado en authMiddleware:', err);
