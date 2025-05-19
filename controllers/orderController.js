@@ -1,4 +1,3 @@
-// 📁 backend/controllers/orderController.js
 import mongoose from 'mongoose';
 import Order from '../models/Order.js';
 import Product from '../models/Product.js';
@@ -82,7 +81,6 @@ export const createOrder = async (req, res) => {
       estado: metodoPago.toLowerCase() === 'transferencia' ? 'pendiente' : 'pagado'
     });
 
-    // 🔄 Actualizar stock por variante
     await Promise.all(items.map(async ({ productId, talla, color, cantidad }) => {
       const updated = await Product.findOneAndUpdate(
         { _id: productId, 'variants.talla': talla.toLowerCase(), 'variants.color': color.toLowerCase() },
@@ -101,7 +99,6 @@ export const createOrder = async (req, res) => {
       }
     }));
 
-    // 📩 Notificación al cliente
     await sendNotification({
       nombreCliente: newOrder.nombreCliente,
       telefono: newOrder.telefono,
@@ -110,7 +107,6 @@ export const createOrder = async (req, res) => {
       tipo: 'creacion'
     });
 
-    // 🔔 Emitir notificación en tiempo real
     if (global.io && typeof global.io.emit === 'function') {
       global.io.emit('cliente:estadoPedido', {
         email: newOrder.email,
@@ -157,7 +153,6 @@ export const actualizarEstadoPedido = async (req, res) => {
       tipo: 'estado'
     });
 
-    // 🔔 Emitir notificación WebSocket si cliente está conectado
     if (global.io && typeof global.io.emit === 'function') {
       global.io.emit('cliente:estadoPedido', {
         email: order.email,
@@ -171,4 +166,121 @@ export const actualizarEstadoPedido = async (req, res) => {
     console.error('❌ Error actualizando estado:', err);
     return enviarError(res, '❌ Error interno al actualizar estado', 500);
   }
+};
+
+/* 🗑️ ELIMINAR PEDIDO */
+export const deleteOrder = async (req, res) => {
+  try {
+    const id = String(req.params.id || '').trim();
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return enviarError(res, '⚠️ ID de pedido inválido.', 400);
+    }
+
+    const order = await Order.findById(id);
+    if (!order) {
+      return enviarError(res, '❌ Pedido no encontrado.', 404);
+    }
+
+    await Order.deleteOne({ _id: id });
+    return enviarExito(res, { deletedId: id }, '✅ Pedido eliminado');
+  } catch (err) {
+    console.error('❌ Error eliminando pedido:', err);
+    return enviarError(res, '❌ Error interno al eliminar pedido', 500);
+  }
+};
+
+/* 📋 OBTENER TODOS LOS PEDIDOS */
+export const getOrders = async (_req, res) => {
+  try {
+    const orders = await Order.find().sort({ createdAt: -1 }).lean();
+    return enviarExito(res, orders);
+  } catch (err) {
+    console.error('❌ Error obteniendo pedidos:', err);
+    return enviarError(res, '❌ Error interno al obtener pedidos', 500);
+  }
+};
+
+/* 📦 PEDIDOS DEL CLIENTE AUTENTICADO */
+export const getMyOrders = async (req, res) => {
+  try {
+    const userEmail = req.user?.email?.toLowerCase();
+    if (!userEmail) {
+      return enviarError(res, '❌ Usuario no autenticado correctamente.', 401);
+    }
+
+    const pedidos = await Order.find({ email: userEmail }).sort({ createdAt: -1 }).lean();
+    return res.status(200).json({ ok: true, pedidos });
+  } catch (err) {
+    console.error('❌ Error obteniendo pedidos del usuario:', err);
+    return enviarError(res, '❌ Error interno al obtener tus pedidos.', 500);
+  }
+};
+
+/* 📊 ESTADÍSTICAS DE PEDIDOS */
+export const getOrderStats = async (_req, res) => {
+  try {
+    const orders = await Order.find().lean();
+    const today = new Date().setHours(0, 0, 0, 0);
+
+    const summary = {
+      total: 0,
+      pendiente: 0,
+      en_proceso: 0,
+      enviado: 0,
+      cancelado: 0,
+      hoy: 0,
+      ventasTotales: 0
+    };
+
+    orders.forEach(o => {
+      summary.total++;
+      const estado = (o.estado || 'pendiente').toLowerCase();
+      if (summary[estado] !== undefined) summary[estado]++;
+      if (estado === 'enviado') summary.ventasTotales += parseFloat(o.total || 0);
+      if (new Date(o.createdAt).setHours(0, 0, 0, 0) === today) summary.hoy++;
+    });
+
+    summary.ventasTotales = Number(summary.ventasTotales.toFixed(2));
+    return enviarExito(res, summary);
+  } catch (err) {
+    console.error('❌ Error generando estadísticas:', err);
+    return enviarError(res, '❌ Error interno al generar estadísticas', 500);
+  }
+};
+
+/* 🔍 SEGUIMIENTO DE PEDIDO */
+export const trackOrder = async (req, res) => {
+  try {
+    const codigo = String(req.params.codigo || '').trim();
+    if (!codigo) {
+      return enviarError(res, '⚠️ Código de seguimiento requerido.', 400);
+    }
+
+    const order = await Order.findOne({ codigoSeguimiento: codigo }).lean();
+    if (!order) {
+      return enviarError(res, '❌ Pedido no encontrado.', 404);
+    }
+
+    return enviarExito(res, {
+      nombre: order.nombreCliente,
+      direccion: order.direccion,
+      metodoPago: order.metodoPago,
+      total: order.total,
+      estadoActual: order.estado
+    });
+  } catch (err) {
+    console.error('❌ Error en seguimiento:', err);
+    return enviarError(res, '❌ Error interno en seguimiento', 500);
+  }
+};
+
+/* ✅ EXPORTAR TODOS */
+export {
+  createOrder,
+  actualizarEstadoPedido,
+  deleteOrder,
+  getOrders,
+  getMyOrders,
+  getOrderStats,
+  trackOrder
 };
