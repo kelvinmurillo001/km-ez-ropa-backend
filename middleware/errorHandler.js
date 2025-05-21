@@ -17,7 +17,7 @@ const errorHandler = (err, req, res, next) => {
     : 500;
 
   // 📋 Mensaje legible o por defecto
-  const message = typeof err.message === 'string' && err.message.length < 400
+  const message = (typeof err.message === 'string' && err.message.length < 400)
     ? err.message
     : '❌ Error interno del servidor';
 
@@ -27,31 +27,31 @@ const errorHandler = (err, req, res, next) => {
     return next(err);
   }
 
-  // 🧾 Log extendido
-  const logData = {
-    method: req.method,
-    url: req.originalUrl,
+  // 🧾 Log extendido con trazabilidad
+  const logInfo = {
+    metodo: req.method,
+    ruta: req.originalUrl,
     ip: req.ip,
-    status,
     userId: req.user?.id || 'Anon',
-    code: err.code || 'N/A',
-    name: err.name || 'Error',
-    ...(isDev && { stack: err.stack || 'No stack' })
+    status,
+    errorCode: err.code || 'N/A',
+    errorName: err.name || 'Error',
+    ...(isDev && { stack: err.stack || 'No stack trace' }),
   };
 
-  logger.error(`💥 [${status}] ${req.method} ${req.originalUrl} - ${message}`, logData);
+  logger.error(`💥 [${status}] ${req.method} ${req.originalUrl} - ${message}`, logInfo);
 
-  // 📤 Estructura de respuesta unificada
-  const response = {
+  // 📤 Respuesta JSON estructurada
+  const respuesta = {
     ok: false,
     message: status === 500 ? '❌ Error interno. Intenta más tarde.' : message,
     ...(err.code && { errorCode: err.code }),
     ...(isDev && err.stack && {
-      stack: err.stack.split('\n').slice(0, 5).join('\n') // solo primeras 5 líneas
+      stack: err.stack.split('\n').slice(0, 5).join('\n')
     })
   };
 
-  return res.status(status).json(response);
+  res.status(status).json(respuesta);
 };
 
 export default errorHandler;

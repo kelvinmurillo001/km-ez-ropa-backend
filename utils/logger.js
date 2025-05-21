@@ -4,62 +4,74 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// 📌 Ruta del archivo y directorio de logs
+// 📌 Determinar ruta absoluta del archivo
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const logDir = path.resolve(__dirname, '../../logs');
 
-// 📁 Crear directorio si no existe
+// 📁 Crear carpeta de logs si no existe
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir, { recursive: true });
 }
 
-// 🎨 Colores personalizados para consola
+// 🎨 Definir colores personalizados
 winston.addColors({
   info: 'green',
   warn: 'yellow',
   error: 'red',
-  debug: 'cyan'
+  debug: 'blue'
 });
 
-// 🧱 Formato base para todos los logs
-const baseFormat = winston.format.combine(
+// 📦 Formato de log personalizado
+const customFormat = winston.format.combine(
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-  winston.format.printf(({ timestamp, level, message }) =>
-    `[${timestamp}] [${level.toUpperCase()}] ${message}`
-  )
+  winston.format.errors({ stack: true }),
+  winston.format.printf(({ timestamp, level, message, stack }) => {
+    return stack
+      ? `[${timestamp}] [${level.toUpperCase()}] ${message}\n${stack}`
+      : `[${timestamp}] [${level.toUpperCase()}] ${message}`;
+  })
 );
 
-// 📋 Definición de transportes
+// 📤 Transportes de logs
 const transports = [
-  new winston.transports.File({ filename: path.join(logDir, 'error.log'), level: 'error' }),
-  new winston.transports.File({ filename: path.join(logDir, 'warn.log'), level: 'warn' }),
-  new winston.transports.File({ filename: path.join(logDir, 'combined.log') })
+  new winston.transports.File({
+    filename: path.join(logDir, 'error.log'),
+    level: 'error'
+  }),
+  new winston.transports.File({
+    filename: path.join(logDir, 'warn.log'),
+    level: 'warn'
+  }),
+  new winston.transports.File({
+    filename: path.join(logDir, 'combined.log')
+  })
 ];
 
-// 🖥️ Consola solo en desarrollo
+// 🖥️ Agregar consola solo en desarrollo
 if (process.env.NODE_ENV !== 'production') {
   transports.unshift(
     new winston.transports.Console({
       level: 'debug',
       format: winston.format.combine(
         winston.format.colorize(),
-        baseFormat
+        customFormat
       )
     })
   );
 }
 
-// 🚀 Instancia principal del logger
+// 🚀 Crear logger principal
 const logger = winston.createLogger({
   level: process.env.NODE_ENV === 'development' ? 'debug' : 'info',
   levels: winston.config.npm.levels,
+  format: customFormat,
   transports
 });
 
-// 🧪 Log de confirmación
+// 🧪 Log de inicio
 if (process.env.NODE_ENV !== 'production') {
-  logger.debug('🧪 Logger iniciado en modo desarrollo');
+  logger.debug('🧪 Logger activo en modo desarrollo');
 }
 
 export default logger;

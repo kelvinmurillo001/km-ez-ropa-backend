@@ -56,7 +56,7 @@ const userSchema = new mongoose.Schema({
     default: false
   },
 
-  // 🔐 Campos para recuperación de contraseña
+  // 🔐 Para recuperación de contraseña
   resetToken: {
     type: String,
     default: null,
@@ -93,7 +93,7 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-/* 🧼 Normalización de campos */
+/* 🧼 Normalización de texto antes de validar */
 userSchema.pre('validate', function (next) {
   if (this.name) this.name = this.name.trim();
   if (this.email) this.email = this.email.toLowerCase().trim();
@@ -106,7 +106,7 @@ userSchema.pre('validate', function (next) {
   next();
 });
 
-/* 🔐 Encriptar contraseña si fue modificada */
+/* 🔐 Hashear contraseña si fue modificada */
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password') || !this.password) return next();
 
@@ -120,7 +120,7 @@ userSchema.pre('save', async function (next) {
   }
 });
 
-/* 🔑 Método para comparar contraseñas */
+/* 🔑 Comparar contraseña ingresada */
 userSchema.methods.matchPassword = async function (inputPassword) {
   if (!this.password || !inputPassword) return false;
   return await bcrypt.compare(inputPassword, this.password);
