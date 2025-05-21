@@ -19,45 +19,45 @@ const router = express.Router();
 
 /* ───────────────────────────────────────────── */
 /* 🔐 LOGIN ADMINISTRADOR                        */
-/* POST /api/auth/login                          */
+/* Endpoint: POST /api/auth/login                */
 /* ───────────────────────────────────────────── */
 router.post(
   '/login',
   loginValidation,
   (req, res, next) => {
-    logger.info(`🔐 POST ${req.originalUrl} - Intento de login admin desde IP: ${req.ip}`);
-    return loginAdmin(req, res, next);
+    logger.info(`🔐 Login admin desde IP: ${req.ip}`);
+    loginAdmin(req, res, next);
   }
 );
 
 /* ───────────────────────────────────────────── */
 /* 👤 LOGIN CLIENTE                              */
-/* POST /api/auth/login-cliente                  */
+/* Endpoint: POST /api/auth/login-cliente        */
 /* ───────────────────────────────────────────── */
 router.post(
   '/login-cliente',
   loginClienteValidation,
   (req, res, next) => {
-    logger.info(`👤 POST ${req.originalUrl} - Intento de login cliente desde IP: ${req.ip}`);
-    return loginCliente(req, res, next);
+    logger.info(`👤 Login cliente desde IP: ${req.ip}`);
+    loginCliente(req, res, next);
   }
 );
 
 /* ───────────────────────────────────────────── */
 /* 🔁 REFRESH TOKEN JWT                          */
-/* POST /api/auth/refresh                        */
+/* Endpoint: POST /api/auth/refresh              */
 /* ───────────────────────────────────────────── */
 router.post(
   '/refresh',
   (req, res, next) => {
-    logger.debug(`🔄 POST ${req.originalUrl} - Solicitud refresh token desde IP: ${req.ip}`);
-    return refreshToken(req, res, next);
+    logger.debug(`🔄 Refresh token desde IP: ${req.ip}`);
+    refreshToken(req, res, next);
   }
 );
 
 /* ───────────────────────────────────────────── */
-/* 🔎 DATOS DEL USUARIO AUTENTICADO              */
-/* GET /api/auth/me                              */
+/* 🔎 OBTENER DATOS DEL USUARIO AUTENTICADO      */
+/* Endpoint: GET /api/auth/me                    */
 /* ───────────────────────────────────────────── */
 router.get(
   '/me',

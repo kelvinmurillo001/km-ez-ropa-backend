@@ -5,47 +5,44 @@ import { body } from 'express-validator';
 /* 🔤 Validadores individuales reutilizables     */
 /* ───────────────────────────────────────────── */
 
-// 🔹 Validador para username (admin)
+// 🔹 Username para login de admin
 const usernameValidator = body('username')
   .exists({ checkFalsy: true }).withMessage('⚠️ El nombre de usuario es obligatorio.')
   .bail()
-  .isString().withMessage('⚠️ El nombre de usuario debe ser una cadena de texto.')
-  .trim()
-  .notEmpty().withMessage('⚠️ El nombre de usuario no puede estar vacío.')
+  .isString().withMessage('⚠️ Debe ser una cadena de texto.')
+  .trim().notEmpty().withMessage('⚠️ No puede estar vacío.')
   .toLowerCase()
-  .isLength({ min: 3 }).withMessage('⚠️ Mínimo 3 caracteres en el nombre de usuario.');
+  .isLength({ min: 3 }).withMessage('⚠️ Mínimo 3 caracteres.');
 
-// 🔹 Validador para email (cliente)
+// 🔹 Email para login de cliente
 const emailValidator = body('email')
-  .exists({ checkFalsy: true }).withMessage('⚠️ El correo electrónico es obligatorio.')
+  .exists({ checkFalsy: true }).withMessage('⚠️ El correo es obligatorio.')
   .bail()
-  .isString().withMessage('⚠️ El correo debe ser texto.')
-  .trim()
-  .notEmpty().withMessage('⚠️ El correo no puede estar vacío.')
-  .isEmail().withMessage('⚠️ Debe ser un correo válido.')
+  .isString().withMessage('⚠️ Debe ser texto.')
+  .trim().notEmpty().withMessage('⚠️ No puede estar vacío.')
+  .isEmail().withMessage('⚠️ Formato inválido.')
   .normalizeEmail();
 
-// 🔹 Validador para password (ambos)
+// 🔹 Password común
 const passwordValidator = body('password')
   .exists({ checkFalsy: true }).withMessage('⚠️ La contraseña es obligatoria.')
   .bail()
-  .isString().withMessage('⚠️ La contraseña debe ser texto.')
-  .trim()
-  .notEmpty().withMessage('⚠️ La contraseña no puede estar vacía.')
-  .isLength({ min: 6 }).withMessage('⚠️ Mínimo 6 caracteres en la contraseña.');
+  .isString().withMessage('⚠️ Debe ser texto.')
+  .trim().notEmpty().withMessage('⚠️ No puede estar vacía.')
+  .isLength({ min: 6 }).withMessage('⚠️ Mínimo 6 caracteres.');
 
 /* ───────────────────────────────────────────── */
-/* ✅ Validaciones agrupadas                     */
+/* ✅ Validaciones agrupadas por contexto        */
 /* ───────────────────────────────────────────── */
 
-// 🛡️ Admin login: username + password
+// 🛡️ Admin login
 export const loginValidation = [usernameValidator, passwordValidator];
 
-// 👤 Cliente login: email + password
+// 👤 Cliente login
 export const loginClienteValidation = [emailValidator, passwordValidator];
 
 /* ───────────────────────────────────────────── */
-/* 📦 Exportación para validación flexible       */
+/* 📦 Exportar validadores individuales          */
 /* ───────────────────────────────────────────── */
 export const baseUserValidation = {
   usernameValidator,
