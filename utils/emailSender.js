@@ -4,17 +4,21 @@ import validator from 'validator';
 import logger from './logger.js';
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true, // SSL
   auth: {
     user: process.env.EMAIL_FROM,
     pass: process.env.EMAIL_PASSWORD
   },
-  secure: true
+  tls: {
+    rejectUnauthorized: true
+  }
 });
 
 /**
  * 📧 Enviar correo electrónico HTML con validación estricta
- * @param {string} to - Dirección de correo destino
+ * @param {string} to - Correo destino
  * @param {string} subject - Asunto del correo
  * @param {string} html - Contenido HTML
  */
@@ -25,8 +29,8 @@ const sendEmail = async (to, subject, html) => {
     }
 
     if (
-      !subject || typeof subject !== 'string' || subject.trim().length < 3 ||
-      !html || typeof html !== 'string' || html.trim().length < 10
+      typeof subject !== 'string' || subject.trim().length < 3 ||
+      typeof html !== 'string' || html.trim().length < 10
     ) {
       throw new Error('⚠️ Asunto o contenido HTML inválido.');
     }
@@ -37,18 +41,17 @@ const sendEmail = async (to, subject, html) => {
       subject: subject.trim(),
       html: html.trim(),
       headers: {
-        'X-Priority': '3',
-        'X-Mailer': 'KM-EZ-ROPA-Mailer'
+        'X-Mailer': 'KM-EZ-ROPA',
+        'X-Priority': '3'
       }
     };
 
     const info = await transporter.sendMail(mailOptions);
-
-    logger.info(`📨 Correo enviado a ${to} | ID: ${info.messageId}`);
+    logger.info(`📨 Correo enviado exitosamente a: ${to} | ID: ${info.messageId}`);
     return true;
   } catch (err) {
     logger.error(`❌ Error al enviar correo a ${to}: ${err.message}`);
-    throw new Error('❌ No se pudo enviar el correo.');
+    throw new Error('❌ No se pudo enviar el correo electrónico.');
   }
 };
 
