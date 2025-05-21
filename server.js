@@ -21,7 +21,7 @@ import { fileURLToPath } from 'url';
 
 import validarBodyGlobal from './middleware/validateBody.js';
 import { promRegistry } from './metrics/prometheus.js';
-import { crearSocketServer } from './ws/socketServer.js'; // ✅ Corrección aquí
+import { crearSocketServer } from './ws/socketServer.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -85,7 +85,7 @@ app.use(helmet());
 app.use((req, res, next) => {
   res.setHeader("Content-Security-Policy",
     "default-src 'self'; " +
-    "script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com https://www.googletagmanager.com https://www.google-analytics.com; " +
+    "script-src 'self' https://accounts.google.com https://apis.google.com https://www.googletagmanager.com https://www.google-analytics.com; " +
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
     "font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com; " +
     "img-src 'self' data: https://*.googleusercontent.com https://lh3.googleusercontent.com https://www.google-analytics.com; " +
@@ -185,7 +185,7 @@ if (process.env.NODE_ENV !== 'test') {
         console.log(`🌍 Modo: ${config.env}`);
       });
 
-      crearSocketServer(httpServer); // ✅ Ahora funciona correctamente
+      crearSocketServer(httpServer);
     } catch (err) {
       console.error('❌ Error al conectar con MongoDB:', err.message);
       process.exit(1);
