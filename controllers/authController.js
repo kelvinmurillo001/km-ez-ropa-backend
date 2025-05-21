@@ -5,20 +5,13 @@ import config from '../config/configuracionesito.js';
 import { validationResult } from 'express-validator';
 import { enviarError, enviarExito } from '../utils/admin-auth-utils.js';
 
-/* ───────────────────────────────────────────── */
-/* 🔐 GENERADORES DE TOKEN JWT                   */
-/* ───────────────────────────────────────────── */
 const generateAccessToken = (user) =>
   jwt.sign({ id: user._id, role: user.role }, config.jwtSecret, { expiresIn: '15m' });
 
 const generateRefreshToken = (user) =>
   jwt.sign({ id: user._id }, config.jwtRefreshSecret, { expiresIn: '7d' });
 
-/* ───────────────────────────────────────────── */
-/* 🛡️ LOGIN DE ADMINISTRADOR                    */
-/* ───────────────────────────────────────────── */
 export const loginAdmin = async (req, res) => {
-  console.log('📥 [LOGIN ADMIN] Body:', req.body);
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return enviarError(res, '❌ Datos inválidos en el formulario.', 400, errors.array());
@@ -50,7 +43,7 @@ export const loginAdmin = async (req, res) => {
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: config.env === 'production',
-      sameSite: 'None',
+      sameSite: config.env === 'production' ? 'None' : 'Lax',
       path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000
     });
@@ -70,9 +63,6 @@ export const loginAdmin = async (req, res) => {
   }
 };
 
-/* ───────────────────────────────────────────── */
-/* 👤 LOGIN CLIENTE                             */
-/* ───────────────────────────────────────────── */
 export const loginCliente = async (req, res) => {
   const { email, password } = req.body;
   const errors = validationResult(req);
@@ -100,7 +90,7 @@ export const loginCliente = async (req, res) => {
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: config.env === 'production',
-      sameSite: 'None',
+      sameSite: config.env === 'production' ? 'None' : 'Lax',
       path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000
     });
@@ -120,9 +110,6 @@ export const loginCliente = async (req, res) => {
   }
 };
 
-/* ───────────────────────────────────────────── */
-/* 🔁 REFRESH TOKEN                             */
-/* ───────────────────────────────────────────── */
 export const refreshToken = async (req, res) => {
   try {
     const token = req.cookies?.refreshToken;
@@ -150,9 +137,6 @@ export const refreshToken = async (req, res) => {
   }
 };
 
-/* ───────────────────────────────────────────── */
-/* 👁️ OBTENER USUARIO ACTUAL                   */
-/* ───────────────────────────────────────────── */
 export const getUsuarioActual = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password -refreshToken');
