@@ -1,24 +1,24 @@
-// 📁 backend/controllers/products/getProductBySlug.js
 import Product from '../../models/Product.js';
 import { calcularStockTotal } from '../../utils/calculateStock.js';
+import logger from '../../utils/logger.js';
 
 /**
- * 🔍 Obtener un producto por slug
- * @route   GET /api/products/slug/:slug
- * @access  Público
+ * 🔍 Obtener un producto por su slug
+ * @route GET /api/products/slug/:slug
+ * @access Público
  */
 const getProductBySlug = async (req, res) => {
   try {
-    const rawSlug = String(req.params.slug || '').trim();
+    const rawSlug = req.params.slug?.trim();
 
     // 🧼 Sanitizar y normalizar slug
     const slug = rawSlug
-      .normalize('NFD')                         // Eliminar acentos
-      .replace(/[\u0300-\u036f]/g, '')          // Quitar tildes
+      ?.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase()
-      .replace(/[^a-z0-9-]/g, '')               // Solo letras, números y guiones
-      .replace(/--+/g, '-')                     // Quitar guiones duplicados
-      .replace(/^-+|-+$/g, '');                 // Quitar guiones al inicio o final
+      .replace(/[^a-z0-9-]/g, '')
+      .replace(/--+/g, '-')
+      .replace(/^-+|-+$/g, '');
 
     if (!slug || slug.length < 3) {
       return res.status(400).json({
@@ -27,7 +27,6 @@ const getProductBySlug = async (req, res) => {
       });
     }
 
-    // 🔍 Buscar producto por slug
     const productoDoc = await Product.findOne({ slug }).select('-__v').lean();
 
     if (!productoDoc) {
@@ -37,20 +36,21 @@ const getProductBySlug = async (req, res) => {
       });
     }
 
-    // 🧮 Calcular stock total
     const producto = {
       ...productoDoc,
       stockTotal: calcularStockTotal(productoDoc)
     };
 
-    // 🐞 Log de desarrollo
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`🔍 Producto encontrado por slug: ${slug}`);
+      logger.debug(`🔍 Producto encontrado por slug: "${slug}" -> ID: ${producto._id}`);
     }
 
-    return res.status(200).json({ ok: true, data: producto });
+    return res.status(200).json({
+      ok: true,
+      data: producto
+    });
   } catch (err) {
-    console.error('❌ Error interno al obtener producto por slug:', err);
+    logger.error('❌ Error en getProductBySlug:', err);
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al obtener producto por slug.',

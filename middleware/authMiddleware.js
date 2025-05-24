@@ -1,4 +1,3 @@
-// 📁 backend/middleware/authMiddleware.js
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import config from '../config/configuracionesito.js';
@@ -10,18 +9,22 @@ import {
 
 /**
  * 🔐 Middleware de autenticación:
- * - Permite acceso si hay un token JWT válido.
- * - También permite si hay sesión activa con Passport (Google).
+ * - Permite acceso con JWT válido o sesión activa (Passport).
  */
 const authMiddleware = async (req, res, next) => {
   const { method, originalUrl } = req;
 
   try {
-    // 1️⃣ Autenticación por JWT
+    // 1️⃣ Autenticación vía JWT
     const token = obtenerTokenDesdeHeader(req);
+
     if (token) {
       try {
         const decoded = jwt.verify(token, config.jwtSecret);
+        if (!decoded?.id) {
+          return enviarError(res, '⛔ Token mal formado.', 401);
+        }
+
         const user = await User.findById(decoded.id)
           .select('-password -refreshToken')
           .lean();
@@ -42,7 +45,7 @@ const authMiddleware = async (req, res, next) => {
         }
 
         req.user = user;
-        logger.info(`✅ Autenticado por JWT | ${user.email || user.username} | ${method} ${originalUrl}`);
+        logger.info(`✅ Autenticado por JWT | ${user.email || user.username || user.id} | ${method} ${originalUrl}`);
         return next();
       } catch (err) {
         logger.warn(`⛔ JWT inválido o expirado | ${method} ${originalUrl} | ${err.message}`);
@@ -52,8 +55,8 @@ const authMiddleware = async (req, res, next) => {
       }
     }
 
-    // 2️⃣ Autenticación por sesión activa (Passport - Google)
-    if (req.isAuthenticated?.() && req.user) {
+    // 2️⃣ Autenticación vía sesión activa (Passport)
+    if (typeof req.isAuthenticated === 'function' && req.isAuthenticated() && req.user) {
       req.user = {
         id: req.user._id,
         name: req.user.name,
@@ -61,7 +64,7 @@ const authMiddleware = async (req, res, next) => {
         role: req.user.role
       };
 
-      logger.info(`✅ Autenticado por sesión activa | ${req.user.email} | ${method} ${originalUrl}`);
+      logger.info(`✅ Autenticado por sesión activa | ${req.user.email || req.user.id} | ${method} ${originalUrl}`);
       return next();
     }
 

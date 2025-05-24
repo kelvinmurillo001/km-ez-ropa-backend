@@ -3,36 +3,33 @@ import config from '../config/configuracionesito.js';
 import logger from '../utils/logger.js';
 
 /**
- * ❌ Middleware de manejo global de errores
- * - Unifica respuestas
- * - Oculta detalles sensibles en producción
- * - Log profesional para trazabilidad
+ * ❌ Middleware global para manejo de errores
  */
 const errorHandler = (err, req, res, next) => {
   const isDev = config.env !== 'production';
 
-  // 📦 Código de estado HTTP seguro
-  const status = Number.isInteger(err.statusCode) && err.statusCode >= 100 && err.statusCode < 600
-    ? err.statusCode
-    : 500;
+  const status =
+    Number.isInteger(err.statusCode) && err.statusCode >= 100 && err.statusCode < 600
+      ? err.statusCode
+      : Number.isInteger(err.status) && err.status >= 100 && err.status < 600
+      ? err.status
+      : 500;
 
-  // 📋 Mensaje legible o por defecto
-  const message = (typeof err.message === 'string' && err.message.length < 400)
-    ? err.message
-    : '❌ Error interno del servidor';
+  const message =
+    typeof err.message === 'string' && err.message.trim().length > 1 && err.message.length < 400
+      ? err.message
+      : '❌ Error interno del servidor';
 
-  // ⚠️ Evitar doble respuesta
   if (res.headersSent) {
     logger.warn('⚠️ Headers ya enviados. No se puede reenviar error.');
     return next(err);
   }
 
-  // 🧾 Log extendido con trazabilidad
   const logInfo = {
     metodo: req.method,
     ruta: req.originalUrl,
     ip: req.ip,
-    userId: req.user?.id || 'Anon',
+    userId: req.user?.id || req.user?._id || 'Desconocido',
     status,
     errorCode: err.code || 'N/A',
     errorName: err.name || 'Error',
@@ -41,17 +38,16 @@ const errorHandler = (err, req, res, next) => {
 
   logger.error(`💥 [${status}] ${req.method} ${req.originalUrl} - ${message}`, logInfo);
 
-  // 📤 Respuesta JSON estructurada
-  const respuesta = {
+  const responseBody = {
     ok: false,
     message: status === 500 ? '❌ Error interno. Intenta más tarde.' : message,
-    ...(err.code && { errorCode: err.code }),
+    ...(err.code && typeof err.code === 'string' && { errorCode: err.code }),
     ...(isDev && err.stack && {
       stack: err.stack.split('\n').slice(0, 5).join('\n')
-    })
+    }),
   };
 
-  res.status(status).json(respuesta);
+  res.status(status).json(responseBody);
 };
 
 export default errorHandler;

@@ -1,15 +1,11 @@
-// 📁 backend/controllers/products/updateProduct.js
 import mongoose from 'mongoose';
 import Product from '../../models/Product.js';
 import { cloudinary } from '../../config/cloudinary.js';
 import { validationResult } from 'express-validator';
 import { calcularStockTotal } from '../../utils/calculateStock.js';
+import logger from '../../utils/logger.js';
+import { slugify } from '../../utils/generarSlug.js'; // ✅ Slug centralizado
 
-/**
- * ✏️ Actualizar un producto existente
- * @route   PUT /api/products/:id
- * @access  Admin
- */
 const updateProduct = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -17,7 +13,7 @@ const updateProduct = async (req, res) => {
   }
 
   try {
-    const id = String(req.params.id || '').trim();
+    const id = req.params.id?.trim();
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ ok: false, message: '⚠️ ID de producto inválido.' });
     }
@@ -109,18 +105,12 @@ const updateProduct = async (req, res) => {
       }
     }
 
-    // 📝 Actualizar campos principales
+    // ✏️ Actualizar campos
     if (name && name.trim() !== product.name) {
       product.name = name.trim();
 
-      // 🔠 Regenerar slug único si cambia el nombre
-      const slugBase = name.normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/ñ/g, 'n')
-        .replace(/\s+/g, '-')
-        .replace(/[^\w-]/g, '')
-        .toLowerCase();
-
+      // ✅ Regenerar slug con slugify()
+      const slugBase = slugify(product.name);
       let slug = slugBase;
       let exists = await Product.findOne({ slug, _id: { $ne: id } });
       let attempts = 0;
@@ -138,15 +128,19 @@ const updateProduct = async (req, res) => {
       product.slug = slug;
     }
 
-    // 🔄 Otros campos
     if (!isNaN(Number(price))) product.price = Number(price);
     if (category) product.category = String(category).trim().toLowerCase();
     if (subcategory) product.subcategory = String(subcategory).trim().toLowerCase();
     if (tallaTipo) product.tallaTipo = String(tallaTipo).trim().toLowerCase();
     if (typeof color === 'string') product.color = color.trim().toLowerCase();
-    if (Array.isArray(sizes)) product.sizes = sizes.map(s => String(s).trim());
-    product.featured = featured === true || featured === 'true';
 
+    if (Array.isArray(sizes)) {
+      product.sizes = sizes
+        .filter(s => typeof s === 'string' && s.trim())
+        .map(s => s.trim().toUpperCase());
+    }
+
+    product.featured = featured === true || featured === 'true';
     product.images = newImages;
     product.variants = newVariants;
     product.updatedBy = req.user?.username || 'admin';
@@ -163,9 +157,13 @@ const updateProduct = async (req, res) => {
     const result = product.toObject();
     result.stockTotal = calcularStockTotal(result);
 
+    if (process.env.NODE_ENV !== 'production') {
+      logger.debug(`✏️ Producto actualizado: ${result.name} (${result._id})`);
+    }
+
     return res.status(200).json({ ok: true, data: result });
   } catch (err) {
-    console.error('❌ Error interno al actualizar producto:', err);
+    logger.error('❌ Error en updateProduct:', err);
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al actualizar producto.',

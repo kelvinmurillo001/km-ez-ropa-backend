@@ -1,21 +1,20 @@
-// 📁 backend/controllers/products/createProduct.js
 import Product from '../../models/Product.js';
 import { validationResult } from 'express-validator';
+import logger from '../../utils/logger.js';
+import { slugify } from '../../utils/generarSlug.js'; // ✅ Importación slugify
 
 /**
- * ✅ Crear nuevo producto (con o sin variantes) + slug único
- * @route   POST /api/products
- * @access  Admin
+ * ✅ Crear nuevo producto (admin)
+ * @route POST /api/products
  */
 const createProduct = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    console.warn('🛑 Validación fallida:', errors.array());
+    logger.warn('🛑 Validación fallida:', errors.array());
     return res.status(400).json({ ok: false, errors: errors.array() });
   }
 
   try {
-    // 🧹 Normalizar campos
     let {
       name,
       description = '',
@@ -32,29 +31,28 @@ const createProduct = async (req, res) => {
       createdBy
     } = req.body;
 
-    name = String(name || '').trim();
-    description = String(description || '').trim();
-    category = String(category || '').trim().toLowerCase();
-    subcategory = String(subcategory || '').trim().toLowerCase();
-    tallaTipo = String(tallaTipo || '').trim().toLowerCase();
-    createdBy = String(createdBy || '').trim();
-    color = String(color || '').trim().toLowerCase();
+    // Normalizar campos
+    name = name?.trim();
+    description = description?.trim();
+    category = category?.trim().toLowerCase();
+    subcategory = subcategory?.trim().toLowerCase();
+    tallaTipo = tallaTipo?.trim().toLowerCase();
+    color = color?.trim().toLowerCase();
+    createdBy = createdBy?.trim();
 
     if (!name || typeof price !== 'number' || !category || !tallaTipo || !createdBy) {
       return res.status(400).json({ ok: false, message: '⚠️ Faltan campos obligatorios.' });
     }
 
-    // 📷 Validación de imagen principal
     if (!Array.isArray(images) || images.length !== 1) {
       return res.status(400).json({ ok: false, message: '⚠️ Debes enviar una imagen principal.' });
     }
 
-    const main = images[0];
+    const [main] = images;
     if (!main.url || !main.cloudinaryId || !main.talla || !main.color) {
       return res.status(400).json({ ok: false, message: '⚠️ Imagen principal incompleta.' });
     }
 
-    // 🧬 Validación de variantes
     const hasVariants = Array.isArray(variants) && variants.length > 0;
     let generalStock = 0;
 
@@ -65,10 +63,10 @@ const createProduct = async (req, res) => {
 
       const combos = new Set();
       for (const v of variants) {
-        const talla = String(v.talla || '').trim().toLowerCase();
-        const col = String(v.color || '').trim().toLowerCase();
-        const url = String(v.imageUrl || '').trim();
-        const id = String(v.cloudinaryId || '').trim();
+        const talla = v.talla?.trim().toLowerCase();
+        const col = v.color?.trim().toLowerCase();
+        const url = v.imageUrl?.trim();
+        const id = v.cloudinaryId?.trim();
         const stk = Number(v.stock);
 
         if (!talla || !col || !url || !id || isNaN(stk)) {
@@ -89,25 +87,16 @@ const createProduct = async (req, res) => {
       }
     }
 
-    // 🧪 Verificar duplicado
     const duplicate = await Product.findOne({ name, subcategory });
     if (duplicate) {
       return res.status(409).json({ ok: false, message: '⚠️ Ya existe un producto con ese nombre y subcategoría.' });
     }
 
-    // 🔤 Limpieza y capitalización de tallas
     const cleanedSizes = Array.isArray(sizes)
       ? sizes.filter(s => typeof s === 'string' && s.trim()).map(s => s.trim().toUpperCase())
       : [];
 
-    // 🆔 Generar slug único
-    const slugBase = name
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .replace(/ñ/g, 'n')
-      .replace(/\s+/g, '-')
-      .replace(/[^\w-]/g, '')
-      .toLowerCase();
-
+    const slugBase = slugify(name); // ✅ Usar función reutilizable
     let slug = slugBase;
     let exists = await Product.findOne({ slug });
     let attempts = 0;
@@ -119,10 +108,10 @@ const createProduct = async (req, res) => {
     }
 
     if (exists) {
+      logger.error('❌ No se pudo generar slug único tras 5 intentos:', slugBase);
       return res.status(500).json({ ok: false, message: '⚠️ No se pudo generar un slug único.' });
     }
 
-    // 📦 Crear objeto producto
     const productData = {
       name,
       description,
@@ -144,12 +133,12 @@ const createProduct = async (req, res) => {
     const newProduct = await Product.create(productData);
 
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`✅ Producto creado: ${newProduct.name} [${newProduct.slug}]`);
+      logger.debug(`✅ Producto creado: ${newProduct.name} [${newProduct.slug}]`);
     }
 
     return res.status(201).json({ ok: true, data: newProduct });
   } catch (err) {
-    console.error('❌ Error interno al crear producto:', err);
+    logger.error('❌ Error en createProduct:', err);
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al crear producto.',

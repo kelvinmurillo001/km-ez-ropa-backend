@@ -1,5 +1,5 @@
-// 📁 backend/models/Product.js
 import mongoose from 'mongoose';
+import { slugify } from '../utils/generarSlug.js'; // ✅ Integración slugify
 
 /* 🧩 Subesquema: Variante del producto */
 const variantSchema = new mongoose.Schema({
@@ -192,19 +192,12 @@ productSchema.pre('validate', async function (next) {
 
   // 🏷️ Slug único
   if (!this.slug && this.name) {
-    const base = this.name.toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .replace(/ñ/g, 'n')
-      .replace(/\s+/g, '-')
-      .replace(/[^\w-]/g, '')
-      .substring(0, 100);
-
+    const base = slugify(this.name);
     let slug = base;
     let i = 1;
     while (await mongoose.models.Product.exists({ slug })) {
       slug = `${base}-${i++}`;
     }
-
     this.slug = slug;
   }
 

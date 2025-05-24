@@ -18,4 +18,5 @@ function generarSlug(texto) {
     .substring(0, 100);                        // máximo 100 caracteres
 }
 
-export default generarSlug;
+export const slugify = generarSlug;
+

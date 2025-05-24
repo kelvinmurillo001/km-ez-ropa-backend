@@ -1,23 +1,21 @@
-// 📁 backend/controllers/products/deleteProduct.js
 import mongoose from 'mongoose';
 import Product from '../../models/Product.js';
 import { cloudinary } from '../../config/cloudinary.js';
+import logger from '../../utils/logger.js';
 
 /**
  * 🗑️ Eliminar un producto y sus imágenes de Cloudinary
- * @route   DELETE /api/products/:id
- * @access  Admin
+ * @route DELETE /api/products/:id
+ * @access Admin
  */
 const deleteProduct = async (req, res) => {
   try {
-    const id = String(req.params.id || '').trim();
+    const id = req.params.id?.trim();
 
-    // 🔍 Validar ID
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ ok: false, message: '⚠️ ID de producto inválido.' });
     }
 
-    // 🔎 Buscar producto
     const product = await Product.findById(id).lean();
     if (!product) {
       return res.status(404).json({ ok: false, message: '❌ Producto no encontrado.' });
@@ -26,11 +24,11 @@ const deleteProduct = async (req, res) => {
     const deletedCloudinaryIds = [];
     const failedDeletions = [];
 
-    // 🧹 Función para eliminar imagen de Cloudinary
     const eliminarDeCloudinary = async (cloudinaryId, tipo) => {
+      if (!cloudinaryId) return;
       try {
         const resultado = await cloudinary.uploader.destroy(cloudinaryId);
-        if (resultado.result === 'ok' || resultado.result === 'not found') {
+        if (['ok', 'not found'].includes(resultado.result)) {
           deletedCloudinaryIds.push(cloudinaryId);
         } else {
           failedDeletions.push({ tipo, cloudinaryId, error: resultado.result });
@@ -40,19 +38,15 @@ const deleteProduct = async (req, res) => {
       }
     };
 
-    // 🖼️ Recopilar IDs de imágenes a eliminar
     const imagenes = [
-      ...(Array.isArray(product.images) ? product.images.map(img => ({ id: img.cloudinaryId, tipo: 'principal' })) : []),
-      ...(Array.isArray(product.variants) ? product.variants.map(v => ({ id: v.cloudinaryId, tipo: 'variante' })) : [])
+      ...(product.images?.map(img => ({ id: img.cloudinaryId, tipo: 'principal' })) || []),
+      ...(product.variants?.map(v => ({ id: v.cloudinaryId, tipo: 'variante' })) || [])
     ].filter(img => img.id);
 
-    // 🚮 Eliminar imágenes en paralelo
     await Promise.all(imagenes.map(({ id, tipo }) => eliminarDeCloudinary(id, tipo)));
 
-    // 🧽 Eliminar producto de la base de datos
     await Product.deleteOne({ _id: id });
 
-    // 📤 Respuesta final
     const response = {
       ok: true,
       message: '✅ Producto eliminado correctamente.',
@@ -63,17 +57,18 @@ const deleteProduct = async (req, res) => {
     };
 
     if (failedDeletions.length > 0) {
-      response.warning = '⚠️ Algunas imágenes no pudieron eliminarse.';
+      response.warning = '⚠️ Algunas imágenes no se eliminaron correctamente.';
       response.errors = failedDeletions;
+      logger.warn(`⚠️ Imágenes no eliminadas en producto ${id}:`, failedDeletions);
     }
 
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`🗑️ Producto eliminado: ${id} | Imágenes eliminadas: ${deletedCloudinaryIds.length}`);
+      logger.debug(`🗑️ Producto eliminado: ${id} | Imágenes eliminadas: ${deletedCloudinaryIds.length}`);
     }
 
     return res.status(200).json(response);
   } catch (err) {
-    console.error('❌ Error al eliminar producto:', err);
+    logger.error('❌ Error interno al eliminar producto:', err);
     return res.status(500).json({
       ok: false,
       message: '❌ Error interno al eliminar producto.',

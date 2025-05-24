@@ -1,67 +1,57 @@
 // 📁 backend/validators/filtroProductosValidator.js
-
-import { query } from 'express-validator'
+import { query } from 'express-validator';
 
 export const filtroProductosValidator = [
-  // 📄 Paginación: página actual
+  // 📄 Paginación
   query('pagina')
     .optional()
-    .isInt({ min: 1 })
-    .withMessage('⚠️ La página debe ser un número positivo'),
+    .isInt({ min: 1 }).withMessage('⚠️ La página debe ser un número positivo'),
 
-  // 📄 Límite de resultados por página
   query('limite')
     .optional()
-    .isInt({ min: 1, max: 100 })
-    .withMessage('⚠️ El límite debe estar entre 1 y 100'),
+    .isInt({ min: 1, max: 100 }).withMessage('⚠️ El límite debe estar entre 1 y 100'),
 
-  // 💰 Filtro de precio mínimo
+  // 💰 Filtro de precios
   query('precioMin')
     .optional()
-    .isFloat({ min: 0 })
-    .withMessage('⚠️ Precio mínimo inválido'),
+    .isFloat({ min: 0 }).withMessage('⚠️ Precio mínimo inválido'),
 
-  // 💰 Filtro de precio máximo, validación cruzada con mínimo
   query('precioMax')
     .optional()
-    .isFloat({ min: 0 })
-    .withMessage('⚠️ Precio máximo inválido')
+    .isFloat({ min: 0 }).withMessage('⚠️ Precio máximo inválido')
     .custom((value, { req }) => {
-      const min = parseFloat(req.query.precioMin)
-      const max = parseFloat(value)
+      const min = parseFloat(req.query.precioMin);
+      const max = parseFloat(value);
       if (!isNaN(min) && max < min) {
-        throw new Error('⚠️ El precio máximo debe ser mayor o igual al mínimo')
+        throw new Error('⚠️ El precio máximo debe ser mayor o igual al mínimo');
       }
-      return true
+      return true;
     }),
 
-  // 🔍 Nombre (búsqueda por texto)
+  // 🔍 Filtros de texto
   query('nombre')
     .optional()
     .isString().withMessage('⚠️ El nombre debe ser texto')
-    .trim(),
+    .trim().isLength({ min: 2 }).withMessage('⚠️ El nombre debe tener al menos 2 caracteres'),
 
-  // 🏷️ Filtro por categoría
   query('categoria')
     .optional()
     .isString().withMessage('⚠️ La categoría debe ser texto')
-    .trim(),
+    .trim().toLowerCase(),
 
-  // 🏷️ Filtro por subcategoría
   query('subcategoria')
     .optional()
     .isString().withMessage('⚠️ La subcategoría debe ser texto')
-    .trim(),
+    .trim().toLowerCase(),
 
-  // 🌟 Filtrar por productos destacados
+  // 🌟 Bools
   query('featured')
     .optional()
     .isBoolean().withMessage('⚠️ featured debe ser booleano')
     .toBoolean(),
 
-  // 📦 Filtrar solo productos con stock
   query('conStock')
     .optional()
     .isBoolean().withMessage('⚠️ conStock debe ser booleano')
     .toBoolean()
-]
+];

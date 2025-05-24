@@ -28,53 +28,25 @@ import { filtroProductosValidator } from '../validators/filtroProductosValidator
 
 const router = express.Router();
 
-/* ───────────────────────────────────────────── */
-/* 📦 RUTAS DE PRODUCTOS                         */
-/* ───────────────────────────────────────────── */
+// 🔧 Validadores reutilizables
+const validarId = param('id')
+  .isMongoId()
+  .withMessage('⚠️ El ID proporcionado no es válido');
 
-/**
- * 📥 GET /api/products
- * ➤ Obtener todos los productos con filtros (PÚBLICO)
- */
-router.get(
-  '/',
-  filtroProductosValidator,
-  validarErrores,
-  getAllProducts
-);
+const validarSlug = param('slug')
+  .matches(/^[a-z0-9-]+$/)
+  .withMessage('⚠️ Slug inválido');
 
-/**
- * 🔍 GET /api/products/slug/:slug
- * ➤ Obtener un producto por su slug
- */
-router.get(
-  '/slug/:slug',
-  param('slug')
-    .matches(/^[a-z0-9-]+$/)
-    .withMessage('⚠️ Slug inválido'),
-  validarErrores,
-  getProductBySlug
-);
+// ──────────────── 📦 RUTAS PÚBLICAS ────────────────
 
-/**
- * 🔍 GET /api/products/:id
- * ➤ Obtener un producto por ID
- */
-router.get(
-  '/:id',
-  param('id')
-    .isMongoId()
-    .withMessage('⚠️ El ID proporcionado no es válido'),
-  validarErrores,
-  getProductById
-);
+router.get('/', filtroProductosValidator, validarErrores, getAllProducts);
 
-/* 🔐 Rutas protegidas para administradores */
+router.get('/slug/:slug', validarSlug, validarErrores, getProductBySlug);
 
-/**
- * ➕ POST /api/products
- * ➤ Crear un nuevo producto
- */
+router.get('/:id', validarId, validarErrores, getProductById);
+
+// ─────────────── 🔐 RUTAS ADMIN PROTEGIDAS ───────────────
+
 router.post(
   '/',
   authMiddleware,
@@ -84,33 +56,20 @@ router.post(
   createProduct
 );
 
-/**
- * ✏️ PUT /api/products/:id
- * ➤ Actualizar un producto existente
- */
 router.put(
   '/:id',
   authMiddleware,
   adminOnly,
-  [
-    param('id').isMongoId().withMessage('⚠️ ID inválido'),
-    ...updateProductValidation
-  ],
+  [validarId, ...updateProductValidation],
   validarErrores,
   updateProduct
 );
 
-/**
- * 🗑️ DELETE /api/products/:id
- * ➤ Eliminar un producto por ID
- */
 router.delete(
   '/:id',
   authMiddleware,
   adminOnly,
-  param('id')
-    .isMongoId()
-    .withMessage('⚠️ ID inválido'),
+  validarId,
   validarErrores,
   deleteProduct
 );
