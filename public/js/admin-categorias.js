@@ -1,14 +1,11 @@
 "use strict";
 
-// 📥 Imports
 import { API_BASE } from "./config.js";
 import { verificarSesion, mostrarMensaje, goBack } from "./admin-utils.js";
 
-// 🔐 Token de sesión
-const token = verificarSesion();
+let token = "";
 const API = `${API_BASE}/api/categories`;
 
-// 📌 Elementos DOM
 const formCrear = document.getElementById("formCrearCategoria");
 const formSub = document.getElementById("formSubcategoria");
 const categoriaInput = document.getElementById("categoriaInput");
@@ -16,9 +13,15 @@ const subcategoriaInput = document.getElementById("subcategoriaInput");
 const selectCategoria = document.getElementById("selectCategoria");
 const listaCategorias = document.getElementById("listaCategorias");
 
-// 🚀 Inicializar
-document.addEventListener("DOMContentLoaded", () => {
-  if (token) cargarCategorias();
+// 🔐 Sesión obligatoria
+document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    token = await verificarSesion();
+    await cargarCategorias();
+  } catch (err) {
+    mostrarMensaje("❌ Error de sesión. Redirigiendo...", "error");
+    setTimeout(() => window.location.href = "/login.html", 1500);
+  }
 });
 
 // ➕ Crear categoría
@@ -38,9 +41,9 @@ formCrear?.addEventListener("submit", async (e) => {
     });
 
     const data = await res.json();
-    if (!res.ok || data.ok === false) throw new Error(data.message || "❌ No se pudo crear la categoría");
+    if (!res.ok) throw new Error(data.message || "❌ No se pudo crear la categoría");
 
-    mostrarMensaje("✅ Categoría creada exitosamente", "success");
+    mostrarMensaje("✅ Categoría creada", "success");
     formCrear.reset();
     categoriaInput.focus();
     await cargarCategorias();
@@ -49,7 +52,7 @@ formCrear?.addEventListener("submit", async (e) => {
   }
 });
 
-// ➕ Agregar subcategoría
+// ➕ Crear subcategoría
 formSub?.addEventListener("submit", async (e) => {
   e.preventDefault();
   const categoriaId = selectCategoria.value;
@@ -68,7 +71,7 @@ formSub?.addEventListener("submit", async (e) => {
     });
 
     const data = await res.json();
-    if (!res.ok || data.ok === false) throw new Error(data.message || "❌ Error al agregar subcategoría");
+    if (!res.ok) throw new Error(data.message || "❌ Error al agregar subcategoría");
 
     mostrarMensaje("✅ Subcategoría agregada", "success");
     formSub.reset();
@@ -79,7 +82,7 @@ formSub?.addEventListener("submit", async (e) => {
   }
 });
 
-// 🔄 Cargar y renderizar categorías
+// 🔄 Obtener categorías del backend
 async function cargarCategorias() {
   try {
     const res = await fetch(API, {
@@ -87,30 +90,21 @@ async function cargarCategorias() {
     });
 
     const data = await res.json();
-    if (!res.ok || data.ok === false || !Array.isArray(data.data)) {
-      throw new Error(data.message || "❌ Error al obtener categorías");
-    }
+    const categorias = data?.data;
+    if (!Array.isArray(categorias)) throw new Error(data.message || "❌ Error al obtener categorías");
 
-    renderCategorias(data.data);
-    actualizarSelect(data.data);
+    renderCategorias(categorias);
+    actualizarSelect(categorias);
   } catch (err) {
     mostrarMensaje(err.message, "error");
     listaCategorias.innerHTML = `<p class="text-error">${sanitize(err.message)}</p>`;
   }
 }
 
-// 🧩 Actualizar <select> para subcategorías
-function actualizarSelect(categorias = []) {
-  selectCategoria.innerHTML = '<option value="">📂 Selecciona una categoría</option>';
-  categorias.forEach(cat => {
-    selectCategoria.innerHTML += `<option value="${cat._id}">${sanitize(cat.name)}</option>`;
-  });
-}
-
-// 🎨 Renderizar la lista visual
+// 📋 Render visual de categorías
 function renderCategorias(categorias = []) {
   if (!categorias.length) {
-    listaCategorias.innerHTML = "<p>⚠️ No hay categorías registradas.</p>";
+    listaCategorias.innerHTML = "<p>📭 No hay categorías registradas.</p>";
     return;
   }
 
@@ -134,6 +128,14 @@ function renderCategorias(categorias = []) {
   `).join("");
 }
 
+// ⬇️ Actualizar <select> con categorías
+function actualizarSelect(categorias = []) {
+  selectCategoria.innerHTML = '<option value="">📂 Selecciona una categoría</option>';
+  categorias.forEach(cat => {
+    selectCategoria.innerHTML += `<option value="${cat._id}">${sanitize(cat.name)}</option>`;
+  });
+}
+
 // ❌ Eliminar categoría
 window.eliminarCategoria = async (id) => {
   if (!confirm("⚠️ ¿Eliminar esta categoría y todas sus subcategorías?")) return;
@@ -145,7 +147,7 @@ window.eliminarCategoria = async (id) => {
     });
 
     const data = await res.json();
-    if (!res.ok || data.ok === false) throw new Error(data.message || "❌ No se pudo eliminar la categoría");
+    if (!res.ok) throw new Error(data.message || "❌ No se pudo eliminar la categoría");
 
     mostrarMensaje("✅ Categoría eliminada", "success");
     await cargarCategorias();
@@ -165,7 +167,7 @@ window.eliminarSubcategoria = async (categoryId, subcategory) => {
     });
 
     const data = await res.json();
-    if (!res.ok || data.ok === false) throw new Error(data.message || "❌ No se pudo eliminar la subcategoría");
+    if (!res.ok) throw new Error(data.message || "❌ No se pudo eliminar la subcategoría");
 
     mostrarMensaje("✅ Subcategoría eliminada", "success");
     await cargarCategorias();
@@ -174,7 +176,7 @@ window.eliminarSubcategoria = async (categoryId, subcategory) => {
   }
 };
 
-// 🔐 Sanitizar texto para prevenir XSS
+// 🧼 Sanitizar texto
 function sanitize(text = "") {
   const temp = document.createElement("div");
   temp.textContent = text;

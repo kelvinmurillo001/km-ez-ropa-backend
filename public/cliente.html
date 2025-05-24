@@ -6,14 +6,21 @@
   <title>📦 Mis Pedidos | KM & EZ ROPA</title>
 
   <!-- 🔐 Seguridad y SEO -->
-  <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; 
-                 script-src 'self' https://www.googletagmanager.com 'unsafe-inline'; 
-                 img-src 'self' data:; connect-src https://api.kmezropacatalogo.com;">
   <meta name="robots" content="noindex, nofollow" />
   <meta name="description" content="Revisa el historial de tus pedidos en KM & EZ ROPA, su estado y detalles de cada compra." />
   <meta name="author" content="KM & EZ ROPA" />
   <meta name="theme-color" content="#ff6d00" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; 
+                 style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; 
+                 script-src 'self' https://www.googletagmanager.com; 
+                 img-src 'self' data:; 
+                 connect-src 'self'; 
+                 font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com;
+                 object-src 'none'; 
+                 base-uri 'self'; 
+                 frame-ancestors 'none';" />
   <link rel="icon" href="/assets/favicon.ico" type="image/x-icon" />
 
   <!-- 🎨 Estilos -->
@@ -22,9 +29,8 @@
   <link rel="stylesheet" href="/css/fondo.css" />
   <link rel="stylesheet" href="/css/cliente.css" />
 
-  <!-- 🚀 Scripts deferidos -->
-  <script type="module" src="/js/cliente.js" defer></script>
-  <script type="module" src="/js/modoOscuro.js" defer></script>
+  <!-- 🌙 Modo oscuro sin inline -->
+  <script type="module" src="/js/modo-oscuro.js" defer></script>
 
   <!-- 📈 Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-BNWNNFDCC3"></script>
@@ -34,6 +40,9 @@
     gtag('js', new Date());
     gtag('config', 'G-BNWNNFDCC3');
   </script>
+
+  <!-- 🚀 Funcionalidad cliente -->
+  <script type="module" src="/js/cliente.js" defer></script>
 </head>
 
 <body lang="es" class="con-fondo fade-in">
@@ -53,7 +62,7 @@
     <nav class="nav-links" role="navigation" aria-label="Menú principal">
       <a href="/index.html">🏠 Inicio</a>
       <a href="/carrito.html">🛒 Carrito</a>
-      <button id="modoOscuroBtn" class="btn-secundario" aria-label="Alternar modo oscuro">🌙</button>
+      <button id="modoOscuroBtn" class="btn-secundario" aria-label="Activar/desactivar modo oscuro" aria-pressed="false">🌙</button>
       <button id="cerrarSesionBtn" class="btn-secundario" aria-label="Cerrar sesión de cliente">🚪 Cerrar Sesión</button>
     </nav>
   </header>
@@ -87,9 +96,11 @@
   <!-- 🔔 Mensajes flotantes -->
   <div id="adminMensaje" class="admin-message oculto" role="alert" aria-live="assertive"></div>
 
-  <!-- ⚠️ JS desactivado -->
+  <!-- ⚠️ Fallback por si JS está desactivado -->
   <noscript>
-    <p style="text-align:center; color:red;">⚠️ Activa JavaScript para ver tus pedidos correctamente.</p>
+    <p style="text-align:center; color:red;">
+      ⚠️ Activa JavaScript para ver tus pedidos correctamente.
+    </p>
   </noscript>
 
 </body>

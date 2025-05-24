@@ -5,13 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>📦 Pedidos | KM & EZ ROPA</title>
 
-  <!-- 🧠 SEO & Seguridad -->
+  <!-- 🔐 Seguridad y SEO -->
   <meta name="robots" content="noindex, nofollow" />
   <meta name="description" content="Administra pedidos desde el panel de KM & EZ ROPA: pendientes, enviados, cancelados y más." />
   <meta name="author" content="KM & EZ ROPA" />
   <meta name="theme-color" content="#ff6d00" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' https://cdnjs.cloudflare.com; connect-src 'self' https://api.kmezropacatalogo.com; img-src 'self' data:;">
+        content="default-src 'self'; 
+                 script-src 'self' https://cdnjs.cloudflare.com; 
+                 style-src 'self' 'unsafe-inline'; 
+                 connect-src 'self'; 
+                 img-src 'self' data:; 
+                 object-src 'none'; 
+                 frame-ancestors 'none';" />
 
   <!-- 🎨 Estilos -->
   <link rel="stylesheet" href="/css/global.css" />
@@ -19,13 +26,10 @@
   <link rel="stylesheet" href="/css/componentes.css" />
   <link rel="stylesheet" href="/css/pedidos.css" />
   <link rel="stylesheet" href="/css/adminMensaje.css" />
-
-  <!-- 🚀 Scripts -->
-  <script type="module" src="/js/pedidos.js" defer></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+  <link rel="icon" href="/assets/favicon.ico" type="image/x-icon" />
 </head>
 
-<body>
+<body lang="es" class="con-fondo fade-in">
 
 <main class="pedidos-container fade-in" role="main" aria-labelledby="tituloPedidos">
   <h1 id="tituloPedidos" class="text-center" tabindex="0">📦 Gestión de Pedidos</h1>
@@ -72,6 +76,18 @@
 
 <!-- 🔔 Mensajes dinámicos flotantes -->
 <div id="adminMensaje" class="admin-message oculto" role="alert" aria-live="assertive"></div>
+
+<!-- ✅ Scripts -->
+<script type="module" src="/js/pedidos.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+
+<!-- 🌙 Activar modo oscuro si está guardado -->
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const dark = localStorage.getItem("modoOscuro") === "true";
+    if (dark) document.body.classList.add("modo-oscuro");
+  });
+</script>
 
 <!-- 🚫 JavaScript requerido -->
 <noscript>

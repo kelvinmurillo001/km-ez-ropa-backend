@@ -23,6 +23,19 @@
   <meta name="twitter:description" content="Moda urbana organizada por categoría. Encuentra lo que buscas fácilmente.">
   <meta name="twitter:image" content="/assets/og-image.jpg">
 
+  <!-- 🔒 Seguridad -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; 
+                 script-src 'self'; 
+                 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; 
+                 img-src 'self' data: https://*; 
+                 connect-src 'self'; 
+                 object-src 'none'; 
+                 base-uri 'self'; 
+                 frame-ancestors 'none';" />
+
+  <link rel="icon" href="/assets/favicon.ico" type="image/x-icon" />
+
   <!-- 🎨 Estilos -->
   <link rel="stylesheet" href="/css/global.css">
   <link rel="stylesheet" href="/css/fondo.css">
@@ -49,7 +62,7 @@
       <a href="/" aria-label="Ir al inicio">
         <img src="/assets/logo.jpg" alt="Logo de KM & EZ ROPA" loading="lazy">
       </a>
-      <div class="brand">
+      <div class="brand-text">
         <h1>KM & EZ ROPA</h1>
         <p>Explora tu estilo</p>
       </div>
@@ -57,7 +70,7 @@
     <nav class="nav-links" role="navigation" aria-label="Navegación principal">
       <a href="/index.html">🏠 Inicio</a>
       <a href="/carrito.html">🛒 Carrito</a>
-      <button id="modoOscuroBtn" aria-label="Activar o desactivar modo oscuro">🌙</button>
+      <button id="modoOscuroBtn" aria-label="Activar o desactivar modo oscuro" aria-pressed="false">🌙</button>
     </nav>
   </header>
 
@@ -122,7 +135,25 @@
     <p>&copy; 2024 KM & EZ ROPA. Todos los derechos reservados.</p>
   </footer>
 
-  <!-- 🚫 JS requerido -->
+  <!-- 🌙 Modo oscuro automático -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const btn = document.getElementById("modoOscuroBtn");
+      const dark = localStorage.getItem("modoOscuro") === "true";
+      if (dark) document.body.classList.add("modo-oscuro");
+
+      if (btn) {
+        btn.setAttribute("aria-pressed", dark);
+        btn.addEventListener("click", () => {
+          const activo = document.body.classList.toggle("modo-oscuro");
+          localStorage.setItem("modoOscuro", activo);
+          btn.setAttribute("aria-pressed", activo);
+        });
+      }
+    });
+  </script>
+
+  <!-- ⚠️ JS requerido -->
   <noscript>
     <p style="text-align: center; color: red;">⚠️ Activa JavaScript para visualizar correctamente esta página.</p>
   </noscript>

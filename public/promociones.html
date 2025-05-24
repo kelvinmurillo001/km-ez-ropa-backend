@@ -10,8 +10,16 @@
   <meta name="description" content="Administra banners promocionales con texto, imagen o video en KM & EZ ROPA." />
   <meta name="author" content="KM & EZ ROPA" />
   <meta name="theme-color" content="#ff6d00" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:; media-src 'self' blob:;">
+        content="default-src 'self'; 
+                 style-src 'self' 'unsafe-inline'; 
+                 script-src 'self'; 
+                 img-src 'self' data:; 
+                 media-src 'self' blob:; 
+                 connect-src 'self'; 
+                 object-src 'none'; 
+                 frame-ancestors 'none';" />
 
   <!-- 🎨 Estilos -->
   <link rel="stylesheet" href="/css/fondo.css" />
@@ -20,12 +28,13 @@
   <link rel="stylesheet" href="/css/promociones.css" />
   <link rel="stylesheet" href="/css/promos-admin-panel.css" />
   <link rel="stylesheet" href="/css/adminMensaje.css" />
+  <link rel="icon" href="/assets/favicon.ico" type="image/x-icon" />
 
   <!-- ✅ Script principal -->
   <script type="module" src="/js/promociones.js" defer></script>
 </head>
 
-<body>
+<body lang="es" class="con-fondo fade-in">
 <main class="promociones-container fade-in" role="main" aria-labelledby="tituloPromos">
   <h1 id="tituloPromos" class="text-center">🚀 Promociones que Atraen y Convencen</h1>
 
@@ -55,14 +64,14 @@
   <!-- 📝 Formulario -->
   <section class="form-editar-promo mt-3" aria-label="Formulario de creación y edición de promociones">
     <h3>✏️ Crear o Editar Promoción</h3>
-    <form id="formPromo" enctype="multipart/form-data" novalidate>
+    <form id="formPromo" enctype="multipart/form-data" novalidate autocomplete="on">
       <input type="hidden" id="promoId" />
 
       <label for="promoMensaje">📝 Mensaje Promocional <span aria-hidden="true">*</span></label>
       <input type="text" id="promoMensaje" required maxlength="120" placeholder="Ej: ¡Hasta 50% OFF solo hoy!" aria-required="true" />
 
       <label for="promoTema">🎨 Tema visual:</label>
-      <select id="promoTema">
+      <select id="promoTema" aria-label="Tema visual de la promoción">
         <option value="blue">Azul</option>
         <option value="orange" selected>Naranja</option>
         <option value="green">Verde</option>
@@ -80,14 +89,14 @@
       </fieldset>
 
       <label for="promoPosition">📌 Ubicación del Banner:</label>
-      <select id="promoPosition" required>
+      <select id="promoPosition" required aria-label="Ubicación del banner promocional">
         <option value="top">🔝 Superior</option>
         <option value="middle">📍 Medio</option>
         <option value="bottom">🔻 Inferior</option>
       </select>
 
       <label for="promoTipo">🧩 Tipo de Contenido:</label>
-      <select id="promoTipo" required aria-required="true">
+      <select id="promoTipo" required aria-required="true" aria-label="Tipo de contenido de la promoción">
         <option value="">Seleccionar tipo</option>
         <option value="texto">📢 Solo Texto</option>
         <option value="imagen">🖼 Imagen</option>
@@ -98,14 +107,14 @@
       <div id="mediaUploadContainer" class="mt-1" aria-live="polite"></div>
 
       <label for="promoInicio">📅 Fecha Inicio:</label>
-      <input type="date" id="promoInicio" />
+      <input type="date" id="promoInicio" name="promoInicio" aria-label="Fecha de inicio de la promoción" />
 
       <label for="promoFin">📅 Fecha Fin:</label>
-      <input type="date" id="promoFin" />
+      <input type="date" id="promoFin" name="promoFin" aria-label="Fecha de fin de la promoción" />
 
       <label><input type="checkbox" id="promoActivo" /> ✅ Activar promoción</label>
 
-      <button type="submit" class="btn mt-2">💾 Guardar Promoción</button>
+      <button type="submit" class="btn mt-2" aria-label="Guardar promoción">💾 Guardar Promoción</button>
 
       <!-- Mensaje de estado -->
       <p id="msgPromo" class="form-msg text-center mt-2" role="alert" aria-live="assertive"></p>
@@ -114,13 +123,14 @@
 
   <!-- 🔙 Volver -->
   <div class="text-center mt-3">
-    <button onclick="goBack()" class="btn-secundario">🔙 Volver al Panel</button>
+    <button onclick="goBack()" class="btn-secundario" aria-label="Volver al panel de administración">🔙 Volver al Panel</button>
   </div>
 </main>
 
 <!-- 🔔 Mensajes flotantes globales -->
 <div id="adminMensaje" class="admin-message oculto" role="status" aria-live="assertive"></div>
 
+<!-- ⚠️ No JS fallback -->
 <noscript>
   <div role="alert" style="text-align: center; color: red; font-weight: bold;">
     ⚠️ JavaScript debe estar activado para gestionar promociones.

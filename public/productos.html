@@ -5,13 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>👕 Productos | Panel Admin | KM & EZ ROPA</title>
 
-  <!-- 🔐 SEO y Seguridad -->
+  <!-- 🔐 Seguridad y SEO -->
   <meta name="robots" content="noindex, nofollow" />
   <meta name="author" content="KM & EZ ROPA" />
   <meta name="description" content="Administra productos de tu tienda de ropa: añade, edita o elimina fácilmente desde este panel de administración." />
   <meta name="theme-color" content="#ff6d00" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://api.kmezropacatalogo.com;">
+        content="default-src 'self'; 
+                 script-src 'self'; 
+                 style-src 'self' 'unsafe-inline'; 
+                 img-src 'self' data:; 
+                 connect-src 'self'; 
+                 object-src 'none'; 
+                 base-uri 'self'; 
+                 frame-ancestors 'none';" />
+  <link rel="icon" href="/assets/favicon.ico" type="image/x-icon" />
 
   <!-- 🎨 Estilos -->
   <link rel="preload" href="/css/global.css" as="style" />
@@ -21,10 +30,9 @@
   <link rel="stylesheet" href="/css/fondo.css" />
   <link rel="stylesheet" href="/css/promo-display.css" />
   <link rel="stylesheet" href="/css/adminMensaje.css" />
-  <link rel="icon" href="/assets/favicon.ico" type="image/x-icon" />
 </head>
 
-<body>
+<body lang="es">
 <main class="productos-container fade-in" role="main" aria-labelledby="tituloProductos">
   <h1 id="tituloProductos" class="text-center" tabindex="0">👕 Gestión de Productos</h1>
 
@@ -80,19 +88,18 @@
 <div id="adminMensaje" class="admin-message oculto" role="alert" aria-live="assertive"></div>
 
 <!-- 🌙 Activación automática de modo oscuro -->
-<script>
-  if (localStorage.getItem("modoOscuro") === "true") {
-    document.body.classList.add("modo-oscuro");
-  }
-</script>
-
-<!-- ✅ Scripts principales -->
-<script type="module" defer>
+<script type="module">
   import { goBack } from "/js/admin-utils.js";
   import "/js/productos.js";
   import "/js/promo-display.js";
 
-  document.getElementById("btnVolverPanel")?.addEventListener("click", goBack);
+  document.addEventListener("DOMContentLoaded", () => {
+    if (localStorage.getItem("modoOscuro") === "true") {
+      document.body.classList.add("modo-oscuro");
+    }
+
+    document.getElementById("btnVolverPanel")?.addEventListener("click", goBack);
+  });
 </script>
 
 <noscript>

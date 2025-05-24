@@ -5,50 +5,61 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>KM & EZ ROPA | Moda, Estilo y Belleza</title>
 
-  <!-- 🔍 SEO Básico -->
-  <meta name="description" content="Encuentra todo lo que necesitas en moda y belleza. KM & EZ ROPA viste todos tus momentos con estilo.">
-  <meta name="keywords" content="ropa urbana, streetwear, ropa mujer, moda casual, KM & EZ ROPA, tienda de ropa, moda, belleza, estilo" />
+  <!-- 🔍 SEO Mejorado -->
+  <meta name="description" content="Encuentra ropa urbana, streetwear, moda casual y más en KM & EZ ROPA. Estilo para cada momento.">
+  <meta name="keywords" content="ropa urbana, streetwear, ropa mujer, ropa hombre, moda, belleza, tienda de ropa online, KM & EZ ROPA, estilo" />
   <meta name="robots" content="index, follow">
   <meta name="author" content="KM & EZ ROPA">
   <meta name="theme-color" content="#ff6d00" />
   <link rel="canonical" href="https://kmezropacatalogo.com/" />
 
-  <!-- 🌐 Open Graph -->
+  <!-- 🌐 Open Graph / Redes Sociales -->
   <meta property="og:title" content="KM & EZ ROPA | Moda, Estilo y Belleza" />
-  <meta property="og:description" content="Viste para cada ocasión y encuentra tu estilo ideal en KM & EZ ROPA." />
+  <meta property="og:description" content="Viste para cada ocasión con lo último en tendencia. Descubre KM & EZ ROPA.">
   <meta property="og:image" content="/assets/og-image.jpg" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://kmezropacatalogo.com/" />
-
-  <!-- 🐦 Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="KM & EZ ROPA | Moda, Estilo y Belleza" />
-  <meta name="twitter:description" content="Viste para cada ocasión con estilo. Encuentra tu look ideal en KM & EZ ROPA." />
+  <meta name="twitter:description" content="Desde streetwear hasta looks elegantes. Tu estilo vive aquí.">
   <meta name="twitter:image" content="/assets/og-image.jpg" />
 
+  <!-- 🔒 Seguridad -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self';
+                 script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com;
+                 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+                 font-src 'self' https://fonts.gstatic.com;
+                 img-src 'self' data: https://www.google-analytics.com https://kmezropacatalogo.com;
+                 connect-src 'self' https://kmezropacatalogo.com;
+                 frame-src https://www.youtube.com;
+                 object-src 'none';" />
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <meta http-equiv="X-Frame-Options" content="DENY" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
   <!-- 🎨 Estilos -->
+  <link rel="icon" href="/assets/favicon.ico" type="image/x-icon" />
+  <link rel="preload" href="/assets/logo.jpg" as="image" />
   <link rel="stylesheet" href="/css/global.css" />
   <link rel="stylesheet" href="/css/fondo.css" />
   <link rel="stylesheet" href="/css/index.css" />
   <link rel="stylesheet" href="/css/componentes.css" />
   <link rel="stylesheet" href="/css/promo-display.css" />
-
-  <!-- 🌠 Rendimiento -->
-  <link rel="preload" href="/assets/logo.jpg" as="image" />
-  <link rel="icon" href="/assets/favicon.ico" type="image/x-icon" />
   <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" as="style">
-  <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet" media="all" />
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet" />
 
-  <!-- 📈 Scripts -->
+  <!-- 📈 Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-BNWNNFDCC3"></script>
   <script type="module" src="/js/gtag-loader.js" defer></script>
+
+  <!-- ⚙️ Scripts -->
   <script type="module" src="/js/index.js" defer></script>
   <script type="module" src="/js/promo-display.js" defer></script>
 </head>
 
-<body lang="es">
+<body class="con-fondo fade-in">
   <!-- 🔝 Encabezado -->
   <header class="main-header" role="banner">
     <div class="logo">
@@ -68,40 +79,35 @@
     </nav>
   </header>
 
-  <!-- 🔥 Promociones -->
+  <!-- 🔥 Promociones dinámicas -->
   <section id="promo-display-container" data-page="home" role="region" aria-label="Promociones activas">
     <div class="promo-fallback">
       <p style="text-align: center; opacity: 0.6;">🔄 Cargando promociones...</p>
     </div>
   </section>
 
-  <!-- ✨ Hero -->
+  <!-- ✨ Hero principal -->
   <section class="hero-banner" aria-label="Mensaje de bienvenida">
     <div class="hero-content">
       <h2>✨ Un solo lugar, infinitos estilos</h2>
       <p>Desde streetwear hasta elegancia casual. Looks para eventos especiales y productos que realzan tu esencia.</p>
       <a href="/categorias.html"
          class="btn-hero"
-         aria-label="Explorar catálogo completo"
-         onclick="gtag('event', 'click_explorar_coleccion', {
-           event_category: 'Promocion',
-           event_label: 'Hero Banner',
-           value: 1
-         })">
+         aria-label="Explorar catálogo completo">
          Explorar Colección
       </a>
     </div>
   </section>
 
-  <!-- 🛍️ Productos -->
+  <!-- 🛍️ Productos destacados -->
   <main class="main-section" role="main" aria-label="Productos destacados">
     <h2 class="section-title">🌟 Más Vendido del Momento</h2>
     <div id="catalogo" class="product-grid" aria-live="polite" aria-busy="true">
-      <!-- Productos dinámicos -->
+      <!-- Se cargan dinámicamente -->
     </div>
   </main>
 
-  <!-- 🛒 Flotantes -->
+  <!-- 🛒 Botones flotantes -->
   <div class="floating-buttons" aria-hidden="false">
     <a href="/carrito.html" class="cart-icon" aria-label="Ir al carrito">
       <img src="/assets/cart-icon.svg" alt="Carrito de compras" loading="lazy" />
@@ -117,7 +123,7 @@
     <p>&copy; <span itemprop="name">KM & EZ ROPA</span> — Viste para cada ocasión, brilla siempre.</p>
   </footer>
 
-  <!-- 🚫 JS Requerido -->
+  <!-- ⚠️ Fallback sin JS -->
   <noscript>
     <p style="text-align: center; color: red;">⚠️ Este sitio requiere JavaScript para funcionar correctamente.</p>
   </noscript>

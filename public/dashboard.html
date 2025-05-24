@@ -10,6 +10,15 @@
   <meta name="description" content="Panel de control con estadísticas de ventas, productos, visitas y pedidos recibidos." />
   <meta name="author" content="KM & EZ ROPA" />
   <meta name="theme-color" content="#d4af37" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; 
+                 script-src 'self'; 
+                 style-src 'self' 'unsafe-inline'; 
+                 img-src 'self' data:; 
+                 connect-src 'self'; 
+                 object-src 'none'; 
+                 frame-ancestors 'none';" />
   <link rel="icon" href="/assets/favicon.ico" type="image/x-icon" />
 
   <!-- 🎨 Estilos -->
@@ -26,7 +35,7 @@
 
 <body lang="es" class="con-fondo fade-in">
 <main class="dashboard-container fade-in" role="main" aria-label="Panel de estadísticas de KM & EZ ROPA">
-  <h1 class="text-center">📊 Panel de Analítica</h1>
+  <h1 class="text-center" tabindex="0">📊 Panel de Analítica</h1>
 
   <!-- 🔢 Métricas Globales -->
   <section class="dashboard-grid" aria-label="Métricas globales">
@@ -65,18 +74,18 @@
   <section class="analitica-extra mt-3" aria-labelledby="tituloTopCategorias">
     <h2 id="tituloTopCategorias" class="text-center">📁 Top Categorías</h2>
     <ul id="topCategorias" class="listado-categorias" aria-live="polite">
-      <!-- Categorías cargadas dinámicamente -->
+      <!-- Cargado por JS -->
     </ul>
   </section>
 
   <!-- 📤 Exportar CSV -->
   <div class="text-center mt-3">
-    <button id="btnExportar" class="btn-secundario" aria-label="Exportar estadísticas como archivo CSV">
+    <button id="btnExportar" class="btn-secundario" aria-label="Exportar estadísticas como CSV">
       📤 Exportar Estadísticas (CSV)
     </button>
   </div>
 
-  <!-- 🔙 Volver -->
+  <!-- 🔙 Volver al panel -->
   <div class="text-center mt-2">
     <button type="button" onclick="goBack()" class="btn" aria-label="Volver al Panel de Administración">
       🔙 Volver al Panel
@@ -87,12 +96,12 @@
 <!-- 🔔 Mensaje flotante -->
 <div id="adminMensaje" class="admin-message oculto" role="status" aria-live="assertive"></div>
 
-<!-- 🚫 Fallback JS desactivado -->
+<!-- ⚠️ Fallback sin JS -->
 <noscript>
   <p style="text-align: center; color: red;">⚠️ Esta página requiere JavaScript para funcionar correctamente.</p>
 </noscript>
 
-<!-- 🌙 Activar modo oscuro si está guardado -->
+<!-- 🌙 Activar modo oscuro automáticamente -->
 <script>
   document.addEventListener("DOMContentLoaded", () => {
     if (localStorage.getItem("modoOscuro") === "true") {
