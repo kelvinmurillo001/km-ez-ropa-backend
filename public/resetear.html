@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🔐 Solicitar Nueva Contraseña | KM & EZ ROPA</title>
+
+  <!-- 🔒 Seguridad y SEO -->
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#ff6d00" />
+  <meta name="description" content="Solicita una nueva contraseña segura para tu cuenta en KM & EZ ROPA." />
+  <meta name="author" content="KM & EZ ROPA" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self';">
+
+  <!-- 🎨 Estilos -->
+  <link rel="stylesheet" href="/css/global.css" />
+  <link rel="stylesheet" href="/css/componentes.css" />
+  <link rel="stylesheet" href="/css/fondo.css" />
+  <link rel="stylesheet" href="/css/login.css" />
+
+  <!-- 🔐 Lógica de recuperación -->
+  <script type="module" src="/js/resetear.js" defer></script>
+</head>
+
+<body class="con-fondo fade-in">
+
+<main class="login-container fade-in" role="main" aria-labelledby="tituloReset">
+  <h1 id="tituloReset" class="text-center">🔐 Recuperar Acceso</h1>
+
+  <form id="resetForm" class="formulario" novalidate aria-describedby="descReset">
+    <p id="descReset" class="text-center mb-2">
+      Ingresa tu correo electrónico y te enviaremos una nueva contraseña temporal.
+    </p>
+
+    <!-- Campo de Email -->
+    <label for="email">Correo electrónico:</label>
+    <input 
+      type="email"
+      id="email"
+      name="email"
+      placeholder="ejemplo@correo.com"
+      required
+      maxlength="100"
+      autocomplete="email"
+      aria-required="true"
+      aria-describedby="descReset"
+    />
+
+    <!-- Botón de Envío -->
+    <button type="submit" class="btn mt-2" aria-label="Solicitar recuperación de contraseña">
+      📧 Solicitar Contraseña
+    </button>
+
+    <!-- Mensaje de Estado -->
+    <div id="msgEstado" class="form-msg mt-2 text-center" role="alert" aria-live="assertive"></div>
+  </form>
+</main>
+
+<!-- 🚫 Fallback si JS está deshabilitado -->
+<noscript>
+  <div role="alert" style="text-align:center; color:red; font-weight:bold;">
+    ⚠️ Activa JavaScript para continuar con la recuperación de contraseña.
+  </div>
+</noscript>
+
+<!-- 🌙 Modo oscuro y validación en vivo -->
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const input = document.getElementById("email");
+    if (localStorage.getItem("modoOscuro") === "true") {
+      document.body.classList.add("modo-oscuro");
+    }
+
+    input?.focus();
+
+    input?.addEventListener("input", () => {
+      const isValid = input.checkValidity();
+      input.setAttribute("aria-invalid", !isValid);
+      input.style.borderColor = isValid ? "" : "tomato";
+    });
+  });
+</script>
+</body>
+</html>

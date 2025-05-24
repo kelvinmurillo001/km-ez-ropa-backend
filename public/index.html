@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KM & EZ ROPA | Moda, Estilo y Belleza</title>
+
+  <!-- 🔍 SEO Básico -->
+  <meta name="description" content="Encuentra todo lo que necesitas en moda y belleza. KM & EZ ROPA viste todos tus momentos con estilo.">
+  <meta name="keywords" content="ropa urbana, streetwear, ropa mujer, moda casual, KM & EZ ROPA, tienda de ropa, moda, belleza, estilo" />
+  <meta name="robots" content="index, follow">
+  <meta name="author" content="KM & EZ ROPA">
+  <meta name="theme-color" content="#ff6d00" />
+  <link rel="canonical" href="https://kmezropacatalogo.com/" />
+
+  <!-- 🌐 Open Graph -->
+  <meta property="og:title" content="KM & EZ ROPA | Moda, Estilo y Belleza" />
+  <meta property="og:description" content="Viste para cada ocasión y encuentra tu estilo ideal en KM & EZ ROPA." />
+  <meta property="og:image" content="/assets/og-image.jpg" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://kmezropacatalogo.com/" />
+
+  <!-- 🐦 Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="KM & EZ ROPA | Moda, Estilo y Belleza" />
+  <meta name="twitter:description" content="Viste para cada ocasión con estilo. Encuentra tu look ideal en KM & EZ ROPA." />
+  <meta name="twitter:image" content="/assets/og-image.jpg" />
+
+  <!-- 🎨 Estilos -->
+  <link rel="stylesheet" href="/css/global.css" />
+  <link rel="stylesheet" href="/css/fondo.css" />
+  <link rel="stylesheet" href="/css/index.css" />
+  <link rel="stylesheet" href="/css/componentes.css" />
+  <link rel="stylesheet" href="/css/promo-display.css" />
+
+  <!-- 🌠 Rendimiento -->
+  <link rel="preload" href="/assets/logo.jpg" as="image" />
+  <link rel="icon" href="/assets/favicon.ico" type="image/x-icon" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" as="style">
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet" media="all" />
+
+  <!-- 📈 Scripts -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-BNWNNFDCC3"></script>
+  <script type="module" src="/js/gtag-loader.js" defer></script>
+  <script type="module" src="/js/index.js" defer></script>
+  <script type="module" src="/js/promo-display.js" defer></script>
+</head>
+
+<body lang="es">
+  <!-- 🔝 Encabezado -->
+  <header class="main-header" role="banner">
+    <div class="logo">
+      <a href="/" aria-label="Ir al inicio">
+        <img src="/assets/logo.jpg" alt="Logo KM & EZ ROPA" loading="lazy" />
+      </a>
+      <div class="brand-text">
+        <h1>KM & EZ ROPA</h1>
+        <p>Moda, estilo y belleza para cada momento</p>
+      </div>
+    </div>
+
+    <nav class="nav-links" role="navigation" aria-label="Menú principal">
+      <a href="/categorias.html">🛍️ Catálogo</a>
+      <a href="/login.html">🔐 Admin</a>
+      <button id="modoOscuroBtn" aria-label="Activar o desactivar modo oscuro" aria-pressed="false">🌙</button>
+    </nav>
+  </header>
+
+  <!-- 🔥 Promociones -->
+  <section id="promo-display-container" data-page="home" role="region" aria-label="Promociones activas">
+    <div class="promo-fallback">
+      <p style="text-align: center; opacity: 0.6;">🔄 Cargando promociones...</p>
+    </div>
+  </section>
+
+  <!-- ✨ Hero -->
+  <section class="hero-banner" aria-label="Mensaje de bienvenida">
+    <div class="hero-content">
+      <h2>✨ Un solo lugar, infinitos estilos</h2>
+      <p>Desde streetwear hasta elegancia casual. Looks para eventos especiales y productos que realzan tu esencia.</p>
+      <a href="/categorias.html"
+         class="btn-hero"
+         aria-label="Explorar catálogo completo"
+         onclick="gtag('event', 'click_explorar_coleccion', {
+           event_category: 'Promocion',
+           event_label: 'Hero Banner',
+           value: 1
+         })">
+         Explorar Colección
+      </a>
+    </div>
+  </section>
+
+  <!-- 🛍️ Productos -->
+  <main class="main-section" role="main" aria-label="Productos destacados">
+    <h2 class="section-title">🌟 Más Vendido del Momento</h2>
+    <div id="catalogo" class="product-grid" aria-live="polite" aria-busy="true">
+      <!-- Productos dinámicos -->
+    </div>
+  </main>
+
+  <!-- 🛒 Flotantes -->
+  <div class="floating-buttons" aria-hidden="false">
+    <a href="/carrito.html" class="cart-icon" aria-label="Ir al carrito">
+      <img src="/assets/cart-icon.svg" alt="Carrito de compras" loading="lazy" />
+      <span id="cartCount" role="status" aria-live="polite">0</span>
+    </a>
+    <a href="https://wa.me/593990270864" target="_blank" rel="noopener noreferrer" class="whatsapp-icon" aria-label="Chat por WhatsApp">
+      <img src="/assets/whatsapp.svg" alt="WhatsApp" loading="lazy" />
+    </a>
+  </div>
+
+  <!-- 🔚 Footer -->
+  <footer class="site-footer" role="contentinfo" itemscope itemtype="https://schema.org/Organization">
+    <p>&copy; <span itemprop="name">KM & EZ ROPA</span> — Viste para cada ocasión, brilla siempre.</p>
+  </footer>
+
+  <!-- 🚫 JS Requerido -->
+  <noscript>
+    <p style="text-align: center; color: red;">⚠️ Este sitio requiere JavaScript para funcionar correctamente.</p>
+  </noscript>
+</body>
+</html>

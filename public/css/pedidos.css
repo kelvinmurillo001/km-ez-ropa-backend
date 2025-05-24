@@ -1,0 +1,233 @@
+/* === 🌒 BASE GENERAL === */
+body {
+  background-color: #121212;
+  color: #f5f5f5;
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+h1 {
+  color: #d4af37;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-size: 2rem;
+}
+
+/* === 📦 CONTENEDOR === */
+.pedidos-container {
+  max-width: 1100px;
+  margin: auto;
+  padding: 2rem 1rem;
+}
+
+/* === 🎯 FILTRO DE ESTADO === */
+.filtro-estado {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.filtro-estado label {
+  font-weight: bold;
+  color: #f4d35e;
+}
+
+.filtro-estado select {
+  background-color: #222;
+  color: #f5f5f5;
+  border: 1px solid #444;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+/* === 📋 TABLA DE PEDIDOS === */
+.tabla-admin {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #1a1a1a;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 1rem;
+  box-shadow: 0 0 16px rgba(212, 175, 55, 0.08);
+}
+
+.tabla-admin thead {
+  background-color: #d4af37;
+  color: #121212;
+  font-weight: bold;
+}
+
+.tabla-admin th,
+.tabla-admin td {
+  padding: 1rem;
+  border-bottom: 1px solid #2a2a2a;
+  font-size: 0.95rem;
+  text-align: left;
+}
+
+.tabla-admin td strong {
+  color: #f4d35e;
+}
+
+.tabla-admin tbody tr:hover {
+  background-color: #222;
+  transition: background-color 0.3s ease;
+}
+
+/* === 🧾 SELECTOR DE ESTADO === */
+.select-estado {
+  background-color: #222;
+  color: #fff;
+  border: 1px solid #555;
+  padding: 0.5rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: border-color 0.2s;
+}
+
+.select-estado:focus {
+  border-color: #d4af37;
+  outline: none;
+}
+
+/* === 🧭 BOTONES === */
+.btn,
+.btn-secundario {
+  padding: 0.75rem 1.4rem;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  margin: 0.4rem;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.btn {
+  background-color: #d4af37;
+  color: #121212;
+  border: none;
+}
+
+.btn:hover {
+  background-color: #f4d35e;
+}
+
+.btn-secundario {
+  background-color: transparent;
+  border: 2px solid #d4af37;
+  color: #d4af37;
+}
+
+.btn-secundario:hover {
+  background-color: #d4af37;
+  color: #121212;
+}
+
+/* === 🏷️ BADGES DE ESTADO === */
+.badge-estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.85rem;
+  font-weight: bold;
+  border-radius: 999px;
+  text-transform: capitalize;
+  background-color: #292929;
+}
+
+.estado-pendiente  { background-color: #d4af3720; color: #d4af37; }
+.estado-procesando { background-color: #2196f320; color: #2196f3; }
+.estado-enviado    { background-color: #00bcd420; color: #00bcd4; }
+.estado-entregado  { background-color: #4caf5020; color: #4caf50; }
+.estado-cancelado  { background-color: #f4433620; color: #f44336; }
+.estado-pagado     { background-color: #8bc34a20; color: #8bc34a; }
+
+/* === 🔢 PAGINACIÓN === */
+.paginacion {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+}
+
+.paginacion button {
+  margin: 0 0.3rem;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.paginacion .paginacion-activa {
+  background-color: #d4af37;
+  color: #121212;
+  font-weight: bold;
+}
+
+.paginacion .btn-secundario:hover {
+  background-color: #d4af37;
+  color: #121212;
+}
+
+/* === 📱 RESPONSIVE === */
+@media (max-width: 768px) {
+  .tabla-admin thead {
+    display: none;
+  }
+
+  .tabla-admin,
+  .tabla-admin tbody,
+  .tabla-admin tr,
+  .tabla-admin td {
+    display: block;
+    width: 100%;
+  }
+
+  .tabla-admin tr {
+    margin-bottom: 1.2rem;
+    background-color: #1e1e1e;
+    padding: 1rem;
+    border-radius: 10px;
+    border: 1px solid #333;
+  }
+
+  .tabla-admin td {
+    padding: 0.6rem 1rem;
+    text-align: right;
+    position: relative;
+  }
+
+  .tabla-admin td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 1rem;
+    top: 0.6rem;
+    font-weight: bold;
+    color: #f4d35e;
+    text-align: left;
+  }
+
+  .filtro-estado {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .paginacion {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+}
+
+/* === 🌙 MODO OSCURO (fallback) === */
+body.modo-oscuro {
+  background-color: #121212;
+  color: #f5f5f5;
+}

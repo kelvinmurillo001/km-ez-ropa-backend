@@ -1,0 +1,205 @@
+/* === 🧩 COMPONENTES REUTILIZABLES === */
+
+/* 🔲 Tarjeta básica */
+.card {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  padding: 1rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+}
+
+body.modo-oscuro .card {
+  background-color: #1e1e1e;
+  color: #f5f5f5;
+}
+
+/* 💬 Etiqueta / Badge */
+.badge {
+  display: inline-block;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: bold;
+  background-color: #ff6d00;
+  color: white;
+  border-radius: 50px;
+  text-transform: uppercase;
+}
+
+.badge.secundario {
+  background-color: #999;
+}
+
+body.modo-oscuro .badge.secundario {
+  background-color: #444;
+}
+
+/* 🧭 Separador visual */
+.divider {
+  height: 1px;
+  background-color: #e0e0e0;
+  margin: 1.5rem 0;
+}
+
+body.modo-oscuro .divider {
+  background-color: #333;
+}
+
+/* 🔠 Encabezado de sección */
+.section-title {
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+  border-left: 6px solid #ff6d00;
+  padding-left: 0.5rem;
+  color: #1e1e1e;
+}
+
+body.modo-oscuro .section-title {
+  color: #eee;
+}
+
+/* 📦 Contenedor flexible */
+.flex-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.flex-center {
+  justify-content: center;
+  align-items: center;
+}
+
+/* 🖼️ Imagen dentro de componente */
+.component-img {
+  max-width: 100%;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+/* ✅ Estados */
+.estado-exito {
+  background-color: #d4edda;
+  color: #155724;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+}
+
+.estado-error {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+}
+
+/* === 🔝 ENCABEZADO PRINCIPAL === */
+.main-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background-color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  transition: background-color 0.3s ease;
+}
+
+body.modo-oscuro .main-header {
+  background-color: #1e1e1e;
+}
+
+/* 📸 Logo y texto */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logo img {
+  height: 48px;
+  width: auto;
+  border-radius: 6px;
+}
+
+.brand-text h1 {
+  font-size: 1.25rem;
+  color: #ff6d00;
+  margin-bottom: 0;
+}
+
+.brand-text p {
+  font-size: 0.85rem;
+  color: #777;
+}
+
+body.modo-oscuro .brand-text p {
+  color: #ccc;
+}
+
+/* 🔗 Navegación */
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nav-links a {
+  color: #333;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.nav-links a:hover,
+.nav-links a:focus-visible {
+  color: #ff6d00;
+}
+
+body.modo-oscuro .nav-links a {
+  color: #eee;
+}
+
+#modoOscuroBtn {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  color: #ff6d00;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+#modoOscuroBtn:hover,
+#modoOscuroBtn:focus-visible {
+  transform: scale(1.1);
+  outline: none;
+}
+
+/* 📱 Responsive */
+@media (max-width: 768px) {
+  .main-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.8rem;
+  }
+
+  .nav-links {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: flex-start;
+  }
+
+  .brand-text p {
+    display: none;
+  }
+
+  .flex-container {
+    flex-direction: column;
+  }
+}

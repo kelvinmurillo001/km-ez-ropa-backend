@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https:; img-src 'self' data:;">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>📦 Seguimiento de Pedido | KM & EZ ROPA</title>
+
+  <!-- SEO y Redes Sociales -->
+  <meta name="description" content="Consulta el estado de tu pedido en KM & EZ ROPA. Seguimiento en tiempo real: preparación, envío y entrega.">
+  <meta name="robots" content="index, follow" />
+  <meta name="theme-color" content="#ff6d00" />
+  <meta name="author" content="KM & EZ ROPA" />
+  <meta property="og:title" content="📦 Seguimiento de Pedido | KM & EZ ROPA" />
+  <meta property="og:description" content="Consulta en tiempo real el estado de tu pedido." />
+  <meta property="og:image" content="/assets/og-image.jpg" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://kmezropacatalogo.com/seguimiento.html" />
+
+  <!-- Estilos -->
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/componentes.css">
+  <link rel="stylesheet" href="/css/seguimiento.css">
+  <link rel="stylesheet" href="/css/fondo.css">
+
+  <!-- Script principal -->
+  <script type="module" src="/js/tracking.js" defer></script>
+
+  <!-- Estilo específico -->
+  <style>
+    .progreso .paso {
+      border: 2px solid #d4af37;
+      padding: 1rem;
+      border-radius: 8px;
+      background-color: #1f1f1f;
+      color: #f5f5f5;
+      text-align: center;
+      flex: 1;
+      opacity: 0.3;
+      transition: all 0.3s ease;
+    }
+
+    .progreso .paso.activo {
+      background-color: #d4af37;
+      color: #121212;
+      opacity: 1;
+      font-weight: bold;
+      transform: scale(1.03);
+    }
+
+    .progreso {
+      display: flex;
+      gap: 0.8rem;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    #resumenPedido p {
+      margin: 0.5rem 0;
+      line-height: 1.4;
+    }
+
+    .mensaje-estado {
+      color: #ffa733;
+      font-weight: bold;
+      font-size: 1rem;
+    }
+
+    input[aria-invalid="true"] {
+      border-color: red;
+    }
+  </style>
+</head>
+
+<body>
+<main class="seguimiento-container fade-in" role="main" aria-labelledby="tituloSeguimiento">
+  <h1 id="tituloSeguimiento" class="text-center">🚚 Seguimiento de tu Pedido</h1>
+  <p id="instruccionesBusqueda" class="text-center subtitulo">
+    Consulta el estado actual de tu compra en tiempo real.
+  </p>
+
+  <!-- 🔎 Buscador -->
+  <section class="buscar-codigo mt-3" role="search" aria-label="Buscar pedido por código de seguimiento">
+    <label for="codigoSeguimiento">Introduce tu código de pedido:</label>
+    <input
+      type="text"
+      id="codigoSeguimiento"
+      name="codigoSeguimiento"
+      placeholder="Ej: KM12345"
+      required
+      maxlength="30"
+      inputmode="text"
+      pattern="[A-Za-z0-9]+"
+      autocomplete="off"
+      aria-describedby="instruccionesBusqueda"
+    />
+    <button id="btnBuscar" class="btn mt-1" aria-label="Buscar estado del pedido">🔍 Buscar Pedido</button>
+  </section>
+
+  <!-- 📈 Progreso -->
+  <section id="barraProgreso" class="progreso mt-4" hidden role="region" aria-label="Etapas del envío del pedido">
+    <div class="paso" id="paso-recibido">📥 Recibido</div>
+    <div class="paso" id="paso-preparando">🛠 Preparando</div>
+    <div class="paso" id="paso-en-camino">🚚 En camino</div>
+    <div class="paso" id="paso-entregado">✅ Entregado</div>
+  </section>
+
+  <!-- 🧾 Resumen -->
+  <section id="resumenPedido" class="resumen mt-4" hidden role="region" aria-labelledby="resumenTitulo">
+    <h2 id="resumenTitulo">🧾 Detalles del Pedido</h2>
+    <p><strong>Cliente:</strong> <span id="nombreCliente">-</span></p>
+    <p><strong>Dirección:</strong> <span id="direccionCliente">-</span></p>
+    <p><strong>Método de Pago:</strong> <span id="metodoPago">-</span></p>
+    <p><strong>Total:</strong> <span id="totalPedido">$0.00</span></p>
+  </section>
+
+  <!-- 🔔 Estado -->
+  <p id="mensajeEstado" class="text-center mt-3 mensaje-estado" role="alert" aria-live="assertive"></p>
+</main>
+
+<noscript>
+  <p style="text-align: center; color: red;">
+    ⚠️ JavaScript debe estar habilitado para consultar tu pedido correctamente.
+  </p>
+</noscript>
+
+<!-- 🌓 Modo oscuro automático -->
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const dark = localStorage.getItem("modoOscuro") === "true";
+    if (dark) document.body.classList.add("modo-oscuro");
+
+    const input = document.getElementById("codigoSeguimiento");
+    if (input) {
+      input.focus();
+      input.addEventListener("input", () => {
+        input.setAttribute("aria-invalid", !input.checkValidity());
+      });
+    }
+  });
+</script>
+</body>
+</html>

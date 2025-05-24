@@ -1,0 +1,256 @@
+:root {
+  --bg-main: #121212;
+  --bg-panel: #1a1a1a;
+  --bg-box: #1e1e1e;
+  --text-main: #f5f5f5;
+  --text-muted: #ccc;
+  --accent: #ff6d00;
+  --accent-light: #ffa733;
+  --border: #444;
+  --radius: 8px;
+  --transition: all 0.3s ease;
+}
+
+/* === BASE === */
+body {
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  padding: 0;
+  line-height: 1.6;
+}
+
+/* === TITULO === */
+h1 {
+  text-align: center;
+  color: var(--accent);
+  margin-bottom: 2rem;
+}
+
+/* === CONTENEDOR === */
+.formulario-container {
+  max-width: 900px;
+  margin: auto;
+  padding: 2rem 1rem;
+}
+
+/* === FORMULARIO === */
+form.form-producto {
+  background-color: var(--bg-panel);
+  padding: 2rem;
+  border-radius: var(--radius);
+  box-shadow: 0 0 20px rgba(255, 109, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+form label {
+  font-weight: 600;
+  color: var(--accent-light);
+  margin-bottom: 0.4rem;
+  display: inline-block;
+}
+form label::after {
+  content: " *";
+  color: red;
+}
+
+/* === CAMPOS === */
+form input,
+form textarea,
+form select {
+  background-color: #222;
+  color: var(--text-main);
+  border: 1px solid var(--border);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  font-size: 1rem;
+  transition: var(--transition);
+  width: 100%;
+}
+
+form input:focus,
+form textarea:focus,
+form select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 5px rgba(255, 109, 0, 0.5);
+}
+
+form textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+/* === IMÁGENES PREVIEW === */
+.preview-imagen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.preview-imagen img {
+  max-width: 220px;
+  max-height: 220px;
+  border-radius: var(--radius);
+  border: 2px solid var(--accent);
+  object-fit: contain;
+}
+
+/* === VARIANTES === */
+.variante-item {
+  background-color: var(--bg-box);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.variante-item label {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.variante-item input,
+.variante-item select {
+  background-color: #222;
+  color: var(--text-main);
+  border: 1px solid var(--border);
+  padding: 0.6rem;
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+}
+
+.variante-item img {
+  margin-top: 0.5rem;
+  max-width: 100px;
+  max-height: 100px;
+  object-fit: cover;
+  border: 2px solid var(--accent);
+  border-radius: var(--radius);
+}
+
+/* === BOTONES / ACCIONES === */
+.form-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+}
+
+.btn,
+.btn-secundario {
+  padding: 0.8rem 1.5rem;
+  font-weight: bold;
+  font-size: 1rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: var(--transition);
+  min-width: 160px;
+  text-align: center;
+}
+
+.btn {
+  background-color: var(--accent);
+  color: #121212;
+  border: none;
+}
+
+.btn:hover {
+  background-color: var(--accent-light);
+}
+
+.btn-secundario {
+  background-color: transparent;
+  border: 2px solid var(--accent);
+  color: var(--accent);
+}
+
+.btn-secundario:hover {
+  background-color: var(--accent);
+  color: #121212;
+}
+
+/* === MENSAJE DE ESTADO === */
+.form-msg {
+  text-align: center;
+  font-weight: bold;
+  padding: 0.8rem;
+  border-radius: var(--radius);
+  font-size: 1rem;
+  margin-top: 1rem;
+  color: limegreen;
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border);
+}
+
+.form-msg.error {
+  color: red;
+  background-color: #2a0000;
+  border-color: red;
+}
+
+/* === MENSAJE ADMIN FLOTANTE === */
+#adminMensaje {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1rem 2rem;
+  border-radius: var(--radius);
+  font-weight: bold;
+  font-size: 1rem;
+  background-color: #222;
+  color: #fff;
+  z-index: 999;
+  border: 2px solid transparent;
+  transition: opacity 0.4s ease;
+}
+
+#adminMensaje.success {
+  border-color: limegreen;
+  background-color: #163f16;
+  color: #adffad;
+}
+
+#adminMensaje.error {
+  border-color: red;
+  background-color: #4a1212;
+  color: #ffc1c1;
+}
+
+#adminMensaje.info {
+  border-color: var(--accent-light);
+  background-color: #2e1a00;
+  color: #fff5d1;
+}
+
+#adminMensaje.oculto {
+  display: none;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 600px) {
+  .form-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .preview-imagen img {
+    width: 100%;
+    height: auto;
+  }
+
+  .variante-item {
+    padding: 1rem;
+  }
+
+  form.form-producto {
+    padding: 1.2rem;
+  }
+}

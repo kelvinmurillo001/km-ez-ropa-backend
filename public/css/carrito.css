@@ -1,0 +1,135 @@
+/* === 🛒 ESTILOS ESPECÍFICOS PARA EL CARRITO === */
+
+.carrito-container {
+  max-width: 960px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  color: #1e1e1e;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.modo-oscuro .carrito-container {
+  background-color: #1f1f1f;
+  color: #f1f1f1;
+}
+
+.carrito-container h1 {
+  font-size: 2rem;
+  color: #ff6d00;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+/* Lista de productos */
+.carrito-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Resumen */
+.carrito-resumen {
+  border-top: 2px solid #e0e0e0;
+  margin-top: 2rem;
+  padding-top: 1rem;
+}
+
+.carrito-resumen h2 {
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.carrito-resumen span {
+  font-weight: bold;
+  color: #ff6d00;
+}
+
+body.modo-oscuro .carrito-resumen h2 {
+  color: #eee;
+}
+
+body.modo-oscuro .carrito-resumen span {
+  color: #f4b400;
+}
+
+/* Botones */
+.botones-carrito {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1rem;
+  justify-content: center;
+}
+
+.botones-carrito .btn,
+.botones-carrito .btn-secundario {
+  min-width: 160px;
+  text-align: center;
+}
+
+/* === Botones flotantes === */
+.floating-buttons {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  z-index: 1000;
+}
+
+.floating-buttons a {
+  background: #fff;
+  border-radius: 50%;
+  padding: 0.6rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: background 0.3s ease;
+}
+
+.floating-buttons a:hover {
+  background: #ff6d00;
+}
+
+body.modo-oscuro .floating-buttons a {
+  background: #2a2a2a;
+}
+
+body.modo-oscuro .floating-buttons a:hover {
+  background: #f4b400;
+}
+
+.cart-icon span {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background-color: red;
+  color: white;
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 50%;
+  font-weight: bold;
+}
+
+/* === Responsive === */
+@media (max-width: 768px) {
+  .carrito-container {
+    padding: 1rem 0.8rem;
+  }
+
+  .botones-carrito {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .floating-buttons {
+    right: 0.5rem;
+    bottom: 0.5rem;
+  }
+}

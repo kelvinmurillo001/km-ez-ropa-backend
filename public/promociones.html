@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎯 Promociones | KM & EZ ROPA</title>
+
+  <!-- 🔒 Seguridad y SEO -->
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="description" content="Administra banners promocionales con texto, imagen o video en KM & EZ ROPA." />
+  <meta name="author" content="KM & EZ ROPA" />
+  <meta name="theme-color" content="#ff6d00" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:; media-src 'self' blob:;">
+
+  <!-- 🎨 Estilos -->
+  <link rel="stylesheet" href="/css/fondo.css" />
+  <link rel="stylesheet" href="/css/global.css" />
+  <link rel="stylesheet" href="/css/componentes.css" />
+  <link rel="stylesheet" href="/css/promociones.css" />
+  <link rel="stylesheet" href="/css/promos-admin-panel.css" />
+  <link rel="stylesheet" href="/css/adminMensaje.css" />
+
+  <!-- ✅ Script principal -->
+  <script type="module" src="/js/promociones.js" defer></script>
+</head>
+
+<body>
+<main class="promociones-container fade-in" role="main" aria-labelledby="tituloPromos">
+  <h1 id="tituloPromos" class="text-center">🚀 Promociones que Atraen y Convencen</h1>
+
+  <!-- 🔍 Filtros -->
+  <section class="mt-2 filtros-promos" aria-label="Filtrar promociones">
+    <input type="text" id="buscarPromo" placeholder="🔎 Buscar mensaje..." aria-label="Buscar por mensaje" />
+    <select id="filtroEstado" aria-label="Filtrar por estado">
+      <option value="">Todos los estados</option>
+      <option value="activa">✅ Activas</option>
+      <option value="inactiva">⛔ Inactivas</option>
+      <option value="futura">🕒 Próximas</option>
+      <option value="expirada">📅 Expiradas</option>
+    </select>
+  </section>
+
+  <!-- 📋 Promos listadas -->
+  <section class="promo-dashboard mt-2" aria-label="Promociones actuales">
+    <h2 class="visually-hidden">Listado de Promociones</h2>
+    <div id="promo-container" class="promo-grid" role="list" aria-live="polite"></div>
+  </section>
+
+  <!-- 👁️ Vista previa -->
+  <section id="estadoActual" class="promo-actual mt-3" aria-label="Vista previa de la promoción actual">
+    <!-- Se llena dinámicamente -->
+  </section>
+
+  <!-- 📝 Formulario -->
+  <section class="form-editar-promo mt-3" aria-label="Formulario de creación y edición de promociones">
+    <h3>✏️ Crear o Editar Promoción</h3>
+    <form id="formPromo" enctype="multipart/form-data" novalidate>
+      <input type="hidden" id="promoId" />
+
+      <label for="promoMensaje">📝 Mensaje Promocional <span aria-hidden="true">*</span></label>
+      <input type="text" id="promoMensaje" required maxlength="120" placeholder="Ej: ¡Hasta 50% OFF solo hoy!" aria-required="true" />
+
+      <label for="promoTema">🎨 Tema visual:</label>
+      <select id="promoTema">
+        <option value="blue">Azul</option>
+        <option value="orange" selected>Naranja</option>
+        <option value="green">Verde</option>
+        <option value="red">Rojo</option>
+      </select>
+
+      <fieldset class="checkbox-group" aria-describedby="ubicacionDescrip">
+        <legend>📍 Mostrar en:</legend>
+        <p id="ubicacionDescrip" class="visually-hidden">Selecciona en qué secciones del sitio aparecerá la promoción.</p>
+        <label><input type="checkbox" name="promoPages" value="home" /> 🏠 Inicio</label>
+        <label><input type="checkbox" name="promoPages" value="categorias" /> 📂 Categorías</label>
+        <label><input type="checkbox" name="promoPages" value="productos" /> 🛍️ Productos</label>
+        <label><input type="checkbox" name="promoPages" value="detalle" /> 📄 Detalle</label>
+        <label><input type="checkbox" name="promoPages" value="checkout" /> 🧾 Checkout</label>
+      </fieldset>
+
+      <label for="promoPosition">📌 Ubicación del Banner:</label>
+      <select id="promoPosition" required>
+        <option value="top">🔝 Superior</option>
+        <option value="middle">📍 Medio</option>
+        <option value="bottom">🔻 Inferior</option>
+      </select>
+
+      <label for="promoTipo">🧩 Tipo de Contenido:</label>
+      <select id="promoTipo" required aria-required="true">
+        <option value="">Seleccionar tipo</option>
+        <option value="texto">📢 Solo Texto</option>
+        <option value="imagen">🖼 Imagen</option>
+        <option value="video">🎬 Video</option>
+      </select>
+
+      <!-- Campo multimedia dinámico -->
+      <div id="mediaUploadContainer" class="mt-1" aria-live="polite"></div>
+
+      <label for="promoInicio">📅 Fecha Inicio:</label>
+      <input type="date" id="promoInicio" />
+
+      <label for="promoFin">📅 Fecha Fin:</label>
+      <input type="date" id="promoFin" />
+
+      <label><input type="checkbox" id="promoActivo" /> ✅ Activar promoción</label>
+
+      <button type="submit" class="btn mt-2">💾 Guardar Promoción</button>
+
+      <!-- Mensaje de estado -->
+      <p id="msgPromo" class="form-msg text-center mt-2" role="alert" aria-live="assertive"></p>
+    </form>
+  </section>
+
+  <!-- 🔙 Volver -->
+  <div class="text-center mt-3">
+    <button onclick="goBack()" class="btn-secundario">🔙 Volver al Panel</button>
+  </div>
+</main>
+
+<!-- 🔔 Mensajes flotantes globales -->
+<div id="adminMensaje" class="admin-message oculto" role="status" aria-live="assertive"></div>
+
+<noscript>
+  <div role="alert" style="text-align: center; color: red; font-weight: bold;">
+    ⚠️ JavaScript debe estar activado para gestionar promociones.
+  </div>
+</noscript>
+</body>
+</html>

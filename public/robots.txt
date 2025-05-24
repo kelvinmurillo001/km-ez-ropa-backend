@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /admin
+Disallow: /login.html
+
+Sitemap: https://kmezropacatalogo.com/sitemap.xml

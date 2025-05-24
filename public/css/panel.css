@@ -1,0 +1,208 @@
+/* === 🎨 VARIABLES ROOT === */
+:root {
+  --color-bg-light: #ffffff;
+  --color-bg-dark: #121212;
+  --color-fg-light: #1f1f1f;
+  --color-fg-dark: #f1f1f1;
+  --color-accent: #d4af37;
+  --color-accent-hover: #f4d35e;
+  --color-border-light: #e0e0e0;
+  --color-border-dark: #333;
+  --color-muted: #888;
+  --color-danger: #c62828;
+  --color-danger-hover: #b71c1c;
+  --shadow-light: rgba(0, 0, 0, 0.05);
+  --shadow-heavy: rgba(0, 0, 0, 0.3);
+  --shadow-gold: rgba(212, 175, 55, 0.2);
+}
+
+/* === 📦 CONTENEDOR PRINCIPAL === */
+.panel-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: var(--color-bg-light);
+  color: var(--color-fg-light);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px var(--shadow-light);
+  animation: fadeIn 0.4s ease-out;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.modo-oscuro .panel-container {
+  background-color: var(--color-bg-dark);
+  color: var(--color-fg-dark);
+}
+
+/* === 🧭 ENCABEZADO === */
+.header-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--color-accent);
+  color: var(--color-fg-light);
+  padding: 1rem 1.5rem;
+  border-radius: 10px;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.modo-oscuro .header-panel {
+  background-color: #2b2b2b;
+  color: var(--color-fg-dark);
+}
+
+.header-panel h1 {
+  margin: 0;
+  font-size: 1.7rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.header-panel button {
+  background-color: var(--color-danger);
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.header-panel button:hover {
+  background-color: var(--color-danger-hover);
+  transform: translateY(-1px);
+}
+
+/* === 📚 MENÚ PANEL === */
+.menu-panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+}
+
+.menu-panel a {
+  display: block;
+  padding: 1.5rem;
+  background-color: #f8f8f8;
+  border-radius: 12px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 15.5px;
+  color: #2c2c2c;
+  text-decoration: none;
+  border: 1px solid var(--color-border-light);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  transition: all 0.25s ease;
+}
+
+.menu-panel a:hover,
+.menu-panel a:focus-visible {
+  background-color: #f1f1f1;
+  color: var(--color-accent);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  outline: none;
+}
+
+.menu-panel a:focus {
+  outline: 2px dashed var(--color-accent);
+  outline-offset: 4px;
+}
+
+body.modo-oscuro .menu-panel a {
+  background-color: #1e1e1e;
+  color: #ddd;
+  border: 1px solid var(--color-border-dark);
+  box-shadow: 0 2px 10px var(--shadow-heavy);
+}
+
+body.modo-oscuro .menu-panel a:hover {
+  background-color: #2a2a2a;
+  color: var(--color-accent-hover);
+}
+
+/* === 🧾 TARJETA DE PRODUCTO === */
+.producto-card {
+  background: #fafafa;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 1.2rem 1rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+  transition: transform 0.2s ease, background-color 0.3s ease;
+}
+
+.producto-card:hover {
+  transform: scale(1.02);
+  background-color: #fdf6e3;
+}
+
+.producto-card h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.producto-card p {
+  margin: 0.3rem 0;
+  font-size: 0.95rem;
+  color: #555;
+}
+
+body.modo-oscuro .producto-card {
+  background-color: #1b1b1b;
+  border-color: var(--color-border-dark);
+  color: #eee;
+}
+
+body.modo-oscuro .producto-card p {
+  color: #ccc;
+}
+
+/* === 🎞️ ANIMACIÓN === */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* === 📱 RESPONSIVE === */
+@media (max-width: 640px) {
+  .menu-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .header-panel {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+
+  .header-panel button {
+    width: 100%;
+  }
+
+  .menu-panel a {
+    font-size: 16px;
+    padding: 1.3rem;
+  }
+
+  .producto-card {
+    padding: 1rem;
+  }
+
+  .producto-card h3 {
+    font-size: 1.1rem;
+  }
+}

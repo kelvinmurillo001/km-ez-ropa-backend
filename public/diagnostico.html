@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>🔍 Diagnóstico del Sistema | KM & EZ ROPA</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#ff6d00" />
+  <meta name="description" content="Herramienta para verificar el estado del backend, base de datos y servicios del sistema KM & EZ ROPA." />
+  <meta name="author" content="KM & EZ ROPA" />
+
+  <!-- 🎨 Estilos -->
+  <link rel="stylesheet" href="/css/global.css" />
+  <link rel="stylesheet" href="/css/componentes.css" />
+  <link rel="stylesheet" href="/css/diagnostico.css" />
+  <link rel="stylesheet" href="/css/fondo.css" />
+
+  <!-- 🔎 Script de diagnóstico -->
+  <script type="module" src="/js/diagnostico.js" defer></script>
+</head>
+
+<body class="con-fondo fade-in">
+
+<main class="diagnostico-container" role="main" aria-labelledby="tituloDiagnostico">
+  <h1 id="tituloDiagnostico" class="text-center">🔍 Diagnóstico del Sistema</h1>
+
+  <p class="text-center subtitulo">
+    Presiona el botón para comprobar que el <strong>backend</strong>, la <strong>base de datos</strong> y los <strong>servicios externos</strong> están funcionando correctamente.
+  </p>
+
+  <div class="text-center mt-3">
+    <button id="btnDiagnostico" class="btn" aria-label="Ejecutar diagnóstico del sistema">📡 Ejecutar Diagnóstico</button>
+  </div>
+
+  <section id="resultados" class="resultados mt-4" role="region" aria-label="Resultados del diagnóstico" aria-live="polite">
+    <!-- Resultados dinámicos se muestran aquí -->
+  </section>
+
+  <div class="text-center mt-4">
+    <a href="/panel.html" class="btn-secundario" aria-label="Volver al panel de administración">🔙 Volver al Panel</a>
+  </div>
+</main>
+
+<!-- ❗ JS desactivado -->
+<noscript>
+  <p style="text-align:center; color:red; font-weight:bold;">
+    ⚠️ Esta herramienta requiere JavaScript para funcionar correctamente.
+  </p>
+</noscript>
+
+</body>
+</html>

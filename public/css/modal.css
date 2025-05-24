@@ -1,0 +1,111 @@
+/* === 🎥 FONDO OVERLAY === */ 
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* === 🧱 CONTENEDOR DEL MODAL === */
+.modal {
+  background-color: #fefefe;
+  max-width: 500px;
+  width: 90%;
+  padding: 2rem 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  position: relative;
+  animation: scaleIn 0.3s ease;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+/* === ❌ BOTÓN CERRAR === */
+.modal-cerrar {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: transparent;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: #555;
+  transition: color 0.2s ease;
+}
+
+.modal-cerrar:hover {
+  color: #d9534f;
+}
+
+/* === 📝 TÍTULO DEL MODAL === */
+.modal h3 {
+  font-size: 1.5rem;
+  margin-bottom: 1.2rem;
+  color: #1e1e1e;
+  font-weight: 600;
+}
+
+/* === 📄 CONTENIDO DEL MODAL === */
+.modal-contenido {
+  font-size: 1rem;
+  color: #333;
+  line-height: 1.6;
+}
+
+/* === 🎞️ ANIMACIONES === */
+@keyframes fadeIn {
+  from {
+    background-color: rgba(0, 0, 0, 0);
+  }
+  to {
+    background-color: rgba(0, 0, 0, 0.65);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.2s ease-in forwards;
+}
+.fade-out {
+  animation: fadeOut 0.2s ease-out forwards;
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* === 🚫 BLOQUEO DE SCROLL CUANDO MODAL ESTÁ ABIERTO === */
+body.no-scroll {
+  overflow: hidden;
+}
+
+/* === 📱 RESPONSIVE === */
+@media (max-width: 480px) {
+  .modal {
+    padding: 1.5rem 1rem;
+    width: 95%;
+  }
+
+  .modal h3 {
+    font-size: 1.25rem;
+  }
+
+  .modal-cerrar {
+    font-size: 1.2rem;
+  }
+}

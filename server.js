@@ -66,17 +66,9 @@ if (config.enableMongoSanitize) app.use(mongoSanitize());
 if (config.enableXSSProtection) app.use(xssClean());
 if (config.enableHPP) app.use(hpp());
 
-/* ─────────────── CORS SEGURO ─────────────── */
+/* ─────────────── CORS SOLO DESDE DOMINIO ÚNICO ─────────────── */
 app.use(cors({
-  origin: (origin, callback) => {
-    const cleanOrigin = origin?.replace(/\/$/, '');
-    if (!origin || config.allowedOrigins.includes(cleanOrigin)) {
-      callback(null, true);
-    } else {
-      console.warn(`❌ CORS rechazado: ${origin}`);
-      callback(new Error('CORS no permitido'));
-    }
-  },
+  origin: "https://kmezropacatalogo.com",
   credentials: true
 }));
 
@@ -85,12 +77,12 @@ app.use(helmet());
 app.use((req, res, next) => {
   res.setHeader("Content-Security-Policy",
     "default-src 'self'; " +
-    "script-src 'self' https://accounts.google.com https://apis.google.com https://www.googletagmanager.com https://www.google-analytics.com; " +
+    "script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com https://www.googletagmanager.com https://www.google-analytics.com; " +
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
     "font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com; " +
     "img-src 'self' data: https://*.googleusercontent.com https://lh3.googleusercontent.com https://www.google-analytics.com; " +
-    "frame-src https://accounts.google.com https://*.google.com; " +
-    "connect-src 'self' https://api.kmezropacatalogo.com https://www.google-analytics.com; " +
+    "frame-src https://accounts.google.com https://*.google.com https://www.paypal.com; " +
+    "connect-src 'self' https://www.google-analytics.com https://nominatim.openstreetmap.org; " +
     "object-src 'none'; base-uri 'self'; frame-ancestors 'none';"
   );
   res.setHeader("X-Frame-Options", "DENY");
@@ -148,6 +140,21 @@ app.get('/metrics', async (req, res) => {
   } catch (err) {
     res.status(500).end(err.message);
   }
+});
+
+/* ─────────────── ARCHIVOS ESTÁTICOS (FRONTEND) ─────────────── */
+app.use(express.static(path.join(__dirname, "public")));
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+app.get("/:page.html", (req, res, next) => {
+  const { page } = req.params;
+  const filePath = path.join(__dirname, "public", `${page}.html`);
+  res.sendFile(filePath, (err) => {
+    if (err) res.status(404).send("❌ Página no encontrada");
+  });
 });
 
 /* ─────────────── ESTADO Y SALUD ─────────────── */

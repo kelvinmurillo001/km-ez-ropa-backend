@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>✏️ Editar Producto | KM & EZ ROPA</title>
+
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="description" content="Editar detalles completos de un producto, incluyendo imágenes, tallas, variantes y más." />
+  <meta name="theme-color" content="#ff6d00" />
+
+  <!-- Estilos -->
+  <link rel="stylesheet" href="/css/global.css" />
+  <link rel="stylesheet" href="/css/componentes.css" />
+  <link rel="stylesheet" href="/css/fondo.css" />
+  <link rel="stylesheet" href="/css/adminMensaje.css" />
+  <link rel="stylesheet" href="/css/editar-producto.css" />
+
+  <style>
+    .mensaje-global {
+      margin: 1rem auto;
+      text-align: center;
+      font-weight: bold;
+      padding: 10px;
+      border-radius: 5px;
+      max-width: 600px;
+      display: none;
+    }
+    .mensaje-global.success { background: #e0ffe8; color: #007a3d; }
+    .mensaje-global.error { background: #ffe0e0; color: #b20000; }
+    .mensaje-global.info { background: #e0f0ff; color: #004b8d; }
+    .mensaje-global.warning { background: #fff8e1; color: #c19000; }
+    .mensaje-global.show { display: block; }
+
+    .imagen-preview-principal {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      display: block;
+      margin: 0 auto;
+    }
+  </style>
+
+  <script type="module" src="/js/editar-producto.js" defer></script>
+</head>
+
+<body>
+<!-- Mensaje global accesible -->
+<div id="adminMensaje" class="mensaje-global" role="alert" aria-live="assertive"></div>
+
+<main class="formulario-container fade-in" role="main" aria-labelledby="tituloEditarProducto">
+  <h1 id="tituloEditarProducto" class="text-center">✏️ Editar Producto</h1>
+
+  <form id="formEditarProducto" class="form-producto" enctype="multipart/form-data" novalidate aria-describedby="instruccionesEditar">
+    <p id="instruccionesEditar" class="text-center mb-2">
+      Modifica los campos necesarios del producto. Los campos marcados con * son obligatorios.
+    </p>
+
+    <input type="hidden" id="productoId" />
+
+    <!-- Imagen actual -->
+    <label for="imagenPrincipalActual">Imagen Principal Actual:</label>
+    <div id="imagenPrincipalActual" class="preview-imagen" aria-live="polite"></div>
+
+    <!-- Nueva imagen -->
+    <label for="imagenPrincipalNueva">Subir Nueva Imagen Principal:</label>
+    <input type="file" id="imagenPrincipalNueva" accept="image/*" aria-describedby="imagenHelp" />
+    <small id="imagenHelp" class="help-text">Opcional. Máx. 2MB. Formatos: JPG, PNG, WEBP.</small>
+
+    <!-- Campos del producto -->
+    <label for="nombreInput">Nombre del Producto: *</label>
+    <input type="text" id="nombreInput" required maxlength="100" aria-required="true" />
+
+    <label for="descripcionInput">Descripción del Producto: *</label>
+    <textarea id="descripcionInput" required maxlength="300" aria-required="true"></textarea>
+
+    <label for="precioInput">Precio de venta: *</label>
+    <input type="number" id="precioInput" step="0.01" min="0" required aria-required="true" />
+
+    <label for="stockInput">Stock base (sin variantes):</label>
+    <input type="number" id="stockInput" min="0" />
+
+    <label for="categoriaInput">Categoría principal: *</label>
+    <select id="categoriaInput" required aria-required="true">
+      <option value="">Selecciona una categoría</option>
+    </select>
+
+    <label for="subcategoriaInput">Subcategoría:</label>
+    <select id="subcategoriaInput" disabled>
+      <option value="">Selecciona una subcategoría</option>
+    </select>
+
+    <label for="tallaTipoInput">Tipo de talla: *</label>
+    <select id="tallaTipoInput" required aria-required="true">
+      <option value="">Selecciona tipo</option>
+      <option value="adulto">Adulto</option>
+      <option value="joven">Joven</option>
+      <option value="niño">Niño</option>
+      <option value="niña">Niña</option>
+      <option value="bebé">Bebé</option>
+    </select>
+
+    <label for="tallasInput">Tallas disponibles:</label>
+    <input type="text" id="tallasInput" placeholder="Ej: S, M, L, XL" />
+
+    <label for="colorInput">Color principal:</label>
+    <input type="text" id="colorInput" placeholder="Ej: Negro, Beige" />
+
+    <!-- Estado del producto -->
+    <div class="mt-2">
+      <input type="checkbox" id="destacadoInput" />
+      <label for="destacadoInput">⭐ Producto destacado en inicio</label>
+    </div>
+
+    <div class="mt-2">
+      <input type="checkbox" id="activoInput" />
+      <label for="activoInput">🟢 Producto activo (visible)</label>
+    </div>
+
+    <div class="mt-2">
+      <input type="checkbox" id="borradorInput" />
+      <label for="borradorInput">💾 Guardar como borrador (no visible)</label>
+    </div>
+
+    <!-- Variantes -->
+    <fieldset class="mt-2">
+      <legend>Variantes (colores, tallas y stock específicos)</legend>
+      <div id="variantesExistentes" aria-live="polite"></div>
+      <button type="button" id="btnAgregarVariante" class="btn-secundario mt-1">➕ Añadir Variante</button>
+    </fieldset>
+
+    <!-- Acciones -->
+    <div class="form-actions mt-3">
+      <button type="submit" class="btn" aria-label="Guardar cambios al producto">💾 Guardar Cambios</button>
+      <button type="button" id="btnCancelar" class="btn-secundario" aria-label="Cancelar edición">🔙 Cancelar</button>
+      <a href="/productos.html" class="btn-secundario" aria-label="Volver a listado de productos" style="margin-left:10px;">⬅️ Volver a Productos</a>
+    </div>
+
+    <!-- Mensaje de estado del formulario -->
+    <p id="msgEstado" class="form-msg text-center mt-2" role="status" aria-live="polite"></p>
+  </form>
+</main>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    if (localStorage.getItem("modoOscuro") === "true") {
+      document.body.classList.add("modo-oscuro");
+    }
+
+    // Cancelar = volver atrás
+    document.getElementById("btnCancelar")?.addEventListener("click", () => history.back());
+
+    // Vista previa de imagen
+    document.getElementById("imagenPrincipalNueva")?.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (file && file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          document.getElementById("imagenPrincipalActual").innerHTML =
+            `<img src="${reader.result}" alt="Vista previa nueva imagen" class="imagen-preview-principal" />`;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Ocultar mensaje al hacer clic
+    document.getElementById('adminMensaje')?.addEventListener('click', e => {
+      e.currentTarget.style.display = 'none';
+    });
+  });
+</script>
+
+<noscript>
+  <p style="text-align: center; color: red;">⚠️ Activa JavaScript para poder editar el producto correctamente.</p>
+</noscript>
+
+</body>
+</html>

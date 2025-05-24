@@ -1,0 +1,256 @@
+/* === 🔝 HEADER === */
+.header {
+  text-align: center;
+  padding: 1.5rem;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-bottom: 1px solid #e0e0e0;
+  backdrop-filter: blur(5px);
+}
+body.modo-oscuro .header {
+  background-color: rgba(30, 30, 30, 0.9);
+  border-color: #333;
+}
+
+.logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo-img {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.subtitulo {
+  font-size: 0.95rem;
+  color: #666;
+  font-style: italic;
+  margin-top: 0.4rem;
+}
+body.modo-oscuro .subtitulo {
+  color: #bbb;
+}
+
+/* === 🎯 FILTROS === */
+.filtros-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  padding: 1.5rem;
+  background: #f4f4f4;
+  border-bottom: 1px solid #ccc;
+}
+body.modo-oscuro .filtros-container {
+  background-color: #1e1e1e;
+  border-color: #444;
+}
+
+.busqueda-input {
+  padding: 0.7rem 1rem;
+  border-radius: 6px;
+  border: 1px solid #bbb;
+  font-size: 1rem;
+  width: 260px;
+  transition: border 0.3s ease, background-color 0.3s;
+}
+.busqueda-input:focus {
+  border-color: var(--accent, #d4af37);
+  outline: none;
+}
+body.modo-oscuro .busqueda-input {
+  background-color: #2a2a2a;
+  color: #fff;
+  border-color: #444;
+}
+
+/* === 🎁 PROMO BANNER === */
+.promo-banner {
+  background-color: #fff8e1;
+  padding: 0.75rem;
+  color: #5d4037;
+  text-align: center;
+  border-left: 5px solid var(--accent, #d4af37);
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 0.95rem;
+  animation: fadeIn 0.5s ease-in;
+}
+body.modo-oscuro .promo-banner {
+  background-color: #3c2f2f;
+  color: #ffe0b2;
+  border-color: var(--accent, #d4af37);
+}
+
+/* === 🛍️ CATÁLOGO === */
+#catalogo {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.8rem;
+  padding: 2rem;
+}
+
+/* === 🧩 TARJETA PRODUCTO === */
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.card img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  border-radius: 10px;
+  cursor: zoom-in;
+}
+
+.card h3 {
+  margin: 0.8rem 0 0.3rem;
+  font-size: 1.1rem;
+  color: #333;
+}
+.card p {
+  margin: 0.2rem 0;
+  font-size: 0.95rem;
+  color: #666;
+}
+
+.card button {
+  margin-top: 0.6rem;
+  padding: 0.6rem 1rem;
+  background-color: var(--accent, #d4af37);
+  color: #121212;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+.card button:hover {
+  background-color: var(--accent-light, #f4d35e);
+}
+.card button:disabled {
+  background-color: #aaa;
+  cursor: not-allowed;
+}
+
+body.modo-oscuro .card {
+  background-color: #2a2a2a;
+  color: #eee;
+}
+body.modo-oscuro .card h3 {
+  color: #f4f4f4;
+}
+body.modo-oscuro .card p {
+  color: #ccc;
+}
+
+/* === 🏷️ DESTACADO === */
+.destacado-badge {
+  background-color: gold;
+  color: #222;
+  font-size: 0.85rem;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+  display: inline-block;
+  margin-bottom: 0.5rem;
+}
+
+/* === 🖼️ MODAL IMG === */
+.modal-img {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+.modal-img img {
+  max-width: 90%;
+  max-height: 80vh;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+.modal-img .cerrar {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  font-size: 30px;
+  color: white;
+  cursor: pointer;
+}
+
+/* === ✅ MINI GALERÍA === */
+.galeria-imagenes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+.galeria-img {
+  width: 48px;
+  height: auto;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+.galeria-img:hover {
+  transform: scale(1.1);
+}
+
+/* === 📦 FOOTER === */
+.footer {
+  text-align: center;
+  margin-top: 3rem;
+  padding: 1.5rem;
+  font-size: 0.9rem;
+  background-color: #e0e0e0;
+  border-top: 1px solid #ccc;
+}
+body.modo-oscuro .footer {
+  background-color: #1a1a1a;
+  color: #ccc;
+  border-top-color: #333;
+}
+
+/* === ✨ ANIMACIÓN === */
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* === 📱 RESPONSIVE === */
+@media (max-width: 480px) {
+  #catalogo {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    padding: 1.2rem;
+  }
+
+  .card img {
+    height: 180px;
+  }
+
+  .busqueda-input {
+    width: 100%;
+  }
+}

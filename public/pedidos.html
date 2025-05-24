@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>📦 Pedidos | KM & EZ ROPA</title>
+
+  <!-- 🧠 SEO & Seguridad -->
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="description" content="Administra pedidos desde el panel de KM & EZ ROPA: pendientes, enviados, cancelados y más." />
+  <meta name="author" content="KM & EZ ROPA" />
+  <meta name="theme-color" content="#ff6d00" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' https://cdnjs.cloudflare.com; connect-src 'self' https://api.kmezropacatalogo.com; img-src 'self' data:;">
+
+  <!-- 🎨 Estilos -->
+  <link rel="stylesheet" href="/css/global.css" />
+  <link rel="stylesheet" href="/css/fondo.css" />
+  <link rel="stylesheet" href="/css/componentes.css" />
+  <link rel="stylesheet" href="/css/pedidos.css" />
+  <link rel="stylesheet" href="/css/adminMensaje.css" />
+
+  <!-- 🚀 Scripts -->
+  <script type="module" src="/js/pedidos.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+</head>
+
+<body>
+
+<main class="pedidos-container fade-in" role="main" aria-labelledby="tituloPedidos">
+  <h1 id="tituloPedidos" class="text-center" tabindex="0">📦 Gestión de Pedidos</h1>
+
+  <!-- 📊 Resumen general -->
+  <section id="estadisticasVentas" class="estadisticas-ventas text-center mt-3 mb-2" aria-live="polite">
+    <!-- Se llena dinámicamente -->
+  </section>
+
+  <!-- 🔍 Filtros de estado -->
+  <div class="filtro-estado text-center mt-2 mb-2" role="search" aria-label="Filtrar pedidos por estado">
+    <label for="filtroEstado" class="visually-hidden">Filtrar por estado:</label>
+    <select id="filtroEstado" aria-label="Seleccionar estado del pedido">
+      <option value="todos">📦 Todos</option>
+      <option value="pendiente">⏳ Pendiente</option>
+      <option value="en_proceso">🛠 En Proceso</option>
+      <option value="enviado">🚚 Enviado</option>
+      <option value="cancelado">❌ Cancelado</option>
+    </select>
+
+    <!-- 📄 Botón exportar -->
+    <button id="btnExportarPedidos" class="btn mt-1" aria-label="Exportar pedidos a PDF">
+      📄 Exportar PDF
+    </button>
+  </div>
+
+  <!-- 📋 Tabla dinámica de pedidos -->
+  <section id="listaPedidos" class="tabla-pedidos mt-2" role="region" aria-label="Listado de pedidos registrados">
+    <!-- Contenido generado desde JS -->
+  </section>
+
+  <!-- 🔢 Navegación por páginas -->
+  <nav id="paginacionPedidos" class="paginacion mt-3 text-center" aria-label="Navegación entre páginas de pedidos">
+    <!-- Generado dinámicamente -->
+  </nav>
+
+  <!-- 🔙 Volver al panel -->
+  <div class="text-center mt-4">
+    <button onclick="window.location.href='/panel.html'" class="btn-secundario" aria-label="Regresar al panel administrativo">
+      🔙 Volver al Panel
+    </button>
+  </div>
+</main>
+
+<!-- 🔔 Mensajes dinámicos flotantes -->
+<div id="adminMensaje" class="admin-message oculto" role="alert" aria-live="assertive"></div>
+
+<!-- 🚫 JavaScript requerido -->
+<noscript>
+  <p style="text-align:center; color:red; font-weight:bold;">
+    ⚠️ Activa JavaScript para visualizar correctamente los pedidos.
+  </p>
+</noscript>
+
+</body>
+</html>

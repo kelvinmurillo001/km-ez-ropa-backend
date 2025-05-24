@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🛍️ Admin Productos | KM & EZ ROPA</title>
+
+  <!-- 🔒 SEO & Seguridad -->
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="author" content="KM & EZ ROPA" />
+  <meta name="description" content="Administra productos de tu tienda: crea, edita y elimina artículos fácilmente desde el panel de control." />
+  <meta name="theme-color" content="#ff6d00" />
+  <link rel="icon" href="/assets/favicon.ico" type="image/x-icon" />
+
+  <!-- 🎨 Estilos -->
+  <link rel="stylesheet" href="/css/global.css" />
+  <link rel="stylesheet" href="/css/componentes.css" />
+  <link rel="stylesheet" href="/css/productos.css" />
+  <link rel="stylesheet" href="/css/responsive.css" />
+  <link rel="stylesheet" href="/css/fondo.css" />
+  <link rel="stylesheet" href="/css/adminMensaje.css" />
+
+  <!-- ✅ Script principal -->
+  <script type="module" src="/js/productos.js" defer></script>
+</head>
+
+<body class="con-fondo fade-in">
+
+<main class="panel-container" role="main" aria-label="Panel de productos administrativos">
+
+  <!-- 🧭 Encabezado -->
+  <header class="header-panel" role="banner">
+    <h1 class="text-center" tabindex="0">🛍️ Gestión de Productos</h1>
+    <div class="botones-header mt-2 text-center" role="group" aria-label="Acciones principales">
+      <a href="/crear-producto.html" class="btn" aria-label="Crear nuevo producto">➕ Crear Producto</a>
+      <a href="/panel.html" class="btn-secundario" aria-label="Volver al panel principal">🔙 Volver</a>
+    </div>
+  </header>
+
+  <!-- 🔎 Filtros de búsqueda -->
+  <section class="filtros-productos mt-3" aria-labelledby="tituloFiltros">
+    <h2 id="tituloFiltros" class="visually-hidden">Filtrar productos</h2>
+
+    <div class="filtros-grid">
+      <input type="text" id="buscarProducto" placeholder="🔍 Buscar por nombre..." aria-label="Buscar producto por nombre" autocomplete="off" />
+
+      <select id="filtroCategoria" aria-label="Filtrar por categoría">
+        <option value="">📂 Todas las categorías</option>
+        <option value="hombres">👔 Hombres</option>
+        <option value="mujeres">👗 Mujeres</option>
+        <option value="accesorios">🧢 Accesorios</option>
+        <option value="ofertas">🔥 Ofertas</option>
+      </select>
+
+      <select id="filtroStock" aria-label="Filtrar por stock">
+        <option value="">📦 Todos los stocks</option>
+        <option value="sinStock">❌ Sin stock</option>
+      </select>
+
+      <label for="filtroDestacados" class="check-destacados">
+        <input type="checkbox" id="filtroDestacados" />
+        ⭐ Solo destacados
+      </label>
+
+      <button id="btnExportar" class="btn-secundario" aria-label="Exportar productos a Excel">
+        📤 Exportar a Excel
+      </button>
+    </div>
+  </section>
+
+  <!-- 🧾 Mensaje administrativo -->
+  <div id="adminMensaje" class="admin-message oculto" role="status" aria-live="assertive"></div>
+
+  <!-- 📋 Listado de productos -->
+  <section id="productosLista" class="menu-panel mt-3" role="region" aria-label="Listado de productos disponibles">
+    <!-- Renderizado dinámicamente por productos.js -->
+  </section>
+
+  <!-- 📊 Contador de productos -->
+  <p id="contadorProductos" class="text-center mt-2" style="font-weight: bold; color: #555;" aria-live="polite"></p>
+
+  <!-- 🔢 Paginación -->
+  <nav id="paginacion" class="paginacion text-center mt-3" role="navigation" aria-label="Paginación de productos"></nav>
+
+</main>
+
+<!-- ⚠️ Fallback para navegadores sin JS -->
+<noscript>
+  <p style="color: red; text-align: center; font-weight: bold;">⚠️ Esta página requiere JavaScript para funcionar correctamente.</p>
+</noscript>
+
+</body>
+</html>

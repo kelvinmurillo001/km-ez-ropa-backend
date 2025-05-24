@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>📦 Detalle del Pedido | KM & EZ ROPA</title>
+
+  <!-- 🔍 SEO y Seguridad -->
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="description" content="Consulta el detalle completo de tu pedido: productos, total, estado y fecha." />
+  <meta name="theme-color" content="#ff6d00" />
+  <meta name="author" content="KM & EZ ROPA" />
+
+  <!-- 🎨 Estilos -->
+  <link rel="stylesheet" href="/css/global.css" />
+  <link rel="stylesheet" href="/css/componentes.css" />
+  <link rel="stylesheet" href="/css/fondo.css" />
+  <link rel="stylesheet" href="/css/detalle-pedido.css" />
+  <!-- ✅ Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-BNWNNFDCC3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-BNWNNFDCC3');
+  </script>
+
+  <!-- 📜 Scripts -->
+  <script type="module" src="/js/detalle-pedido.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js" defer></script>
+</head>
+
+<body>
+  <!-- 🧭 Encabezado -->
+  <header class="main-header" role="banner">
+    <div class="logo">
+      <a href="/" aria-label="Volver al inicio">
+        <img src="/assets/logo.jpg" alt="Logo KM & EZ ROPA" loading="lazy" />
+      </a>
+      <div class="brand">
+        <h1>KM & EZ ROPA</h1>
+        <p>Seguimiento de Pedido</p>
+      </div>
+    </div>
+
+    <nav class="nav-links" aria-label="Navegación principal">
+      <a href="/cliente.html" aria-label="Volver a Mis Pedidos">🔙 Mis Pedidos</a>
+      <a href="/index.html" aria-label="Volver al inicio">🏠 Inicio</a>
+    </nav>
+  </header>
+
+  <!-- 📋 Contenido principal -->
+  <main class="detalle-pedido-container fade-in" role="main" aria-label="Detalle completo del pedido">
+    <h2 class="text-center">📦 Detalle del Pedido</h2>
+
+    <!-- 📄 Botón para descargar -->
+    <div class="text-center mt-2">
+      <button id="descargarPdfBtn" class="btn-principal" aria-label="Descargar este pedido como PDF">📄 Descargar PDF</button>
+    </div>
+
+    <!-- 🧾 Información del Pedido -->
+    <section id="pedidoDetalle" class="pedido-detalle mt-3" aria-live="polite">
+      <p class="text-center">⏳ Cargando información del pedido...</p>
+    </section>
+  </main>
+
+  <!-- 🛎️ Mensajes -->
+  <div id="adminMensaje" class="admin-message oculto" role="alert" aria-live="assertive"></div>
+
+  <!-- ⚠️ Fallback JS -->
+  <noscript>
+    <p style="text-align: center; color:red;">⚠️ Activa JavaScript para ver correctamente esta página.</p>
+  </noscript>
+</body>
+</html>

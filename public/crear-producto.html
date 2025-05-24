@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>➕ Crear Producto | KM & EZ ROPA</title>
+
+  <!-- 🔐 Seguridad & SEO -->
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="description" content="Formulario accesible y seguro para agregar productos nuevos a KM & EZ ROPA." />
+  <meta name="theme-color" content="#ff6d00" />
+
+  <!-- 🎨 Estilos -->
+  <link rel="stylesheet" href="/css/global.css" />
+  <link rel="stylesheet" href="/css/componentes.css" />
+  <link rel="stylesheet" href="/css/crear-producto.css" />
+  <link rel="stylesheet" href="/css/fondo.css" />
+
+  <!-- ✅ JavaScript principal -->
+  <script type="module" src="/js/crear-producto.js" defer></script>
+</head>
+
+<body>
+<main class="formulario-container fade-in" role="main" aria-label="Formulario para registrar producto">
+  <h1 class="text-center">➕ Crear Nuevo Producto</h1>
+
+  <form id="formProducto" class="form-producto" enctype="multipart/form-data" novalidate aria-describedby="msgEstado">
+
+    <!-- 📷 Imagen principal -->
+    <label for="imagenPrincipalInput">📷 Imagen Principal *</label>
+    <input type="file" id="imagenPrincipalInput" accept="image/jpeg,image/png,image/webp,image/svg+xml" required aria-describedby="imagenHelp" />
+    <small id="imagenHelp" class="help-text">Formatos permitidos: JPG, PNG, WEBP, SVG. Tamaño máximo: 2MB.</small>
+    <div id="previewPrincipal" class="preview-imagen" aria-live="polite"></div>
+
+    <!-- 📝 Nombre -->
+    <label for="nombreInput">📝 Nombre del Producto *</label>
+    <input type="text" id="nombreInput" placeholder="Ej: Hoodie Urbana Oversize" required maxlength="100" inputmode="text" />
+
+    <!-- 📄 Descripción -->
+    <label for="descripcionInput">📄 Descripción *</label>
+    <textarea id="descripcionInput" placeholder="Detalles del diseño, corte, tela..." required maxlength="300"></textarea>
+
+    <!-- 💲 Precio -->
+    <label for="precioInput">💲 Precio *</label>
+    <input type="number" id="precioInput" step="0.01" min="0" required placeholder="Ej: 39.90" inputmode="decimal" />
+
+    <!-- 📂 Categoría -->
+    <label for="categoriaInput">📂 Categoría *</label>
+    <select id="categoriaInput" required aria-label="Selecciona una categoría"></select>
+
+    <!-- 📁 Subcategoría -->
+    <label for="subcategoriaInput">📁 Subcategoría</label>
+    <select id="subcategoriaInput" disabled aria-label="Selecciona una subcategoría"></select>
+
+    <!-- 📐 Tipo de talla -->
+    <label for="tallaTipoInput">📐 Tipo de Talla *</label>
+    <select id="tallaTipoInput" required>
+      <option value="">Selecciona tipo</option>
+      <option value="adulto">Adulto</option>
+      <option value="joven">Joven</option>
+      <option value="niño">Niño</option>
+      <option value="niña">Niña</option>
+      <option value="bebé">Bebé</option>
+    </select>
+
+    <!-- 🌟 Producto destacado -->
+    <div class="mt-2">
+      <input type="checkbox" id="destacadoInput" />
+      <label for="destacadoInput">🌟 Producto destacado</label>
+    </div>
+
+    <!-- 🎨 Variantes -->
+    <fieldset class="mt-3">
+      <legend>🎨 Variantes (color, talla, imagen, stock):</legend>
+      <div id="variantesContainer" aria-live="polite"></div>
+      <button type="button" class="btn-secundario mt-1" id="btnAgregarVariante">➕ Añadir Variante</button>
+    </fieldset>
+
+    <!-- 📦 Stock base -->
+    <label for="stockInput">📦 Stock Base (si no hay variantes)</label>
+    <input type="number" id="stockInput" min="0" placeholder="Ej: 10" inputmode="numeric" />
+
+    <!-- 🧾 Acciones -->
+    <div class="form-actions mt-3" role="group" aria-label="Acciones del formulario">
+      <button type="submit" class="btn">💾 Guardar Producto</button>
+      <button type="button" id="btnCancelar" class="btn-secundario">🔙 Cancelar</button>
+      <a href="/productos.html" class="btn-secundario" style="margin-left: 10px;">⬅️ Volver a Productos</a>
+    </div>
+
+    <!-- 📣 Estado y errores -->
+    <p id="msgEstado" class="form-msg text-center mt-2" role="status" aria-live="polite"></p>
+  </form>
+</main>
+
+<!-- 🔔 Mensajes globales -->
+<div id="adminMensaje" class="admin-message oculto" role="alert" aria-live="assertive"></div>
+
+<!-- 🌙 Activar modo oscuro -->
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    if (localStorage.getItem("modoOscuro") === "true") {
+      document.body.classList.add("modo-oscuro");
+    }
+
+    document.getElementById("btnCancelar")?.addEventListener("click", () => {
+      if (confirm("¿Deseas cancelar la creación y volver atrás?")) history.back();
+    });
+  });
+</script>
+
+<noscript>
+  <p style="text-align: center; color: red;">⚠️ Activa JavaScript para crear productos correctamente.</p>
+</noscript>
+
+</body>
+</html>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Página principal -->
+  <url>
+    <loc>https://kmezropacatalogo.com/</loc>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- Catálogo -->
+  <url>
+    <loc>https://kmezropacatalogo.com/categorias.html</loc>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Carrito de compras -->
+  <url>
+    <loc>https://kmezropacatalogo.com/carrito.html</loc>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Página de cliente -->
+  <url>
+    <loc>https://kmezropacatalogo.com/cliente.html</loc>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Contacto o seguimiento (si aplica) -->
+  <url>
+    <loc>https://kmezropacatalogo.com/seguimiento.html</loc>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- Login está incluido pero sugerido con baja prioridad -->
+  <url>
+    <loc>https://kmezropacatalogo.com/login.html</loc>
+    <priority>0.3</priority>
+  </url>
+</urlset>

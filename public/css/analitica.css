@@ -1,0 +1,163 @@
+/* === 🌐 VARIABLES SI NO SE IMPORTAN DE variables.css === */
+:root {
+  --color-azul: #1976d2;
+  --color-azul-claro: #90caf9;
+  --color-bg-claro: #fafafa;
+  --color-bg-card: #f7f7f7;
+  --color-bg-oscuro: #1e1e1e;
+  --color-bg-card-dark: #292929;
+  --color-text: #333;
+  --color-muted: #444;
+  --color-light: #f0f0f0;
+  --radius: 12px;
+}
+
+/* 📊 CONTENEDOR PRINCIPAL */
+.dashboard-container {
+  max-width: 1100px;
+  margin: 40px auto;
+  padding: 2rem 1.5rem;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #ffffff;
+  color: var(--color-text);
+  border-radius: var(--radius);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+body.modo-oscuro .dashboard-container {
+  background-color: var(--color-bg-oscuro);
+  color: #eee;
+}
+
+/* 📈 TARJETAS DE MÉTRICAS */
+.metricas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+  margin-bottom: 2.5rem;
+}
+
+.metricas .card {
+  background-color: var(--color-bg-card);
+  border-radius: 10px;
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  cursor: default;
+}
+
+.metricas .card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+}
+
+.metricas .card h3 {
+  font-size: 1rem;
+  color: var(--color-azul);
+  margin-bottom: 0.6rem;
+}
+
+.metricas .card p {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #222;
+}
+
+/* 🌙 MODO OSCURO TARJETAS */
+body.modo-oscuro .metricas .card {
+  background-color: var(--color-bg-card-dark);
+}
+body.modo-oscuro .metricas .card h3 {
+  color: var(--color-azul-claro);
+}
+body.modo-oscuro .metricas .card p {
+  color: #fff;
+}
+
+/* 📂 PANEL DE DATOS / CATEGORÍAS */
+.analitica-extra {
+  background-color: var(--color-bg-claro);
+  padding: 1.8rem;
+  border-radius: 10px;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.04);
+  transition: background-color 0.3s ease;
+}
+
+.analitica-extra h2 {
+  text-align: center;
+  margin-bottom: 1rem;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.analitica-extra ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.analitica-extra li {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #ddd;
+  font-size: 0.95rem;
+  color: var(--color-muted);
+  transition: background-color 0.2s ease;
+}
+
+.analitica-extra li:hover,
+.analitica-extra li:focus-within {
+  background-color: var(--color-light);
+}
+
+/* 🌙 MODO OSCURO EXTRA */
+body.modo-oscuro .analitica-extra {
+  background-color: var(--color-bg-card-dark);
+}
+body.modo-oscuro .analitica-extra li {
+  border-color: #444;
+  color: #ccc;
+}
+body.modo-oscuro .analitica-extra li:hover,
+body.modo-oscuro .analitica-extra li:focus-within {
+  background-color: #333;
+}
+
+/* ✨ ANIMACIÓN */
+.fade-in {
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 📱 RESPONSIVE */
+@media (max-width: 768px) {
+  .metricas {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .metricas {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-container {
+    padding: 1.2rem;
+  }
+
+  .analitica-extra {
+    padding: 1rem;
+  }
+}

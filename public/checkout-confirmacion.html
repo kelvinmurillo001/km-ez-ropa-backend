@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:;">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>✅ Pedido Confirmado | KM & EZ ROPA</title>
+
+  <!-- 🔐 SEO y Seguridad -->
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="description" content="¡Gracias por tu compra en KM & EZ ROPA! Recibirás actualizaciones del estado de tu pedido." />
+  <meta name="theme-color" content="#d4af37" />
+
+  <!-- 🎨 Estilos -->
+  <link rel="stylesheet" href="/css/global.css" />
+  <link rel="stylesheet" href="/css/componentes.css" />
+  <link rel="stylesheet" href="/css/checkout.css" />
+  <link rel="stylesheet" href="/css/checkout-confirmacion.css" />
+  <link rel="stylesheet" href="/css/fondo.css" />
+
+  <!-- ✨ Estilos Adicionales -->
+  <style>
+    .confirmacion-icono {
+      font-size: 4rem;
+      animation: popIn 0.5s ease forwards;
+      text-align: center;
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.5); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .confirmacion-subtexto {
+      color: #ccc;
+      font-size: 1.05rem;
+      margin: 1rem 0 2rem;
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    .confirmacion-mensaje {
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      color: #d4af37;
+      text-align: center;
+      margin-top: 1rem;
+    }
+
+    .botones-confirmacion a:focus {
+      outline: 2px dashed #d4af37;
+      outline-offset: 4px;
+    }
+
+    .botones-confirmacion {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
+
+    .btn-seguir,
+    .btn-volver {
+      display: inline-block;
+      background-color: #ff6d00;
+      color: #fff;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: bold;
+      text-decoration: none;
+      transition: background-color 0.3s ease;
+    }
+
+    .btn-seguir:hover,
+    .btn-volver:hover {
+      background-color: #e65c00;
+    }
+  </style>
+</head>
+
+<body class="modo-oscuro">
+<main class="confirmacion-container fade-in" role="main" aria-label="Confirmación de Pedido">
+  <div class="confirmacion-icono" aria-hidden="true">✅</div>
+
+  <h1 id="tituloConfirmacion" class="confirmacion-mensaje" tabindex="0">
+    ¡Gracias por tu compra!
+  </h1>
+
+  <p id="mensajeConfirmacion" class="confirmacion-subtexto" tabindex="0">
+    Tu pedido fue recibido correctamente.<br />
+    Recibirás actualizaciones vía WhatsApp y correo electrónico. 📩
+  </p>
+
+  <div class="botones-confirmacion" role="navigation" aria-label="Opciones después de la compra">
+    <a href="/seguimiento.html" class="btn-seguir" aria-label="Ir a la página de seguimiento de pedido">🚚 Seguir mi pedido</a>
+    <a href="/categorias.html" class="btn-volver" aria-label="Volver al catálogo de productos">🛍️ Seguir comprando</a>
+  </div>
+
+  <p id="msgEstado" class="form-msg text-center mt-3" role="alert" aria-live="assertive"></p>
+</main>
+
+<noscript>
+  <p style="text-align: center; color: red;">⚠️ Activa JavaScript para visualizar correctamente esta página.</p>
+</noscript>
+
+<script type="module" src="/js/checkout-confirmacion.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    if (localStorage.getItem("modoOscuro") === "true") {
+      document.body.classList.add("modo-oscuro");
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🔐 Iniciar Sesión | KM & EZ ROPA</title>
+
+  <!-- 🔒 Seguridad y SEO -->
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="description" content="Accede al panel administrativo de KM & EZ ROPA y gestiona productos, pedidos y promociones." />
+  <meta name="author" content="KM & EZ ROPA" />
+  <meta name="theme-color" content="#ff6d00" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' https://accounts.google.com; connect-src 'self' https://api.kmezropacatalogo.com; frame-src https://accounts.google.com;">
+  
+  <!-- 🎨 Estilos -->
+  <link rel="stylesheet" href="/css/global.css" />
+  <link rel="stylesheet" href="/css/componentes.css" />
+  <link rel="stylesheet" href="/css/fondo.css" />
+  <link rel="stylesheet" href="/css/login.css" />
+  <link rel="stylesheet" href="/css/adminMensaje.css" />
+
+  <!-- ✅ Google Fonts preload + fallback -->
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" as="style" onload="this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap"></noscript>
+
+  <!-- ✅ Google Sign-In -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <!-- 🔐 Aplicar modo oscuro sin inline -->
+  <script type="module" src="/js/modo-oscuro.js"></script>
+</head>
+
+<body class="con-fondo fade-in">
+
+  <!-- ✅ Mensaje flotante accesible -->
+  <div id="adminMensaje" class="admin-message oculto" role="status" aria-live="assertive"></div>
+
+  <main class="login-container fade-in" role="main" aria-labelledby="tituloLogin">
+    <h1 id="tituloLogin" class="text-center">🔐 Acceso Administrativo</h1>
+
+    <form id="formLogin" class="formulario" aria-describedby="instruccionesLogin" novalidate>
+      <p id="instruccionesLogin" class="text-center mb-2">
+        Introduce tus credenciales para entrar al panel.
+      </p>
+
+      <label for="username">Usuario o correo:</label>
+      <input type="text" name="username" id="username"
+        placeholder="Ej: admin o email@dominio.com"
+        required maxlength="100" autocomplete="username"
+        inputmode="text" aria-required="true" aria-describedby="errorMensaje" />
+
+      <label for="password">Contraseña:</label>
+      <input type="password" name="password" id="password"
+        placeholder="••••••••"
+        required maxlength="100" autocomplete="current-password"
+        inputmode="text" aria-required="true" aria-describedby="errorMensaje" />
+
+      <button type="submit" class="btn mt-2" aria-label="Ingresar al panel de control">
+        🔓 Ingresar
+      </button>
+
+      <div class="text-center mt-3">
+        <button type="button" id="googleLoginBtn" class="btn-google" aria-label="Iniciar sesión con Google">
+          🔐 Iniciar sesión con Google
+        </button>
+      </div>
+
+      <div id="errorMensaje" class="mensaje-error mt-2" role="alert" aria-live="assertive" style="display: none; color: red;"></div>
+
+      <div class="text-center mt-3">
+        <button type="button" class="btn-secundario" id="volverInicioBtn" aria-label="Volver al inicio del sitio">
+          🔙 Volver al Inicio
+        </button>
+      </div>
+    </form>
+  </main>
+
+  <!-- 🚫 JS requerido -->
+  <noscript>
+    <div role="alert" style="text-align: center; color: red; font-weight: bold;">
+      ⚠️ JavaScript debe estar habilitado para iniciar sesión.
+    </div>
+  </noscript>
+
+  <!-- ✅ Script separado para evitar CSP inline error -->
+  <script type="module" src="/js/login-init.js"></script>
+  <script type="module" src="/js/login.js"></script>
+</body>
+</html>

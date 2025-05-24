@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>📦 Mis Pedidos | KM & EZ ROPA</title>
+
+  <!-- 🔐 Seguridad y SEO -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; 
+                 script-src 'self' https://www.googletagmanager.com 'unsafe-inline'; 
+                 img-src 'self' data:; connect-src https://api.kmezropacatalogo.com;">
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="description" content="Revisa el historial de tus pedidos en KM & EZ ROPA, su estado y detalles de cada compra." />
+  <meta name="author" content="KM & EZ ROPA" />
+  <meta name="theme-color" content="#ff6d00" />
+  <link rel="icon" href="/assets/favicon.ico" type="image/x-icon" />
+
+  <!-- 🎨 Estilos -->
+  <link rel="stylesheet" href="/css/global.css" />
+  <link rel="stylesheet" href="/css/componentes.css" />
+  <link rel="stylesheet" href="/css/fondo.css" />
+  <link rel="stylesheet" href="/css/cliente.css" />
+
+  <!-- 🚀 Scripts deferidos -->
+  <script type="module" src="/js/cliente.js" defer></script>
+  <script type="module" src="/js/modoOscuro.js" defer></script>
+
+  <!-- 📈 Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-BNWNNFDCC3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-BNWNNFDCC3');
+  </script>
+</head>
+
+<body lang="es" class="con-fondo fade-in">
+
+  <!-- 🧭 Encabezado -->
+  <header class="main-header" role="banner">
+    <div class="logo">
+      <a href="/" aria-label="Volver al inicio">
+        <img src="/assets/logo.jpg" alt="Logo KM & EZ ROPA" loading="lazy" />
+      </a>
+      <div class="brand-text">
+        <h1>KM & EZ ROPA</h1>
+        <p>Tu historial de compras</p>
+      </div>
+    </div>
+
+    <nav class="nav-links" role="navigation" aria-label="Menú principal">
+      <a href="/index.html">🏠 Inicio</a>
+      <a href="/carrito.html">🛒 Carrito</a>
+      <button id="modoOscuroBtn" class="btn-secundario" aria-label="Alternar modo oscuro">🌙</button>
+      <button id="cerrarSesionBtn" class="btn-secundario" aria-label="Cerrar sesión de cliente">🚪 Cerrar Sesión</button>
+    </nav>
+  </header>
+
+  <!-- 📋 Panel del cliente -->
+  <main class="cliente-container fade-in" role="main" aria-labelledby="saludoUsuario">
+    <h2 id="saludoUsuario" class="text-center">👤 Bienvenido</h2>
+
+    <!-- 🔎 Filtros -->
+    <div class="filtros-pedidos mt-2 text-center" role="region" aria-label="Filtrar pedidos por estado">
+      <label for="filtroEstado">Filtrar por estado:</label>
+      <select id="filtroEstado" name="estado" aria-describedby="saludoUsuario">
+        <option value="">Todos</option>
+        <option value="pendiente">⏳ Pendiente</option>
+        <option value="preparando">🛠️ Preparando</option>
+        <option value="enviado">🚚 Enviado</option>
+        <option value="entregado">✅ Entregado</option>
+        <option value="cancelado">❌ Cancelado</option>
+      </select>
+    </div>
+
+    <!-- 📦 Listado de pedidos -->
+    <section class="mis-pedidos mt-3" role="region" aria-labelledby="tituloPedidos">
+      <h3 id="tituloPedidos" class="text-center">📦 Tus Pedidos</h3>
+      <div id="listaPedidos" class="lista-pedidos mt-2" aria-live="polite" aria-busy="true">
+        <p class="text-center">⏳ Cargando pedidos...</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- 🔔 Mensajes flotantes -->
+  <div id="adminMensaje" class="admin-message oculto" role="alert" aria-live="assertive"></div>
+
+  <!-- ⚠️ JS desactivado -->
+  <noscript>
+    <p style="text-align:center; color:red;">⚠️ Activa JavaScript para ver tus pedidos correctamente.</p>
+  </noscript>
+
+</body>
+</html>

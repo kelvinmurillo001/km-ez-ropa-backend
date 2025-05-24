@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>👕 Productos | Panel Admin | KM & EZ ROPA</title>
+
+  <!-- 🔐 SEO y Seguridad -->
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="author" content="KM & EZ ROPA" />
+  <meta name="description" content="Administra productos de tu tienda de ropa: añade, edita o elimina fácilmente desde este panel de administración." />
+  <meta name="theme-color" content="#ff6d00" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://api.kmezropacatalogo.com;">
+
+  <!-- 🎨 Estilos -->
+  <link rel="preload" href="/css/global.css" as="style" />
+  <link rel="stylesheet" href="/css/global.css" />
+  <link rel="stylesheet" href="/css/componentes.css" />
+  <link rel="stylesheet" href="/css/productos.css" />
+  <link rel="stylesheet" href="/css/fondo.css" />
+  <link rel="stylesheet" href="/css/promo-display.css" />
+  <link rel="stylesheet" href="/css/adminMensaje.css" />
+  <link rel="icon" href="/assets/favicon.ico" type="image/x-icon" />
+</head>
+
+<body>
+<main class="productos-container fade-in" role="main" aria-labelledby="tituloProductos">
+  <h1 id="tituloProductos" class="text-center" tabindex="0">👕 Gestión de Productos</h1>
+
+  <!-- 🎯 Promoción activa -->
+  <section id="promo-display-container" data-page="productos" role="region" aria-label="Promociones activas para productos"></section>
+
+  <!-- ➕ Acciones principales -->
+  <div class="text-center mt-2" role="group" aria-label="Acciones principales">
+    <button id="btnNuevoProducto" class="btn" aria-label="Crear nuevo producto">➕ Nuevo Producto</button>
+    <button id="btnExportar" class="btn-secundario" aria-label="Exportar productos a archivo Excel">📤 Exportar</button>
+  </div>
+
+  <!-- 🔍 Filtros de búsqueda -->
+  <section class="filtros text-center mt-2" role="search" aria-labelledby="tituloFiltros">
+    <h2 id="tituloFiltros" class="visually-hidden">Filtrar productos</h2>
+
+    <input id="buscarProducto"
+           type="text"
+           placeholder="🔎 Buscar producto por nombre..."
+           aria-label="Buscar producto por nombre"
+           aria-describedby="contadorProductos"
+    />
+
+    <select id="filtroCategoria" aria-label="Filtrar por categoría"></select>
+
+    <select id="filtroStock" aria-label="Filtrar por disponibilidad de stock">
+      <option value="">📦 Todos</option>
+      <option value="sinStock">🚫 Sin stock</option>
+    </select>
+
+    <label for="filtroDestacados" style="margin-left: 1rem;">
+      <input type="checkbox" id="filtroDestacados" />
+      ⭐ Solo destacados
+    </label>
+  </section>
+
+  <!-- 📦 Contador -->
+  <p id="contadorProductos" class="text-center mt-2" style="font-weight: bold; color: #ccc;" role="status" aria-live="polite"></p>
+
+  <!-- 🧾 Tabla de productos -->
+  <section id="productosLista" class="productos-lista mt-3" role="region" aria-label="Listado de productos disponibles en tienda"></section>
+
+  <!-- ⏩ Navegación entre páginas -->
+  <nav id="paginacion" class="paginacion text-center mt-3" role="navigation" aria-label="Navegación de páginas del listado de productos"></nav>
+
+  <!-- 🔙 Volver al panel principal -->
+  <div class="text-center mt-3">
+    <button id="btnVolverPanel" class="btn-secundario" aria-label="Volver al panel principal">🔙 Volver al Panel</button>
+  </div>
+</main>
+
+<!-- 📣 Mensaje global para acciones -->
+<div id="adminMensaje" class="admin-message oculto" role="alert" aria-live="assertive"></div>
+
+<!-- 🌙 Activación automática de modo oscuro -->
+<script>
+  if (localStorage.getItem("modoOscuro") === "true") {
+    document.body.classList.add("modo-oscuro");
+  }
+</script>
+
+<!-- ✅ Scripts principales -->
+<script type="module" defer>
+  import { goBack } from "/js/admin-utils.js";
+  import "/js/productos.js";
+  import "/js/promo-display.js";
+
+  document.getElementById("btnVolverPanel")?.addEventListener("click", goBack);
+</script>
+
+<noscript>
+  <p style="text-align: center; color: red;">⚠️ Activa JavaScript para gestionar productos correctamente.</p>
+</noscript>
+</body>
+</html>

@@ -1,0 +1,201 @@
+:root {
+  --bg-light: #1e1e1e;
+  --text-light: #f5f5f5;
+  --panel-dark: #1a1a1a;
+  --accent: #ff6d00;
+  --accent-light: #ff8a00;
+  --border-color: #444;
+  --badge-success: #28a745;
+  --badge-danger: #dc3545;
+  --badge-warning: #ffc107;
+  --badge-info: #007bff;
+  --chip-bg: #2c2c2c;
+  --shadow-color: rgba(255, 109, 0, 0.15);
+}
+
+/* === 📦 GRID DE PROMOCIONES === */
+.promo-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  margin-top: 20px;
+}
+
+/* === 🧾 TARJETAS DE PROMOCIÓN === */
+.promo-card {
+  background-color: var(--panel-dark);
+  border-radius: 10px;
+  box-shadow: 0 4px 15px var(--shadow-color);
+  padding: 1.5rem;
+  border-left: 6px solid transparent;
+  color: var(--text-light);
+  transition: transform 0.25s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+  position: relative;
+}
+
+.promo-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 20px rgba(255, 109, 0, 0.25);
+}
+
+/* === 🟢 ESTADOS DE PROMOCIÓN === */
+.promo-activa    { border-left-color: var(--badge-success); background-color: #1e2e1e; }
+.promo-inactiva  { border-left-color: var(--badge-warning); background-color: #2a251d; }
+.promo-expirada  { border-left-color: #6c757d; background-color: #2e2e2e; }
+.promo-futura    { border-left-color: var(--badge-info); background-color: #1b2d3a; }
+
+/* === 🏷️ ENCABEZADO TARJETA === */
+.promo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+/* === 🔖 BADGES MEJORADOS === */
+.badge {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: bold;
+  color: white;
+  display: inline-block;
+  text-transform: uppercase;
+  transition: background-color 0.3s ease;
+}
+
+.badge-success  { background-color: var(--badge-success); }
+.badge-danger   { background-color: var(--badge-danger); }
+.badge-warning  { background-color: var(--badge-warning); color: #222; }
+.badge-info     { background-color: var(--badge-info); }
+
+.position, .theme {
+  font-size: 13px;
+  opacity: 0.75;
+  font-style: italic;
+}
+
+/* === 📣 MENSAJE DE PROMOCIÓN === */
+.promo-message {
+  font-size: clamp(1rem, 2vw, 1.1rem);
+  font-weight: 600;
+  margin: 10px 0 6px 0;
+  line-height: 1.5;
+  color: var(--accent-light);
+}
+
+/* === 🔖 CHIPS (Páginas asociadas) === */
+.chip {
+  display: inline-block;
+  background: var(--chip-bg);
+  color: #eee;
+  border-radius: 16px;
+  padding: 4px 10px;
+  margin: 2px 6px 6px 0;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* === 🖼️ CONTENIDO MULTIMEDIA === */
+.preview {
+  margin-top: 10px;
+}
+
+.preview img,
+.preview video {
+  width: 100%;
+  border-radius: 6px;
+  margin-top: 6px;
+  object-fit: cover;
+  box-shadow: 0 0 8px var(--shadow-color);
+}
+
+/* === 🎛️ BOTONES DE ACCIÓN === */
+.promo-actions {
+  display: flex;
+  justify-content: flex-start;
+  gap: 10px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.promo-actions button {
+  padding: 7px 14px;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  border-radius: 5px;
+  font-weight: bold;
+  transition: transform 0.2s, background-color 0.2s ease;
+}
+
+.promo-actions button:focus-visible {
+  outline: 2px dashed var(--accent);
+  outline-offset: 3px;
+}
+
+.btn {
+  background-color: var(--badge-info);
+  color: white;
+}
+
+.btn-secundario {
+  background-color: var(--badge-warning);
+  color: black;
+}
+
+.btn-borrar {
+  background-color: var(--badge-danger);
+  color: white;
+}
+
+.promo-actions button:hover {
+  opacity: 0.92;
+  transform: scale(1.03);
+}
+
+/* === 🔍 FILTROS Y BÚSQUEDA === */
+.filtros-promos {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 1.5rem 0 1rem;
+}
+
+.filtros-promos input,
+.filtros-promos select {
+  padding: 0.65rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background-color: #222;
+  color: white;
+  min-width: 240px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.filtros-promos input:focus,
+.filtros-promos select:focus {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* === 📱 RESPONSIVE (Mobile First) === */
+@media (max-width: 480px) {
+  .promo-message {
+    font-size: 15px;
+  }
+
+  .promo-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .promo-actions button {
+    width: 100%;
+  }
+}
